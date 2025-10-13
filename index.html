@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>LDAH FAQ Helper</title>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -621,56 +623,8 @@
           <div className="max-w-2xl mx-auto w-full flex-1 flex flex-col">
             <div className="text-center mb-6 mt-4">
               <div className="mb-4 flex justify-center">
-                <svg viewBox="0 0 200 200" style={{ height: '128px', width: 'auto' }}>
-                  <circle cx="100" cy="100" r="20" fill="none" stroke="black" strokeWidth="3"/>
-                  
-                  <ellipse cx="70" cy="100" rx="10" ry="15" fill="black"/>
-                  <ellipse cx="130" cy="100" rx="10" ry="15" fill="black"/>
-                  <circle cx="70" cy="100" r="5" fill="white"/>
-                  <circle cx="130" cy="100" r="5" fill="white"/>
-                  
-                  <g transform="translate(100, 40)">
-                    <ellipse rx="10" ry="15" fill="black"/>
-                    <circle r="5" fill="white"/>
-                    <line x1="-15" y1="-10" x2="-25" y2="-20" stroke="black" strokeWidth="3"/>
-                    <line x1="-10" y1="-15" x2="-15" y2="-25" stroke="black" strokeWidth="3"/>
-                    <line x1="15" y1="-10" x2="25" y2="-20" stroke="black" strokeWidth="3"/>
-                    <line x1="10" y1="-15" x2="15" y2="-25" stroke="black" strokeWidth="3"/>
-                  </g>
-                  
-                  <g transform="translate(100, 160)">
-                    <ellipse rx="10" ry="15" fill="black"/>
-                    <circle r="5" fill="white"/>
-                    <line x1="-15" y1="10" x2="-25" y2="20" stroke="black" strokeWidth="3"/>
-                    <line x1="-10" y1="15" x2="-15" y2="25" stroke="black" strokeWidth="3"/>
-                    <line x1="15" y1="10" x2="25" y2="20" stroke="black" strokeWidth="3"/>
-                    <line x1="10" y1="15" x2="15" y2="25" stroke="black" strokeWidth="3"/>
-                  </g>
-                  
-                  <g transform="translate(40, 70) rotate(-45)">
-                    <line x1="-15" y1="0" x2="-25" y2="0" stroke="black" strokeWidth="3"/>
-                    <line x1="-20" y1="-5" x2="-30" y2="-5" stroke="black" strokeWidth="3"/>
-                    <line x1="-20" y1="5" x2="-30" y2="5" stroke="black" strokeWidth="3"/>
-                  </g>
-                  
-                  <g transform="translate(160, 70) rotate(45)">
-                    <line x1="15" y1="0" x2="25" y2="0" stroke="black" strokeWidth="3"/>
-                    <line x1="20" y1="-5" x2="30" y2="-5" stroke="black" strokeWidth="3"/>
-                    <line x1="20" y1="5" x2="30" y2="5" stroke="black" strokeWidth="3"/>
-                  </g>
-                  
-                  <g transform="translate(40, 130) rotate(45)">
-                    <line x1="-15" y1="0" x2="-25" y2="0" stroke="black" strokeWidth="3"/>
-                    <line x1="-20" y1="-5" x2="-30" y2="-5" stroke="black" strokeWidth="3"/>
-                    <line x1="-20" y1="5" x2="-30" y2="5" stroke="black" strokeWidth="3"/>
-                  </g>
-                  
-                  <g transform="translate(160, 130) rotate(-45)">
-                    <line x1="15" y1="0" x2="25" y2="0" stroke="black" strokeWidth="3"/>
-                    <line x1="20" y1="-5" x2="30" y2="-5" stroke="black" strokeWidth="3"/>
-                    <line x1="20" y1="5" x2="30" y2="5" stroke="black" strokeWidth="3"/>
-                  </g>
-                </svg>
+                <img 
+                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF8WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS40LjAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczpleGlmPSJodHRwOi8vbnMuYWRvYmUuY29tL2V4aWYvMS4wLyI+CiAgICAgICAgIDxleGlmOlBpeGVsWERpbWVuc2lvbj4yMDA8L2V4aWY6UGl4ZWxYRGltZW5zaW9uPgogICAgICAgICA8ZXhpZjpQaXhlbFlEaW1lbnNpb24+MjAwPC9leGlmOlBpeGVsWURpbWVuc2lvbj4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9InIiPz7JCqn7AAAhE0lEQVR4nO2deZgcVb3Hv6e6eu/JJJNkJpN9IwlhCWFfwr4JyCIgiyAiCiiyCCiCgKCIgCwi4gKCgICAyCYgIAIBwpKEJGRPJpnJZLLv+9a93j/OrO...
               </div>
               
               <h1 className="text-3xl font-bold mb-1" style={{ fontFamily: 'Georgia, serif' }}>
