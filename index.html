@@ -128,10 +128,82 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // Sign in anonymously
+    // Sign in anonymously - but don't block rendering
     auth.signInAnonymously().catch(error => {
       console.error('Anonymous auth failed:', error);
     });
+
+    // Test if React is working
+    const TestComponent = () => {
+      return <div style={{ padding: '20px', color: '#004E7C', fontSize: '24px', textAlign: 'center' }}>React is working!</div>;
+    };
+
+    // Uncomment to test if React renders at all:
+    // ReactDOM.render(<TestComponent />, document.getElementById('root'));
+    // return;
+
+    // Error boundary wrapper
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error: error };
+      }
+
+      componentDidCatch(error, errorInfo) {
+        console.error('React Error:', error, errorInfo);
+      }
+
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div style={{ 
+              minHeight: '100vh', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              padding: '20px',
+              background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)'
+            }}>
+              <div style={{ 
+                backgroundColor: 'white', 
+                padding: '32px', 
+                borderRadius: '16px', 
+                maxWidth: '500px',
+                textAlign: 'center'
+              }}>
+                <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
+                  Something went wrong
+                </h2>
+                <p style={{ color: '#666', marginBottom: '16px' }}>
+                  {this.state.error?.toString()}
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  style={{
+                    backgroundColor: '#004E7C',
+                    color: 'white',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Reload Page
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        return this.props.children;
+      }
+    }
+
 
     // Mock FAQs for initial load
     const mockFaqs = [
@@ -176,6 +248,7 @@
       const [draggedItem, setDraggedItem] = useState(null);
       const [dragOverItem, setDragOverItem] = useState(null);
       const [saveStatus, setSaveStatus] = useState('');
+      const [error, setError] = useState(null);
 
       const ADMIN_PASSWORD = 'ldah2024';
 
@@ -202,7 +275,7 @@
             }
           } catch (error) {
             console.error('Error loading FAQs:', error);
-            alert('Could not connect to database. Using demo data. Error: ' + error.message);
+            setError('Could not load FAQs: ' + error.message);
             setFaqs(mockFaqs);
           }
           setLoading(false);
@@ -210,6 +283,34 @@
 
         loadFaqs();
       }, []);
+
+      // Show error if something went wrong
+      if (error) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', maxWidth: '500px' }}>
+              <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Oops!</h2>
+              <p style={{ color: '#666', marginBottom: '16px' }}>{error}</p>
+              <p style={{ color: '#666', fontSize: '14px' }}>Using demo data instead.</p>
+              <button
+                onClick={() => setError(null)}
+                style={{
+                  marginTop: '16px',
+                  backgroundColor: '#004E7C',
+                  color: 'white',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        );
+      }
 
       const handleSaveFaq = async (faq) => {
         setSaveStatus('Saving...');
@@ -1086,7 +1187,12 @@
       );
     };
 
-    ReactDOM.render(<LDAHApp />, document.getElementById('root'));
+    ReactDOM.render(
+      <ErrorBoundary>
+        <LDAHApp />
+      </ErrorBoundary>, 
+      document.getElementById('root')
+    );
   </script>
 </body>
 </html>
