@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>LDAH FAQ Helper</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%);
+      min-height: 100vh;
+    }
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Lucide React icons as SVG components
+    const ChevronLeft = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    );
+
+    const ChevronRight = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    );
+
+    const Settings = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M12 1v6m0 6v6m-6-9h6m6 0h6"></path>
+      </svg>
+    );
+
+    const Plus = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    );
+
+    const Edit2 = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+      </svg>
+    );
+
+    const Trash2 = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        <line x1="10" y1="11" x2="10" y2="17"></line>
+        <line x1="14" y1="11" x2="14" y2="17"></line>
+      </svg>
+    );
+
+    const Save = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+        <polyline points="7 3 7 8 15 8"></polyline>
+      </svg>
+    );
+
+    const Share = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="18" cy="5" r="3"></circle>
+        <circle cx="6" cy="12" r="3"></circle>
+        <circle cx="18" cy="19" r="3"></circle>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+      </svg>
+    );
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    );
+
+    const GripVertical = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="9" cy="12" r="1"></circle>
+        <circle cx="9" cy="5" r="1"></circle>
+        <circle cx="9" cy="19" r="1"></circle>
+        <circle cx="15" cy="12" r="1"></circle>
+        <circle cx="15" cy="5" r="1"></circle>
+        <circle cx="15" cy="19" r="1"></circle>
+      </svg>
+    );
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAohn0wRVsbtUexqq-GN9e72Ii0qUApIsg",
+      projectId: "vantosg-65652",
+      storageBucket: "vantosg-65652.firebasestorage.app"
+    };
+
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Sign in anonymously - but don't block rendering
+    auth.signInAnonymously().catch(error => {
+      console.error('Anonymous auth failed:', error);
+    });
+
+    // Test if React is working
+    const TestComponent = () => {
+      return <div style={{ padding: '20px', color: '#004E7C', fontSize: '24px', textAlign: 'center' }}>React is working!</div>;
+    };
+
+    // Uncomment to test if React renders at all:
+    // ReactDOM.render(<TestComponent />, document.getElementById('root'));
+    // return;
+
+    // Error boundary wrapper
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error: error };
+      }
+
+      componentDidCatch(error, errorInfo) {
+        console.error('React Error:', error, errorInfo);
+      }
+
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div style={{ 
+              minHeight: '100vh', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              padding: '20px',
+              background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)'
+            }}>
+              <div style={{ 
+                backgroundColor: 'white', 
+                padding: '32px', 
+                borderRadius: '16px', 
+                maxWidth: '500px',
+                textAlign: 'center'
+              }}>
+                <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
+                  Something went wrong
+                </h2>
+                <p style={{ color: '#666', marginBottom: '16px' }}>
+                  {this.state.error?.toString()}
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  style={{
+                    backgroundColor: '#004E7C',
+                    color: 'white',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Reload Page
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        return this.props.children;
+      }
+    }
+
+
+    // Mock FAQs for initial load
+    const mockFaqs = [
+      {
+        id: '1',
+        question: "How do I get started with an IEP?",
+        summary: "An Individualized Education Program (IEP) is a legal document that outlines special education services for your child.",
+        steps: [
+          "Contact your child's school and request an evaluation in writing",
+          "The school has 60 days to complete the evaluation",
+          "Attend the IEP meeting to discuss results and services",
+          "Review and sign the IEP document",
+          "Request a copy for your records"
+        ],
+        contact: "(808) 532-5364",
+        order: 1
+      },
+      {
+        id: '2',
+        question: "Who do I contact for special education services?",
+        summary: "Start with your school's special education coordinator or principal.",
+        steps: [
+          "Contact your child's school principal or special education coordinator",
+          "Submit a written request for evaluation",
+          "If no response, contact the district special education office"
+        ],
+        contact: "(808) 532-5364",
+        order: 2
+      }
+    ];
+
+    const LDAHApp = () => {
+      const [faqs, setFaqs] = useState([]);
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [selected, setSelected] = useState(new Set());
+      const [showGuide, setShowGuide] = useState(false);
+      const [showAdmin, setShowAdmin] = useState(false);
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [password, setPassword] = useState('');
+      const [editingFaq, setEditingFaq] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [draggedItem, setDraggedItem] = useState(null);
+      const [dragOverItem, setDragOverItem] = useState(null);
+      const [saveStatus, setSaveStatus] = useState('');
+      const [error, setError] = useState(null);
+
+      const ADMIN_PASSWORD = 'ldah2024';
+
+      // Load FAQs from Firestore
+      useEffect(() => {
+        const loadFaqs = async () => {
+          try {
+            // Wait for anonymous auth to complete
+            await auth.signInAnonymously();
+            console.log('Authenticated successfully');
+            
+            // Now load FAQs
+            const snapshot = await db.collection('faqs').orderBy('order').get();
+            if (snapshot.empty) {
+              console.log('No FAQs found, using mock data');
+              setFaqs(mockFaqs);
+            } else {
+              const loadedFaqs = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              }));
+              console.log('Loaded FAQs:', loadedFaqs.length);
+              setFaqs(loadedFaqs);
+            }
+          } catch (error) {
+            console.error('Error loading FAQs:', error);
+            setError('Could not load FAQs: ' + error.message);
+            setFaqs(mockFaqs);
+          }
+          setLoading(false);
+        };
+
+        loadFaqs();
+      }, []);
+
+      // Show error if something went wrong
+      if (error) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', maxWidth: '500px' }}>
+              <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Oops!</h2>
+              <p style={{ color: '#666', marginBottom: '16px' }}>{error}</p>
+              <p style={{ color: '#666', fontSize: '14px' }}>Using demo data instead.</p>
+              <button
+                onClick={() => setError(null)}
+                style={{
+                  marginTop: '16px',
+                  backgroundColor: '#004E7C',
+                  color: 'white',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      const handleSaveFaq = async (faq) => {
+        setSaveStatus('Saving...');
+        
+        try {
+          // Ensure we're authenticated
+          if (!auth.currentUser) {
+            await auth.signInAnonymously();
+          }
+          
+          let faqToSave;
+          
+          if (faq.id && faq.id.length > 10) {
+            // Update existing
+            faqToSave = faq;
+            await db.collection('faqs').doc(faq.id).set(faq);
+            setFaqs(faqs.map(f => f.id === faq.id ? faq : f));
+          } else {
+            // Add new
+            faqToSave = {
+              question: faq.question,
+              summary: faq.summary,
+              steps: faq.steps,
+              contact: faq.contact,
+              order: faqs.length + 1
+            };
+            const docRef = await db.collection('faqs').add(faqToSave);
+            faqToSave.id = docRef.id;
+            setFaqs([...faqs, faqToSave]);
+          }
+          
+          setSaveStatus('✓ Saved!');
+        } catch (error) {
+          console.error('Error saving FAQ:', error);
+          setSaveStatus('⚠️ Error: ' + error.message);
+        }
+        
+        setTimeout(() => setSaveStatus(''), 3000);
+        setEditingFaq(null);
+      };
+
+      const handleDeleteFaq = async (id) => {
+        if (confirm('Are you sure you want to delete this FAQ?')) {
+          try {
+            await db.collection('faqs').doc(id).delete();
+            setFaqs(faqs.filter(f => f.id !== id));
+          } catch (error) {
+            console.error('Error deleting FAQ:', error);
+            alert('Error deleting FAQ: ' + error.message);
+          }
+        }
+      };
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (password === ADMIN_PASSWORD) {
+          setIsAuthenticated(true);
+          setPassword('');
+        } else {
+          alert('Incorrect password');
+          setPassword('');
+        }
+      };
+
+      const toggleSelection = (index) => {
+        const newSelected = new Set(selected);
+        if (newSelected.has(index)) {
+          newSelected.delete(index);
+        } else {
+          newSelected.add(index);
+        }
+        setSelected(newSelected);
+      };
+
+      const nextSlide = () => {
+        setCurrentIndex((prev) => (prev + 1) % faqs.length);
+      };
+
+      const prevSlide = () => {
+        setCurrentIndex((prev) => (prev - 1 + faqs.length) % faqs.length);
+      };
+
+      const handleDragStart = (e, index) => {
+        setDraggedItem(index);
+        e.currentTarget.style.opacity = '0.5';
+      };
+
+      const handleDragEnd = (e) => {
+        e.currentTarget.style.opacity = '1';
+        setDraggedItem(null);
+        setDragOverItem(null);
+      };
+
+      const handleDragOver = (e, index) => {
+        e.preventDefault();
+        setDragOverItem(index);
+      };
+
+      const handleDrop = async (e, dropIndex) => {
+        e.preventDefault();
+        
+        if (draggedItem === null) return;
+        
+        const sortedFaqs = [...faqs].sort((a, b) => a.order - b.order);
+        const draggedFaq = sortedFaqs[draggedItem];
+        const newFaqs = sortedFaqs.filter((_, idx) => idx !== draggedItem);
+        newFaqs.splice(dropIndex, 0, draggedFaq);
+        
+        const reorderedFaqs = newFaqs.map((faq, idx) => ({
+          ...faq,
+          order: idx + 1
+        }));
+        
+        setFaqs(reorderedFaqs);
+        
+        // Save to Firestore
+        try {
+          const batch = db.batch();
+          reorderedFaqs.forEach(faq => {
+            const ref = db.collection('faqs').doc(faq.id);
+            batch.set(ref, faq);
+          });
+          await batch.commit();
+        } catch (error) {
+          console.error('Error reordering FAQs:', error);
+        }
+        
+        setDraggedItem(null);
+        setDragOverItem(null);
+      };
+
+      // Admin Panel
+      if (showAdmin) {
+        if (!isAuthenticated) {
+          return (
+            <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+              <div style={{
+                backdropFilter: 'blur(20px)',
+                backgroundColor: 'rgba(255,255,255,0.4)',
+                borderRadius: '24px',
+                border: '1px solid rgba(255,255,255,0.3)',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                padding: '32px',
+                maxWidth: '28rem',
+                width: '100%'
+              }}>
+                <button
+                  onClick={() => setShowAdmin(false)}
+                  className="flex items-center gap-2 text-[#004E7C] font-semibold mb-6 hover:opacity-70 transition-opacity"
+                >
+                  <ChevronLeft size={20} />
+                  Back to App
+                </button>
+                <h2 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">Admin Login</h2>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleLogin(e);
+                    }
+                  }}
+                  placeholder="Enter password (ldah2024)"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#004E7C] mb-4"
+                  autoFocus
+                />
+                <button
+                  onClick={handleLogin}
+                  className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg"
+                >
+                  Login to Admin Panel
+                </button>
+                <p className="text-center text-sm text-gray-600 mt-4">
+                  Default password: ldah2024
+                </p>
+              </div>
+            </div>
+          );
+        }
+
+        if (editingFaq !== null) {
+          return <FaqEditor faq={editingFaq} onSave={handleSaveFaq} onCancel={() => setEditingFaq(null)} />;
+        }
+
+        return (
+          <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div className="max-w-4xl mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <button
+                  onClick={() => {
+                    setShowAdmin(false);
+                    setIsAuthenticated(false);
+                  }}
+                  className="flex items-center gap-2 text-[#004E7C] font-semibold hover:opacity-70"
+                >
+                  <ChevronLeft size={20} />
+                  Back to App
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingFaq({
+                    question: '',
+                    summary: '',
+                    steps: [],
+                    contact: '(808) 532-5364',
+                    order: faqs.length + 1
+                  })}
+                  style={{
+                    backgroundColor: '#004E7C',
+                    color: 'white',
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Plus size={20} />
+                  <span>Add New FAQ</span>
+                </button>
+              </div>
+
+              {saveStatus && (
+                <div className="mb-4 text-center">
+                  <span className="inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-semibold">
+                    {saveStatus}
+                  </span>
+                </div>
+              )}
+
+              <h1 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">Manage FAQs</h1>
+
+              <div className="space-y-3">
+                {faqs.sort((a, b) => a.order - b.order).map((faq, index) => (
+                  <div
+                    key={faq.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                    className={`bg-white rounded-2xl border shadow-md transition-all ${
+                      dragOverItem === index ? 'border-[#004E7C] border-2' : 'border-gray-200'
+                    }`}
+                    style={{
+                      cursor: 'grab',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div className="p-4 flex items-center gap-4">
+                      <div className="flex-shrink-0 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                        <GripVertical size={24} />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-lg mb-1 text-gray-900">{faq.question}</h3>
+                        <p className="text-sm text-gray-600 mb-1 line-clamp-2">{faq.summary}</p>
+                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                          {faq.steps && faq.steps.length > 0 && (
+                            <span className="bg-gray-100 px-2 py-1 rounded-full">
+                              {faq.steps.length} {faq.steps.length === 1 ? 'step' : 'steps'}
+                            </span>
+                          )}
+                          <span className="text-gray-400">•</span>
+                          <span>Order: {faq.order}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => setEditingFaq(faq)}
+                          className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-sm"
+                          style={{ border: 'none', cursor: 'pointer' }}
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteFaq(faq.id)}
+                          className="p-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-sm"
+                          style={{ border: 'none', cursor: 'pointer' }}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Action Guide View
+      if (showGuide) {
+        const selectedTopics = Array.from(selected).sort().map(idx => faqs[idx]);
+        
+        return (
+          <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div className="max-w-2xl mx-auto">
+              <button
+                onClick={() => setShowGuide(false)}
+                className="flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity"
+              >
+                <ChevronLeft size={20} />
+                Back
+              </button>
+              
+              <h1 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">
+                My Action Guide
+              </h1>
+              
+              <div style={{
+                backdropFilter: 'blur(20px)',
+                backgroundColor: 'rgba(255,255,255,0.25)',
+                borderRadius: '24px',
+                border: '1px solid rgba(255,255,255,0.3)',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                padding: '24px'
+              }}>
+                <div className="space-y-8">
+                  {selectedTopics.map((faq, i) => (
+                    <div key={i} className="pb-8 border-b border-gray-200 last:border-0 last:pb-0">
+                      <h3 className="font-bold text-xl mb-3 text-gray-900">{faq.question}</h3>
+                      
+                      {faq.summary && (
+                        <p className="text-gray-700 mb-4 leading-relaxed">{faq.summary}</p>
+                      )}
+                      
+                      {faq.steps && faq.steps.length > 0 && (
+                        <div className="mb-4">
+                          <ul className="space-y-2">
+                            {faq.steps.map((step, idx) => (
+                              <li key={idx} className="flex gap-3">
+                                <span className="font-bold text-[#004E7C] min-w-[24px]">{idx + 1}.</span>
+                                <span className="text-gray-700">{step}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {faq.contact && (
+                        <p className="text-sm font-semibold text-[#004E7C] mt-3">
+                          LDAH Contact: {faq.contact}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setShowGuide(false)}
+                style={{
+                  width: '100%',
+                  marginTop: '24px',
+                  backdropFilter: 'blur(20px)',
+                  backgroundColor: 'rgba(0, 78, 124, 0.85)',
+                  color: 'white',
+                  borderRadius: '24px',
+                  padding: '16px 24px',
+                  fontWeight: 'bold',
+                  fontSize: '18px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
+                }}
+              >
+                Done
+              </button>
+
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({
+                      title: 'My LDAH Action Guide',
+                      text: `I created an action guide with ${selectedTopics.length} topics from LDAH`,
+                      url: window.location.href
+                    }).catch(() => {});
+                  } else {
+                    const text = selectedTopics.map((faq, i) => 
+                      `${i+1}. ${faq.question}\n${faq.summary}\n`
+                    ).join('\n');
+                    navigator.clipboard.writeText(text);
+                    alert('Guide copied to clipboard!');
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  marginTop: '12px',
+                  backgroundColor: 'rgba(255,255,255,0.9)',
+                  color: '#004E7C',
+                  borderRadius: '24px',
+                  padding: '14px 24px',
+                  fontWeight: '600',
+                  fontSize: '16px',
+                  border: '2px solid #004E7C',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Share size={20} />
+                Share My Guide
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // Main FAQ Selection View
+      if (loading) {
+        return (
+          <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#004E7C] mx-auto mb-4"></div>
+              <p className="text-[#004E7C] font-semibold">Loading FAQs...</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (faqs.length === 0) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div className="text-center">
+              <p className="text-gray-600 mb-4">No FAQs yet. Add some in the admin panel!</p>
+              <button
+                onClick={() => setShowAdmin(true)}
+                className="bg-[#004E7C] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#003a5c] transition-colors"
+              >
+                Go to Admin Panel
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen p-4 flex flex-col" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+          <button
+            onClick={() => setShowAdmin(true)}
+            className="absolute top-4 right-4 p-2 bg-white/60 rounded-full hover:bg-white/80 transition-all shadow-md"
+            style={{
+              backdropFilter: 'blur(20px)'
+            }}
+          >
+            <Settings size={20} className="text-[#004E7C]" />
+          </button>
+
+          <div className="max-w-2xl mx-auto w-full flex-1 flex flex-col">
+            <div className="text-center mb-6 mt-4">
+              <div className="mb-4 flex justify-center">
+                <img 
+                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF8WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS40LjAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczpleGlmPSJodHRwOi8vbnMuYWRvYmUuY29tL2V4aWYvMS4wLyI+CiAgICAgICAgIDxleGlmOlBpeGVsWERpbWVuc2lvbj4yMDA8L2V4aWY6UGl4ZWxYRGltZW5zaW9uPgogICAgICAgICA8ZXhpZjpQaXhlbFlEaW1lbnNpb24+MjAwPC9leGlmOlBpeGVsWURpbWVuc2lvbj4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9InIiPz7JCqn7AAAhE0lEQVR4nO2deZgcVb3Hv6e6eu/JJJNkJpN9IwlhCWFfwr4JyCIgiyAiCiiyCCiCgKCIgCwi4gKCgICAyCYgIAIBwpKEJGRPJpnJZLLv+9a93j/OrO...
+              </div>
+              
+              <h1 className="text-3xl font-bold mb-1" style={{ fontFamily: 'Georgia, serif' }}>
+                Leadership
+              </h1>
+              <h2 className="text-lg font-light mb-0" style={{ fontFamily: 'Georgia, serif' }}>
+                in Disabilities &
+              </h2>
+              <h2 className="text-lg font-light" style={{ fontFamily: 'Georgia, serif' }}>
+                Achievement of Hawai'i
+              </h2>
+              
+              <h3 className="text-xl font-bold text-[#004E7C] mt-4 mb-2">
+                FAQ Helper
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Swipe topics. Toggle ones you want in your Action Guide.
+              </p>
+            </div>
+
+            <div className="flex-1 flex items-center justify-center mb-4">
+              <div className="w-full max-w-xl">
+                <div style={{
+                  backdropFilter: 'blur(20px)',
+                  backgroundColor: 'rgba(255,255,255,0.25)',
+                  borderRadius: '24px',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                  padding: '16px'
+                }}>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{
+                      backdropFilter: 'blur(20px)',
+                      backgroundColor: 'rgba(255,255,255,0.4)',
+                      borderRadius: '24px',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      padding: '24px',
+                      minHeight: '240px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center'
+                    }}>
+                      <h2 className="text-xl font-bold text-center mb-6 px-4">
+                        {faqs[currentIndex].question}
+                      </h2>
+                      
+                      <div className="flex items-center justify-between px-4 py-3 bg-white/30 rounded-2xl" style={{ backdropFilter: 'blur(8px)' }}>
+                        <span className="font-semibold text-gray-800">
+                          Include in my guide
+                        </span>
+                        <button
+                          onClick={() => toggleSelection(currentIndex)}
+                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                            selected.has(currentIndex) ? 'bg-[#004E7C]' : 'bg-gray-300'
+                          }`}
+                          style={{ border: 'none', cursor: 'pointer' }}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                              selected.has(currentIndex) ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                            style={{ transition: 'transform 0.2s' }}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={prevSlide}
+                      className="absolute left-0 top-1/2 bg-white/80 rounded-full p-2 hover:bg-white transition-all shadow-md"
+                      style={{
+                        transform: 'translate(-16px, -50%)',
+                        backdropFilter: 'blur(8px)',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <ChevronLeft className="text-[#004E7C]" size={24} />
+                    </button>
+                    
+                    <button
+                      onClick={nextSlide}
+                      className="absolute right-0 top-1/2 bg-white/80 rounded-full p-2 hover:bg-white transition-all shadow-md"
+                      style={{
+                        transform: 'translate(16px, -50%)',
+                        backdropFilter: 'blur(8px)',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <ChevronRight className="text-[#004E7C]" size={24} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex justify-center gap-2 mt-4">
+                  {faqs.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentIndex(i)}
+                      className={`h-2 rounded-full transition-all ${
+                        i === currentIndex 
+                          ? 'w-8 bg-[#004E7C]' 
+                          : 'w-2 bg-gray-400'
+                      }`}
+                      style={{ border: 'none', cursor: 'pointer' }}
+                    />
+                  ))}
+                </div>
+
+                <p className="text-center mt-4 font-semibold text-base md:text-lg">
+                  {selected.size === 0 ? (
+                    <span className="text-gray-600">Tap a topic above to select it</span>
+                  ) : (
+                    <span className="text-[#004E7C]">
+                      ✓ {selected.size} topic{selected.size === 1 ? '' : 's'} selected
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowGuide(true)}
+              disabled={selected.size === 0}
+              style={{
+                width: '100%',
+                backdropFilter: 'blur(20px)',
+                backgroundColor: selected.size > 0 ? 'rgba(0, 78, 124, 0.85)' : 'rgba(0, 0, 0, 0.1)',
+                color: selected.size > 0 ? 'white' : '#9ca3af',
+                borderRadius: '24px',
+                padding: '18px 24px',
+                fontWeight: 'bold',
+                fontSize: '18px',
+                border: 'none',
+                cursor: selected.size > 0 ? 'pointer' : 'not-allowed',
+                boxShadow: selected.size > 0 ? '0 8px 16px rgba(0,0,0,0.15)' : 'none',
+                transition: 'all 0.3s'
+              }}
+            >
+              {selected.size === 0 ? 'Select topics above to continue' : `Create My Guide (${selected.size} topic${selected.size === 1 ? '' : 's'})`}
+            </button>
+          </div>
+        </div>
+      );
+    };
+
+    // FAQ Editor Component
+    const FaqEditor = ({ faq, onSave, onCancel }) => {
+      const [formData, setFormData] = useState({
+        question: faq?.question || '',
+        summary: faq?.summary || '',
+        steps: faq?.steps || [],
+        contact: faq?.contact || '(808) 532-5364',
+        order: faq?.order || 1
+      });
+
+      const [newStep, setNewStep] = useState('');
+      const [editingStepIndex, setEditingStepIndex] = useState(null);
+      const [editingStepText, setEditingStepText] = useState('');
+      const [isSaving, setIsSaving] = useState(false);
+
+      const handleAddStep = () => {
+        if (newStep.trim()) {
+          setFormData({
+            ...formData,
+            steps: [...formData.steps, newStep.trim()]
+          });
+          setNewStep('');
+        }
+      };
+
+      const handleEditStep = (index) => {
+        setEditingStepIndex(index);
+        setEditingStepText(formData.steps[index]);
+      };
+
+      const handleSaveStep = (index) => {
+        if (editingStepText.trim()) {
+          const updatedSteps = [...formData.steps];
+          updatedSteps[index] = editingStepText.trim();
+          setFormData({
+            ...formData,
+            steps: updatedSteps
+          });
+        }
+        setEditingStepIndex(null);
+        setEditingStepText('');
+      };
+
+      const handleRemoveStep = (index) => {
+        setFormData({
+          ...formData,
+          steps: formData.steps.filter((_, i) => i !== index)
+        });
+      };
+
+      const handleSaveClick = () => {
+        if (!formData.question.trim()) {
+          alert('Please enter a question');
+          return;
+        }
+        
+        setIsSaving(true);
+        
+        const faqToSave = {
+          id: faq?.id || null,
+          question: formData.question.trim(),
+          summary: formData.summary.trim(),
+          steps: formData.steps,
+          contact: formData.contact.trim(),
+          order: formData.order
+        };
+        
+        setTimeout(() => {
+          onSave(faqToSave);
+          setIsSaving(false);
+        }, 100);
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleSaveClick();
+      };
+
+      return (
+        <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+          <div className="max-w-3xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-bold text-[#004E7C]">
+                {faq?.id ? 'Edit FAQ' : 'Add New FAQ'}
+              </h1>
+              <button
+                onClick={onCancel}
+                className="p-2 hover:bg-white/40 rounded-lg transition-colors"
+                style={{ border: 'none', cursor: 'pointer' }}
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} style={{
+              backdropFilter: 'blur(20px)',
+              backgroundColor: 'rgba(255,255,255,0.4)',
+              borderRadius: '24px',
+              border: '1px solid rgba(255,255,255,0.3)',
+              padding: '32px'
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Question *</label>
+                  <input
+                    type="text"
+                    value={formData.question}
+                    onChange={(e) => setFormData({ ...formData, question: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Summary</label>
+                  <textarea
+                    value={formData.summary}
+                    onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Steps</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                    {formData.steps.map((step, idx) => (
+                      <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <span className="font-bold text-[#004E7C] mt-3" style={{ minWidth: '24px' }}>{idx + 1}.</span>
+                        {editingStepIndex === idx ? (
+                          <>
+                            <input
+                              type="text"
+                              value={editingStepText}
+                              onChange={(e) => setEditingStepText(e.target.value)}
+                              onKeyPress={(e) => e.key === 'Enter' && handleSaveStep(idx)}
+                              className="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveStep(idx)}
+                              className="p-3 bg-green-500 text-white hover:bg-green-600 rounded-lg transition-colors"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <Save size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingStepIndex(null);
+                                setEditingStepText('');
+                              }}
+                              className="p-3 bg-gray-400 text-white hover:bg-gray-500 rounded-lg transition-colors"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <X size={16} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex-1 px-4 py-3 rounded-xl border border-gray-300 bg-white">
+                              {step}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleEditStep(idx)}
+                              className="p-3 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveStep(idx)}
+                              className="p-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      value={newStep}
+                      onChange={(e) => setNewStep(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddStep())}
+                      placeholder="Add a new step..."
+                      className="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddStep}
+                      className="px-6 py-3 bg-[#004E7C] text-white rounded-xl font-semibold hover:bg-[#003a5c] transition-colors"
+                      style={{ border: 'none', cursor: 'pointer' }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Contact</label>
+                  <input
+                    type="text"
+                    value={formData.contact}
+                    onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    backgroundColor: '#d1d5db',
+                    color: '#374151',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveClick}
+                  disabled={isSaving}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    backgroundColor: isSaving ? '#6B7280' : '#004E7C',
+                    color: 'white',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    border: 'none',
+                    cursor: isSaving ? 'wait' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <Save size={20} />
+                  <span>{isSaving ? 'Saving...' : 'Save FAQ'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(
+      <ErrorBoundary>
+        <LDAHApp />
+      </ErrorBoundary>, 
+      document.getElementById('root')
+    );
+  </script>
+</body>
+</html>
