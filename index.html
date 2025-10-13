@@ -170,18 +170,26 @@
       useEffect(() => {
         const loadFaqs = async () => {
           try {
+            // Wait for anonymous auth to complete
+            await auth.signInAnonymously();
+            console.log('Authenticated successfully');
+            
+            // Now load FAQs
             const snapshot = await db.collection('faqs').orderBy('order').get();
             if (snapshot.empty) {
+              console.log('No FAQs found, using mock data');
               setFaqs(mockFaqs);
             } else {
               const loadedFaqs = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
               }));
+              console.log('Loaded FAQs:', loadedFaqs.length);
               setFaqs(loadedFaqs);
             }
           } catch (error) {
             console.error('Error loading FAQs:', error);
+            alert('Could not connect to database. Using demo data. Error: ' + error.message);
             setFaqs(mockFaqs);
           }
           setLoading(false);
@@ -194,6 +202,11 @@
         setSaveStatus('Saving...');
         
         try {
+          // Ensure we're authenticated
+          if (!auth.currentUser) {
+            await auth.signInAnonymously();
+          }
+          
           let faqToSave;
           
           if (faq.id && faq.id.length > 10) {
