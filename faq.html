@@ -20,7 +20,8 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      background: linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%);
+      background: url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed;
+      background-size: cover;
       min-height: 100vh;
     }
     .line-clamp-2 {
@@ -875,7 +876,7 @@
       // Loading state
       if (loading) {
         return (
-          <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+          <div className="min-h-screen flex items-center justify-center" style={{ background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
             <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', textAlign: 'center' }}>
               <div className="text-[#004E7C] text-xl font-bold">Loading...</div>
             </div>
@@ -886,7 +887,7 @@
       // Error state
       if (error) {
         return (
-          <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+          <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
             <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', maxWidth: '500px' }}>
               <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Oops!</h2>
               <p style={{ color: '#666', marginBottom: '16px' }}>{error}</p>
@@ -914,7 +915,7 @@
       if (showAdmin) {
         if (!isAuthenticated) {
           return (
-            <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
               <div style={{
                 backdropFilter: 'blur(20px)',
                 backgroundColor: 'rgba(255,255,255,0.25)',
@@ -967,7 +968,7 @@
         }
 
         return (
-          <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+          <div className="min-h-screen p-4" style={{ background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
             <div className="max-w-4xl mx-auto">
               <div className="flex justify-between items-center mb-6">
                 <button
@@ -1216,7 +1217,7 @@
         const selectedFaqs = faqs.filter(faq => selected.has(faq.id));
         
         return (
-          <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+          <div className="min-h-screen p-4" style={{ background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
             <div className="max-w-2xl mx-auto">
               <button
                 onClick={() => setShowGuide(false)}
@@ -1329,7 +1330,7 @@
       // Category Selection View (Main User View)
       // Main FAQ Selection View with Accordion
       return (
-        <div className="min-h-screen p-2" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+        <div className="min-h-screen p-2" style={{ background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
           <div className="max-w-2xl mx-auto">
             {/* Logo Section */}
             <div className="text-center mb-4 mt-2">
