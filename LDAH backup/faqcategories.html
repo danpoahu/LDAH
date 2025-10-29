@@ -29,14 +29,6 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    @media print {
-      body {
-        background: white !important;
-      }
-      button {
-        display: none !important;
-      }
-    }
   </style>
 </head>
 <body>
@@ -1233,20 +1225,11 @@
                       
                       {faq.steps && faq.steps.length > 0 && (
                         <div className="mb-4">
-                          <ul className="space-y-3">
+                          <ul className="space-y-2">
                             {faq.steps.map((step, idx) => (
-                              <li key={idx} className="flex gap-3 items-start">
-                                <div style={{
-                                  width: '18px',
-                                  height: '18px',
-                                  border: '2px solid #004E7C',
-                                  borderRadius: '4px',
-                                  flexShrink: 0,
-                                  marginTop: '3px',
-                                  backgroundColor: 'white'
-                                }}></div>
-                                <span className="font-bold text-[#004E7C]">{idx + 1}.</span>
-                                <span className="text-gray-700 flex-1">{step}</span>
+                              <li key={idx} className="flex gap-3">
+                                <span className="font-bold text-[#004E7C] min-w-[24px]">{idx + 1}.</span>
+                                <span className="text-gray-700">{step}</span>
                               </li>
                             ))}
                           </ul>
@@ -1256,38 +1239,7 @@
                       {faq.contact && (
                         <div className="mt-3 pt-3 border-t border-gray-200">
                           <p className="text-sm text-gray-600">
-                            <strong>Contact:</strong>{' '}
-                            {(() => {
-                              const contact = faq.contact.trim();
-                              // Check if it's an email
-                              if (contact.includes('@')) {
-                                return (
-                                  <a 
-                                    href={`mailto:${contact}`}
-                                    className="text-[#004E7C] underline hover:opacity-70"
-                                  >
-                                    {contact}
-                                  </a>
-                                );
-                              }
-                              // Check if it's a phone number (contains digits and common phone chars)
-                              else if (/[\d\(\)\-\s]/.test(contact)) {
-                                // Remove all non-digit characters for the tel: link
-                                const cleanPhone = contact.replace(/\D/g, '');
-                                return (
-                                  <a 
-                                    href={`tel:${cleanPhone}`}
-                                    className="text-[#004E7C] underline hover:opacity-70"
-                                  >
-                                    {contact}
-                                  </a>
-                                );
-                              }
-                              // Otherwise just display as text
-                              else {
-                                return contact;
-                              }
-                            })()}
+                            <strong>Contact:</strong> {faq.contact}
                           </p>
                         </div>
                       )}
