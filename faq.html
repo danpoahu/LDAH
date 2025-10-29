@@ -29,6 +29,17 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+    @media print {
+      body {
+        background: white !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      button {
+        display: none !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -47,6 +58,18 @@
     const ChevronRight = ({ size = 24, className = '' }) => (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    );
+
+    const ChevronDown = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    );
+
+    const ChevronDown = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <polyline points="6 9 12 15 18 9"></polyline>
       </svg>
     );
 
@@ -566,7 +589,6 @@
     const LDAHApp = () => {
       const [categories, setCategories] = useState([]);
       const [faqs, setFaqs] = useState([]);
-      const [selectedCategory, setSelectedCategory] = useState(null);
       const [selected, setSelected] = useState(new Set());
       const [showGuide, setShowGuide] = useState(false);
       const [showAdmin, setShowAdmin] = useState(false);
@@ -580,8 +602,19 @@
       const [saveStatus, setSaveStatus] = useState('');
       const [error, setError] = useState(null);
       const [adminView, setAdminView] = useState('categories'); // 'categories' or 'faqs'
+      const [expandedCategories, setExpandedCategories] = useState(new Set());
 
       const ADMIN_PASSWORD = 'ldah2024';
+
+      const toggleCategoryExpanded = (categoryId) => {
+        const newExpanded = new Set(expandedCategories);
+        if (newExpanded.has(categoryId)) {
+          newExpanded.delete(categoryId);
+        } else {
+          newExpanded.add(categoryId);
+        }
+        setExpandedCategories(newExpanded);
+      };
 
       // Load Categories and FAQs from Firestore
       useEffect(() => {
@@ -1196,7 +1229,7 @@
             <div className="max-w-2xl mx-auto">
               <button
                 onClick={() => setShowGuide(false)}
-                className="flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity"
+                className="flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity no-print"
               >
                 <ChevronLeft size={20} />
                 Back
@@ -1225,11 +1258,22 @@
                       
                       {faq.steps && faq.steps.length > 0 && (
                         <div className="mb-4">
-                          <ul className="space-y-2">
+                          <ul className="space-y-3">
                             {faq.steps.map((step, idx) => (
-                              <li key={idx} className="flex gap-3">
-                                <span className="font-bold text-[#004E7C] min-w-[24px]">{idx + 1}.</span>
-                                <span className="text-gray-700">{step}</span>
+                              <li key={idx} className="flex gap-3 items-start">
+                                <div style={{
+                                  width: '18px',
+                                  height: '18px',
+                                  border: '2px solid #004E7C',
+                                  borderRadius: '4px',
+                                  flexShrink: 0,
+                                  marginTop: '3px',
+                                  backgroundColor: 'white'
+                                }}></div>
+                                <div className="flex gap-2 flex-1">
+                                  <span className="font-bold text-[#004E7C]">{idx + 1}.</span>
+                                  <span className="text-gray-700">{step}</span>
+                                </div>
                               </li>
                             ))}
                           </ul>
@@ -1247,7 +1291,7 @@
                   ))}
                 </div>
                 
-                <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="mt-6 pt-6 border-t border-gray-200 no-print">
                   <button
                     onClick={() => window.print()}
                     className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg flex items-center justify-center gap-2"
@@ -1304,7 +1348,7 @@
               </div>
 
               <h2 className="text-xl font-bold text-[#004E7C] mb-4 text-center">
-                Choose a Category
+                Select Questions for Your Action Guide
               </h2>
 
               {categories.length === 0 ? (
@@ -1325,43 +1369,138 @@
               ) : (
                 <div className="space-y-3">
                   {categories.sort((a, b) => a.order - b.order).map(category => {
-                    const categoryFaqs = faqs.filter(f => f.categoryId === category.id);
+                    const categoryFaqs = faqs.filter(f => f.categoryId === category.id).sort((a, b) => a.order - b.order);
+                    const isExpanded = expandedCategories.has(category.id);
+                    
                     return (
-                      <button
+                      <div
                         key={category.id}
-                        onClick={() => setSelectedCategory(category)}
                         style={{
-                          width: '100%',
                           backgroundColor: 'white',
                           borderRadius: '24px',
-                          padding: '24px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          border: 'none',
-                          textAlign: 'left'
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.1)';
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = 'none';
+                          overflow: 'hidden',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                          transition: 'all 0.3s ease'
                         }}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Folder size={24} className="text-[#004E7C]" />
-                            <div>
+                        {/* Accordion Header */}
+                        <button
+                          onClick={() => toggleCategoryExpanded(category.id)}
+                          style={{
+                            width: '100%',
+                            padding: '20px 24px',
+                            cursor: 'pointer',
+                            border: 'none',
+                            backgroundColor: 'transparent',
+                            textAlign: 'left',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            transition: 'background-color 0.2s'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f8fafc';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          <div className="flex items-center gap-3 flex-1">
+                            <Folder size={24} className="text-[#004E7C]" style={{ flexShrink: 0 }} />
+                            <div className="flex-1">
                               <h3 className="font-bold text-lg text-gray-900">{category.name}</h3>
                               <p className="text-sm text-gray-600">
                                 {categoryFaqs.length} {categoryFaqs.length === 1 ? 'question' : 'questions'}
                               </p>
                             </div>
                           </div>
-                          <ChevronRight size={24} className="text-[#004E7C]" />
+                          <div style={{
+                            transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)',
+                            transition: 'transform 0.3s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            flexShrink: 0
+                          }}>
+                            <ChevronDown size={24} className="text-[#004E7C]" />
+                          </div>
+                        </button>
+
+                        {/* Accordion Content with smooth animation */}
+                        <div style={{
+                          maxHeight: isExpanded ? '2000px' : '0',
+                          opacity: isExpanded ? '1' : '0',
+                          overflow: 'hidden',
+                          transition: 'max-height 0.4s ease, opacity 0.3s ease'
+                        }}>
+                          <div style={{
+                            borderTop: '1px solid #e5e7eb',
+                            padding: isExpanded ? '16px 24px 24px 24px' : '0 24px'
+                          }}>
+                            {categoryFaqs.length === 0 ? (
+                              <p className="text-gray-500 text-sm py-4 text-center">No questions in this category yet.</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {categoryFaqs.map((faq) => {
+                                  const isSelected = selected.has(faq.id);
+                                  return (
+                                    <div
+                                      key={faq.id}
+                                      onClick={() => toggleSelection(faq.id)}
+                                      style={{
+                                        padding: '16px',
+                                        backgroundColor: isSelected ? '#E3F2FD' : '#F9FAFB',
+                                        borderRadius: '12px',
+                                        cursor: 'pointer',
+                                        border: isSelected ? '2px solid #004E7C' : '2px solid transparent',
+                                        transition: 'all 0.2s ease',
+                                        transform: 'translateZ(0)' // Hardware acceleration
+                                      }}
+                                      onMouseOver={(e) => {
+                                        if (!isSelected) {
+                                          e.currentTarget.style.backgroundColor = '#f1f5f9';
+                                        }
+                                      }}
+                                      onMouseOut={(e) => {
+                                        if (!isSelected) {
+                                          e.currentTarget.style.backgroundColor = '#F9FAFB';
+                                        }
+                                      }}
+                                    >
+                                      <div className="flex items-start gap-3">
+                                        <div style={{
+                                          width: '24px',
+                                          height: '24px',
+                                          borderRadius: '8px',
+                                          border: '2px solid #004E7C',
+                                          backgroundColor: isSelected ? '#004E7C' : 'white',
+                                          flexShrink: 0,
+                                          marginTop: '2px',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          transition: 'all 0.2s ease'
+                                        }}>
+                                          {isSelected && (
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                                              <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                          )}
+                                        </div>
+                                        <div className="flex-1">
+                                          <h4 className="font-bold text-base mb-1 text-gray-900">{faq.question}</h4>
+                                          {faq.summary && (
+                                            <p className="text-sm text-gray-600 line-clamp-2">{faq.summary}</p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -1373,7 +1512,11 @@
                   backgroundColor: 'white',
                   borderRadius: '24px',
                   padding: '20px',
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  position: 'sticky',
+                  bottom: '16px',
+                  boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+                  zIndex: 10
                 }}>
                   <p className="text-gray-700 mb-3">
                     <strong>{selected.size}</strong> {selected.size === 1 ? 'question' : 'questions'} selected
@@ -1391,109 +1534,7 @@
         );
       }
 
-      // FAQ Selection View (within a category)
-      const categoryFaqs = faqs.filter(f => f.categoryId === selectedCategory.id).sort((a, b) => a.order - b.order);
-
-      return (
-        <div className="min-h-screen p-2" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
-          <div className="max-w-2xl mx-auto">
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className="flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity"
-            >
-              <ChevronLeft size={20} />
-              Back to Categories
-            </button>
-
-            <h2 className="text-xl font-bold text-[#004E7C] mb-2 text-center">
-              {selectedCategory.name}
-            </h2>
-            <p className="text-center text-gray-600 text-sm mb-4">
-              Select questions to add to your personalized action guide
-            </p>
-
-            {categoryFaqs.length === 0 ? (
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '24px',
-                padding: '32px',
-                textAlign: 'center'
-              }}>
-                <p className="text-gray-600">No questions in this category yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {categoryFaqs.map((faq) => {
-                  const isSelected = selected.has(faq.id);
-                  return (
-                    <div
-                      key={faq.id}
-                      onClick={() => toggleSelection(faq.id)}
-                      style={{
-                        backgroundColor: 'white',
-                        borderRadius: '24px',
-                        padding: '20px',
-                        cursor: 'pointer',
-                        border: isSelected ? '3px solid #004E7C' : '3px solid transparent',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '8px',
-                          border: '2px solid #004E7C',
-                          backgroundColor: isSelected ? '#004E7C' : 'white',
-                          flexShrink: 0,
-                          marginTop: '2px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          {isSelected && (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-base mb-1 text-gray-900">{faq.question}</h3>
-                          {faq.summary && (
-                            <p className="text-sm text-gray-600 line-clamp-2">{faq.summary}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div className="mt-6 space-y-3">
-              {selected.size > 0 && (
-                <div style={{
-                  backgroundColor: 'white',
-                  borderRadius: '24px',
-                  padding: '20px',
-                  textAlign: 'center'
-                }}>
-                  <p className="text-gray-700 mb-3">
-                    <strong>{selected.size}</strong> {selected.size === 1 ? 'question' : 'questions'} selected
-                  </p>
-                  <button
-                    onClick={() => setShowGuide(true)}
-                    className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg"
-                  >
-                    Create My Action Guide →
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      );
+      // No separate category view needed - accordion handles it all
     };
 
     ReactDOM.render(
