@@ -115,13 +115,7 @@
       </svg>
     );
 
-    const Folder = ({ size = 24, className = '' }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-      </svg>
-    );
-
-    // Firebase configuration
+    // Firebase configuration - UPDATED TO NEW LDAH PROJECT
     const firebaseConfig = {
       apiKey: "AIzaSyAU3CQ07bCVKlJ1qGak-150kaJEyPKldLk",
       authDomain: "ldah-932d5.firebaseapp.com",
@@ -139,7 +133,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // Sign in anonymously
+    // Sign in anonymously - but don't block rendering
     auth.signInAnonymously().catch(error => {
       console.error('Anonymous auth failed:', error);
     });
@@ -206,116 +200,748 @@
       }
     }
 
-    // Category Editor Component
-    const CategoryEditor = ({ category, onSave, onCancel }) => {
-      const [formData, setFormData] = useState({
-        name: category?.name || '',
-        order: category?.order || 0
-      });
-      const [isSaving, setIsSaving] = useState(false);
 
-      const handleSaveClick = async () => {
-        if (!formData.name.trim()) {
-          alert('Category name is required');
-          return;
-        }
+    // Mock FAQs for initial load
+    const mockFaqs = [
+      {
+        id: '1',
+        question: "How do I get started with an IEP?",
+        summary: "An Individualized Education Program (IEP) is a legal document that outlines special education services for your child.",
+        steps: [
+          "Contact your child's school and request an evaluation in writing",
+          "The school has 60 days to complete the evaluation",
+          "Attend the IEP meeting to discuss results and services",
+          "Review and sign the IEP document",
+          "Request a copy for your records"
+        ],
+        contact: "(808) 532-5364",
+        order: 1
+      },
+      {
+        id: '2',
+        question: "Who do I contact for special education services?",
+        summary: "Start with your school's special education coordinator or principal.",
+        steps: [
+          "Contact your child's school principal or special education coordinator",
+          "Submit a written request for evaluation",
+          "If no response, contact the district special education office"
+        ],
+        contact: "(808) 532-5364",
+        order: 2
+      }
+    ];
 
-        setIsSaving(true);
+    const LDAHApp = () => {
+      const [faqs, setFaqs] = useState([]);
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [selected, setSelected] = useState(new Set());
+      const [showGuide, setShowGuide] = useState(false);
+      const [showAdmin, setShowAdmin] = useState(false);
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [password, setPassword] = useState('');
+      const [editingFaq, setEditingFaq] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [draggedItem, setDraggedItem] = useState(null);
+      const [dragOverItem, setDragOverItem] = useState(null);
+      const [saveStatus, setSaveStatus] = useState('');
+      const [error, setError] = useState(null);
+
+      const ADMIN_PASSWORD = 'ldah2024';
+
+      // Load FAQs from Firestore
+      useEffect(() => {
+        const loadFaqs = async () => {
+          try {
+            // Wait for anonymous auth to complete
+            await auth.signInAnonymously();
+            console.log('Authenticated successfully');
+            
+            // Now load FAQs
+            const snapshot = await db.collection('faqs').orderBy('order').get();
+            if (snapshot.empty) {
+              console.log('No FAQs found, using mock data');
+              setFaqs(mockFaqs);
+            } else {
+              const loadedFaqs = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              }));
+              console.log('Loaded FAQs:', loadedFaqs.length);
+              setFaqs(loadedFaqs);
+            }
+          } catch (error) {
+            console.error('Error loading FAQs:', error);
+            setError('Could not load FAQs: ' + error.message);
+            setFaqs(mockFaqs);
+          }
+          setLoading(false);
+        };
+
+        loadFaqs();
+      }, []);
+
+      // Show error if something went wrong
+      if (error) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', maxWidth: '500px' }}>
+              <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Oops!</h2>
+              <p style={{ color: '#666', marginBottom: '16px' }}>{error}</p>
+              <p style={{ color: '#666', fontSize: '14px' }}>Using demo data instead.</p>
+              <button
+                onClick={() => setError(null)}
+                style={{
+                  marginTop: '16px',
+                  backgroundColor: '#004E7C',
+                  color: 'white',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      const handleSaveFaq = async (faq) => {
+        setSaveStatus('Saving...');
+        
         try {
-          await onSave({
-            ...category,
-            ...formData
-          });
-        } finally {
-          setIsSaving(false);
+          // Ensure we're authenticated
+          if (!auth.currentUser) {
+            await auth.signInAnonymously();
+          }
+          
+          let faqToSave;
+          
+          if (faq.id && faq.id.length > 10) {
+            // Update existing
+            faqToSave = faq;
+            await db.collection('faqs').doc(faq.id).set(faq);
+            setFaqs(faqs.map(f => f.id === faq.id ? faq : f));
+          } else {
+            // Add new
+            faqToSave = {
+              question: faq.question,
+              summary: faq.summary,
+              steps: faq.steps,
+              contact: faq.contact,
+              order: faqs.length + 1
+            };
+            const docRef = await db.collection('faqs').add(faqToSave);
+            faqToSave.id = docRef.id;
+            setFaqs([...faqs, faqToSave]);
+          }
+          
+          setSaveStatus('✓ Saved!');
+        } catch (error) {
+          console.error('Error saving FAQ:', error);
+          setSaveStatus('⚠️ Error: ' + error.message);
+        }
+        
+        setTimeout(() => setSaveStatus(''), 3000);
+        setEditingFaq(null);
+      };
+
+      const handleDeleteFaq = async (id) => {
+        if (confirm('Are you sure you want to delete this FAQ?')) {
+          try {
+            await db.collection('faqs').doc(id).delete();
+            setFaqs(faqs.filter(f => f.id !== id));
+          } catch (error) {
+            console.error('Error deleting FAQ:', error);
+            alert('Error deleting FAQ: ' + error.message);
+          }
         }
       };
 
-      return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style={{ backdropFilter: 'blur(4px)' }}>
-          <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <form onSubmit={(e) => e.preventDefault()} style={{
-              backdropFilter: 'blur(20px)',
-              backgroundColor: 'rgba(255,255,255,0.4)',
-              borderRadius: '24px',
-              border: '1px solid rgba(255,255,255,0.3)',
-              padding: '32px'
-            }}>
-              <h2 className="text-2xl font-bold text-[#004E7C] mb-6">
-                {category?.id ? 'Edit Category' : 'New Category'}
-              </h2>
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (password === ADMIN_PASSWORD) {
+          setIsAuthenticated(true);
+          setPassword('');
+        } else {
+          alert('Incorrect password');
+          setPassword('');
+        }
+      };
 
-              <div className="mb-6">
-                <label className="block font-semibold text-gray-700 mb-2">Category Name *</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
-                  placeholder="e.g., IEP Process, Parent Rights"
-                  required
-                />
-              </div>
+      const toggleSelection = (index) => {
+        const newSelected = new Set(selected);
+        if (newSelected.has(index)) {
+          newSelected.delete(index);
+        } else {
+          newSelected.add(index);
+        }
+        setSelected(newSelected);
+      };
 
-              <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
+      const nextSlide = () => {
+        setCurrentIndex((prev) => (prev + 1) % faqs.length);
+      };
+
+      const prevSlide = () => {
+        setCurrentIndex((prev) => (prev - 1 + faqs.length) % faqs.length);
+      };
+
+      const handleDragStart = (e, index) => {
+        setDraggedItem(index);
+        e.currentTarget.style.opacity = '0.5';
+      };
+
+      const handleDragEnd = (e) => {
+        e.currentTarget.style.opacity = '1';
+        setDraggedItem(null);
+        setDragOverItem(null);
+      };
+
+      const handleDragOver = (e, index) => {
+        e.preventDefault();
+        setDragOverItem(index);
+      };
+
+      const handleDrop = async (e, dropIndex) => {
+        e.preventDefault();
+        
+        if (draggedItem === null) return;
+        
+        const sortedFaqs = [...faqs].sort((a, b) => a.order - b.order);
+        const draggedFaq = sortedFaqs[draggedItem];
+        const newFaqs = sortedFaqs.filter((_, idx) => idx !== draggedItem);
+        newFaqs.splice(dropIndex, 0, draggedFaq);
+        
+        const reorderedFaqs = newFaqs.map((faq, idx) => ({
+          ...faq,
+          order: idx + 1
+        }));
+        
+        setFaqs(reorderedFaqs);
+        
+        // Save to Firestore
+        try {
+          const batch = db.batch();
+          reorderedFaqs.forEach(faq => {
+            const ref = db.collection('faqs').doc(faq.id);
+            batch.set(ref, faq);
+          });
+          await batch.commit();
+        } catch (error) {
+          console.error('Error reordering FAQs:', error);
+        }
+        
+        setDraggedItem(null);
+        setDragOverItem(null);
+      };
+
+      // Admin Panel
+      if (showAdmin) {
+        if (!isAuthenticated) {
+          return (
+            <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+              <div style={{
+                backdropFilter: 'blur(20px)',
+                backgroundColor: 'rgba(255,255,255,0.4)',
+                borderRadius: '24px',
+                border: '1px solid rgba(255,255,255,0.3)',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                padding: '32px',
+                maxWidth: '28rem',
+                width: '100%'
+              }}>
                 <button
-                  type="button"
-                  onClick={onCancel}
-                  style={{
-                    flex: 1,
-                    padding: '16px 24px',
-                    backgroundColor: '#d1d5db',
-                    color: '#374151',
-                    borderRadius: '12px',
-                    fontWeight: 'bold',
-                    fontSize: '18px',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
+                  onClick={() => setShowAdmin(false)}
+                  className="flex items-center gap-2 text-[#004E7C] font-semibold mb-6 hover:opacity-70 transition-opacity"
                 >
-                  Cancel
+                  <ChevronLeft size={20} />
+                  Back to App
+                </button>
+                <h2 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">Admin Login</h2>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleLogin(e);
+                    }
+                  }}
+                  placeholder="Enter password (ldah2024)"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#004E7C] mb-4"
+                  autoFocus
+                />
+                <button
+                  onClick={handleLogin}
+                  className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg"
+                >
+                  Login to Admin Panel
+                </button>
+                <p className="text-center text-sm text-gray-600 mt-4">
+                  Default password: ldah2024
+                </p>
+              </div>
+            </div>
+          );
+        }
+
+        if (editingFaq !== null) {
+          return <FaqEditor faq={editingFaq} onSave={handleSaveFaq} onCancel={() => setEditingFaq(null)} />;
+        }
+
+        return (
+          <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div className="max-w-4xl mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <button
+                  onClick={() => {
+                    setShowAdmin(false);
+                    setIsAuthenticated(false);
+                  }}
+                  className="flex items-center gap-2 text-[#004E7C] font-semibold hover:opacity-70"
+                >
+                  <ChevronLeft size={20} />
+                  Back to App
                 </button>
                 <button
                   type="button"
-                  onClick={handleSaveClick}
-                  disabled={isSaving}
+                  onClick={() => setEditingFaq({
+                    question: '',
+                    summary: '',
+                    steps: [],
+                    contact: '(808) 532-5364',
+                    order: faqs.length + 1
+                  })}
                   style={{
-                    flex: 1,
-                    padding: '16px 24px',
-                    backgroundColor: isSaving ? '#6B7280' : '#004E7C',
+                    backgroundColor: '#004E7C',
                     color: 'white',
+                    padding: '12px 24px',
                     borderRadius: '12px',
                     fontWeight: 'bold',
-                    fontSize: '18px',
                     border: 'none',
-                    cursor: isSaving ? 'wait' : 'pointer',
+                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                    gap: '8px'
                   }}
                 >
-                  <Save size={20} />
-                  <span>{isSaving ? 'Saving...' : 'Save Category'}</span>
+                  <Plus size={20} />
+                  <span>Add New FAQ</span>
                 </button>
               </div>
-            </form>
+
+              {saveStatus && (
+                <div className="mb-4 text-center">
+                  <span className="inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-semibold">
+                    {saveStatus}
+                  </span>
+                </div>
+              )}
+
+              <h1 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">Manage FAQs</h1>
+
+              <div className="space-y-3">
+                {faqs.sort((a, b) => a.order - b.order).map((faq, index) => (
+                  <div
+                    key={faq.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                    className={`bg-white rounded-2xl border shadow-md transition-all ${
+                      dragOverItem === index ? 'border-[#004E7C] border-2' : 'border-gray-200'
+                    }`}
+                    style={{
+                      cursor: 'grab',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div className="p-4 flex items-center gap-4">
+                      <div className="flex-shrink-0 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                        <GripVertical size={24} />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-lg mb-1 text-gray-900">{faq.question}</h3>
+                        <p className="text-sm text-gray-600 mb-1 line-clamp-2">{faq.summary}</p>
+                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                          {faq.steps && faq.steps.length > 0 && (
+                            <span className="bg-gray-100 px-2 py-1 rounded-full">
+                              {faq.steps.length} {faq.steps.length === 1 ? 'step' : 'steps'}
+                            </span>
+                          )}
+                          <span className="text-gray-400">•</span>
+                          <span>Order: {faq.order}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => setEditingFaq(faq)}
+                          className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-sm"
+                          style={{ border: 'none', cursor: 'pointer' }}
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteFaq(faq.id)}
+                          className="p-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-sm"
+                          style={{ border: 'none', cursor: 'pointer' }}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Action Guide View
+      if (showGuide) {
+        const selectedTopics = Array.from(selected).sort().map(idx => faqs[idx]);
+        
+        return (
+          <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div className="max-w-2xl mx-auto">
+              <button
+                onClick={() => setShowGuide(false)}
+                className="flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity"
+              >
+                <ChevronLeft size={20} />
+                Back
+              </button>
+              
+              <h1 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">
+                My Action Guide
+              </h1>
+              
+              <div style={{
+                backdropFilter: 'blur(20px)',
+                backgroundColor: 'rgba(255,255,255,0.25)',
+                borderRadius: '24px',
+                border: '1px solid rgba(255,255,255,0.3)',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                padding: '24px'
+              }}>
+                <div className="space-y-8">
+                  {selectedTopics.map((faq, i) => (
+                    <div key={i} className="pb-8 border-b border-gray-200 last:border-0 last:pb-0">
+                      <h3 className="font-bold text-xl mb-3 text-gray-900">{faq.question}</h3>
+                      
+                      {faq.summary && (
+                        <p className="text-gray-700 mb-4 leading-relaxed">{faq.summary}</p>
+                      )}
+                      
+                      {faq.steps && faq.steps.length > 0 && (
+                        <div className="mb-4">
+                          <ul className="space-y-2">
+                            {faq.steps.map((step, idx) => (
+                              <li key={idx} className="flex gap-3">
+                                <span className="font-bold text-[#004E7C] min-w-[24px]">{idx + 1}.</span>
+                                <span className="text-gray-700">{step}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {faq.contact && (
+                        <p className="text-sm font-semibold text-[#004E7C] mt-3">
+                          LDAH Contact: {faq.contact}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setShowGuide(false)}
+                style={{
+                  width: '100%',
+                  marginTop: '24px',
+                  backdropFilter: 'blur(20px)',
+                  backgroundColor: 'rgba(0, 78, 124, 0.85)',
+                  color: 'white',
+                  borderRadius: '24px',
+                  padding: '16px 24px',
+                  fontWeight: 'bold',
+                  fontSize: '18px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
+                }}
+              >
+                Done
+              </button>
+
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({
+                      title: 'My LDAH Action Guide',
+                      text: `I created an action guide with ${selectedTopics.length} topics from LDAH`,
+                      url: window.location.href
+                    }).catch(() => {});
+                  } else {
+                    const text = selectedTopics.map((faq, i) => 
+                      `${i+1}. ${faq.question}\n${faq.summary}\n`
+                    ).join('\n');
+                    navigator.clipboard.writeText(text);
+                    alert('Guide copied to clipboard!');
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  marginTop: '12px',
+                  backgroundColor: 'rgba(255,255,255,0.9)',
+                  color: '#004E7C',
+                  borderRadius: '24px',
+                  padding: '14px 24px',
+                  fontWeight: '600',
+                  fontSize: '16px',
+                  border: '2px solid #004E7C',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Share size={20} />
+                Share My Guide
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // Main FAQ Selection View
+      if (loading) {
+        return (
+          <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#004E7C] mx-auto mb-4"></div>
+              <p className="text-[#004E7C] font-semibold">Loading FAQs...</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (faqs.length === 0) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div className="text-center">
+              <p className="text-gray-600 mb-4">No FAQs yet. Add some in the admin panel!</p>
+              <button
+                onClick={() => setShowAdmin(true)}
+                className="bg-[#004E7C] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#003a5c] transition-colors"
+              >
+                Go to Admin Panel
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen p-2 flex flex-col" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+          <button
+            onClick={() => setShowAdmin(true)}
+            className="absolute top-2 right-2 p-2 bg-white/60 rounded-full hover:bg-white/80 transition-all shadow-md"
+            style={{
+              backdropFilter: 'blur(20px)'
+            }}
+          >
+            <Settings size={20} className="text-[#004E7C]" />
+          </button>
+
+          <div className="max-w-2xl mx-auto w-full">
+            <div className="text-center mb-2 mt-2">
+              <div className="mb-2 flex justify-center">
+                <a href="index.html" style={{ textDecoration: 'none' }}>
+                  <div style={{
+                    backgroundColor: 'white',
+                    borderRadius: '24px',
+                    padding: '16px',
+                    display: 'inline-block',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s, box-shadow 0.2s'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}>
+                    <img 
+                      src="https://danpoahu.github.io/LDAH/logo.jpg" 
+                      alt="LDAH Logo"
+                      style={{ width: '180px', height: '180px', display: 'block' }}
+                    />
+                  </div>
+                </a>
+              </div>
+              
+              <h3 className="text-lg font-bold text-[#004E7C] mb-1">
+                FAQ Helper
+              </h3>
+              <p className="text-gray-600 text-xs mb-2">
+                Choose topics. Toggle ones you want in your Action Guide.
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
+              <div className="w-full max-w-xl">
+                <div style={{
+                  backdropFilter: 'blur(20px)',
+                  backgroundColor: 'rgba(255,255,255,0.25)',
+                  borderRadius: '24px',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                  padding: '12px',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{
+                      backdropFilter: 'blur(20px)',
+                      backgroundColor: 'rgba(255,255,255,0.4)',
+                      borderRadius: '24px',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      padding: '16px',
+                      minHeight: '180px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      <h2 className="text-base font-bold text-center mb-4 px-3">
+                        {faqs[currentIndex].question}
+                      </h2>
+                      
+                      <div className="flex items-center justify-center gap-3 px-3 py-2 bg-white/30 rounded-2xl" style={{ backdropFilter: 'blur(8px)' }}>
+                        <span className="font-semibold text-gray-800 text-sm">
+                          Include in my guide
+                        </span>
+                        <button
+                          onClick={() => toggleSelection(currentIndex)}
+                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                            selected.has(currentIndex) ? 'bg-[#004E7C]' : 'bg-gray-300'
+                          }`}
+                          style={{ border: 'none', cursor: 'pointer' }}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                              selected.has(currentIndex) ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                            style={{ transition: 'transform 0.2s' }}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={prevSlide}
+                      className="absolute left-0 top-1/2 bg-white/80 rounded-full p-2 hover:bg-white transition-all shadow-md"
+                      style={{
+                        transform: 'translate(-16px, -50%)',
+                        backdropFilter: 'blur(8px)',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <ChevronLeft className="text-[#004E7C]" size={24} />
+                    </button>
+                    
+                    <button
+                      onClick={nextSlide}
+                      className="absolute right-0 top-1/2 bg-white/80 rounded-full p-2 hover:bg-white transition-all shadow-md"
+                      style={{
+                        transform: 'translate(16px, -50%)',
+                        backdropFilter: 'blur(8px)',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <ChevronRight className="text-[#004E7C]" size={24} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex justify-center gap-2" style={{ marginTop: '12px', marginBottom: '12px' }}>
+                  {faqs.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentIndex(i)}
+                      className={`h-2 rounded-full transition-all ${
+                        i === currentIndex 
+                          ? 'w-8 bg-[#004E7C]' 
+                          : 'w-2 bg-gray-400'
+                      }`}
+                      style={{ border: 'none', cursor: 'pointer' }}
+                    />
+                  ))}
+                </div>
+
+                <p className="text-center font-semibold text-sm" style={{ marginTop: '12px', marginBottom: '12px' }}>
+                  {selected.size === 0 ? (
+                    <span className="text-gray-600">Tap a topic above to select it</span>
+                  ) : (
+                    <span className="text-[#004E7C]">
+                      ✓ {selected.size} topic{selected.size === 1 ? '' : 's'} selected
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowGuide(true)}
+              disabled={selected.size === 0}
+              style={{
+                width: '100%',
+                marginTop: '8px',
+                backdropFilter: 'blur(20px)',
+                backgroundColor: selected.size > 0 ? 'rgba(0, 78, 124, 0.85)' : 'rgba(0, 0, 0, 0.1)',
+                color: selected.size > 0 ? 'white' : '#9ca3af',
+                borderRadius: '24px',
+                padding: '14px 20px',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                border: 'none',
+                cursor: selected.size > 0 ? 'pointer' : 'not-allowed',
+                boxShadow: selected.size > 0 ? '0 8px 16px rgba(0,0,0,0.15)' : 'none',
+                transition: 'all 0.3s'
+              }}
+            >
+              {selected.size === 0 ? 'Select topics above to continue' : `Create My Guide (${selected.size} topic${selected.size === 1 ? '' : 's'})`}
+            </button>
           </div>
         </div>
       );
     };
 
     // FAQ Editor Component
-    const FaqEditor = ({ faq, categories, onSave, onCancel }) => {
+    const FaqEditor = ({ faq, onSave, onCancel }) => {
       const [formData, setFormData] = useState({
         question: faq?.question || '',
         summary: faq?.summary || '',
         steps: faq?.steps || [],
         contact: faq?.contact || '(808) 532-5364',
-        categoryId: faq?.categoryId || (categories.length > 0 ? categories[0].id : ''),
-        order: faq?.order || 0
+        order: faq?.order || 1
       });
+
       const [newStep, setNewStep] = useState('');
       const [editingStepIndex, setEditingStepIndex] = useState(null);
       const [editingStepText, setEditingStepText] = useState('');
@@ -323,7 +949,10 @@
 
       const handleAddStep = () => {
         if (newStep.trim()) {
-          setFormData({ ...formData, steps: [...formData.steps, newStep.trim()] });
+          setFormData({
+            ...formData,
+            steps: [...formData.steps, newStep.trim()]
+          });
           setNewStep('');
         }
       };
@@ -335,71 +964,77 @@
 
       const handleSaveStep = (index) => {
         if (editingStepText.trim()) {
-          const newSteps = [...formData.steps];
-          newSteps[index] = editingStepText.trim();
-          setFormData({ ...formData, steps: newSteps });
-          setEditingStepIndex(null);
-          setEditingStepText('');
+          const updatedSteps = [...formData.steps];
+          updatedSteps[index] = editingStepText.trim();
+          setFormData({
+            ...formData,
+            steps: updatedSteps
+          });
         }
+        setEditingStepIndex(null);
+        setEditingStepText('');
       };
 
       const handleRemoveStep = (index) => {
-        setFormData({ ...formData, steps: formData.steps.filter((_, i) => i !== index) });
+        setFormData({
+          ...formData,
+          steps: formData.steps.filter((_, i) => i !== index)
+        });
       };
 
-      const handleSaveClick = async () => {
+      const handleSaveClick = () => {
         if (!formData.question.trim()) {
-          alert('Question is required');
+          alert('Please enter a question');
           return;
         }
-        if (!formData.categoryId) {
-          alert('Please select a category');
-          return;
-        }
-
+        
         setIsSaving(true);
-        try {
-          await onSave({
-            ...faq,
-            ...formData
-          });
-        } finally {
+        
+        const faqToSave = {
+          id: faq?.id || null,
+          question: formData.question.trim(),
+          summary: formData.summary.trim(),
+          steps: formData.steps,
+          contact: formData.contact.trim(),
+          order: formData.order
+        };
+        
+        setTimeout(() => {
+          onSave(faqToSave);
           setIsSaving(false);
-        }
+        }, 100);
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleSaveClick();
       };
 
       return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style={{ backdropFilter: 'blur(4px)' }}>
-          <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <form onSubmit={(e) => e.preventDefault()} style={{
+        <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+          <div className="max-w-3xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-bold text-[#004E7C]">
+                {faq?.id ? 'Edit FAQ' : 'Add New FAQ'}
+              </h1>
+              <button
+                onClick={onCancel}
+                className="p-2 hover:bg-white/40 rounded-lg transition-colors"
+                style={{ border: 'none', cursor: 'pointer' }}
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} style={{
               backdropFilter: 'blur(20px)',
               backgroundColor: 'rgba(255,255,255,0.4)',
               borderRadius: '24px',
               border: '1px solid rgba(255,255,255,0.3)',
               padding: '32px'
             }}>
-              <h2 className="text-2xl font-bold text-[#004E7C] mb-6">
-                {faq?.id ? 'Edit FAQ' : 'New FAQ'}
-              </h2>
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <div>
-                  <label className="block font-semibold text-gray-700 mb-2">Category *</label>
-                  <select
-                    value={formData.categoryId}
-                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
-                    required
-                  >
-                    {categories.length === 0 && (
-                      <option value="">No categories available - create one first</option>
-                    )}
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-
                 <div>
                   <label className="block font-semibold text-gray-700 mb-2">Question *</label>
                   <input
@@ -558,939 +1193,6 @@
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      );
-    };
-
-    const LDAHApp = () => {
-      const [categories, setCategories] = useState([]);
-      const [faqs, setFaqs] = useState([]);
-      const [selectedCategory, setSelectedCategory] = useState(null);
-      const [selected, setSelected] = useState(new Set());
-      const [showGuide, setShowGuide] = useState(false);
-      const [showAdmin, setShowAdmin] = useState(false);
-      const [isAuthenticated, setIsAuthenticated] = useState(false);
-      const [password, setPassword] = useState('');
-      const [editingFaq, setEditingFaq] = useState(null);
-      const [editingCategory, setEditingCategory] = useState(null);
-      const [loading, setLoading] = useState(true);
-      const [draggedItem, setDraggedItem] = useState(null);
-      const [dragOverItem, setDragOverItem] = useState(null);
-      const [saveStatus, setSaveStatus] = useState('');
-      const [error, setError] = useState(null);
-      const [adminView, setAdminView] = useState('categories'); // 'categories' or 'faqs'
-
-      const ADMIN_PASSWORD = 'ldah2024';
-
-      // Load Categories and FAQs from Firestore
-      useEffect(() => {
-        const loadData = async () => {
-          try {
-            await auth.signInAnonymously();
-            
-            // Load categories
-            const categoriesSnapshot = await db.collection('categories').orderBy('order').get();
-            const loadedCategories = categoriesSnapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }));
-            setCategories(loadedCategories);
-
-            // Load FAQs
-            const faqsSnapshot = await db.collection('faqs').orderBy('order').get();
-            const loadedFaqs = faqsSnapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }));
-            setFaqs(loadedFaqs);
-            
-            console.log('Loaded:', loadedCategories.length, 'categories,', loadedFaqs.length, 'FAQs');
-          } catch (error) {
-            console.error('Error loading data:', error);
-            setError('Could not load data: ' + error.message);
-          }
-          setLoading(false);
-        };
-
-        loadData();
-      }, []);
-
-      // Save Category
-      const handleSaveCategory = async (category) => {
-        setSaveStatus('Saving category...');
-        
-        try {
-          if (!auth.currentUser) {
-            await auth.signInAnonymously();
-          }
-          
-          if (category.id) {
-            // Update existing
-            await db.collection('categories').doc(category.id).set(category);
-            setCategories(categories.map(c => c.id === category.id ? category : c));
-          } else {
-            // Add new
-            const categoryToSave = {
-              name: category.name,
-              order: categories.length + 1
-            };
-            const docRef = await db.collection('categories').add(categoryToSave);
-            setCategories([...categories, { id: docRef.id, ...categoryToSave }]);
-          }
-          
-          setSaveStatus('✓ Category saved!');
-        } catch (error) {
-          console.error('Error saving category:', error);
-          setSaveStatus('⚠️ Error: ' + error.message);
-        }
-        
-        setTimeout(() => setSaveStatus(''), 3000);
-        setEditingCategory(null);
-      };
-
-      // Delete Category
-      const handleDeleteCategory = async (id) => {
-        const faqsInCategory = faqs.filter(f => f.categoryId === id);
-        if (faqsInCategory.length > 0) {
-          alert(`Cannot delete category. It contains ${faqsInCategory.length} FAQ(s). Please reassign or delete those FAQs first.`);
-          return;
-        }
-
-        if (confirm('Are you sure you want to delete this category?')) {
-          try {
-            await db.collection('categories').doc(id).delete();
-            setCategories(categories.filter(c => c.id !== id));
-          } catch (error) {
-            console.error('Error deleting category:', error);
-            alert('Error deleting category: ' + error.message);
-          }
-        }
-      };
-
-      // Save FAQ
-      const handleSaveFaq = async (faq) => {
-        setSaveStatus('Saving FAQ...');
-        
-        try {
-          if (!auth.currentUser) {
-            await auth.signInAnonymously();
-          }
-          
-          if (faq.id) {
-            // Update existing
-            await db.collection('faqs').doc(faq.id).set(faq);
-            setFaqs(faqs.map(f => f.id === faq.id ? faq : f));
-          } else {
-            // Add new - get the max order for this category
-            const faqsInCategory = faqs.filter(f => f.categoryId === faq.categoryId);
-            const faqToSave = {
-              question: faq.question,
-              summary: faq.summary,
-              steps: faq.steps,
-              contact: faq.contact,
-              categoryId: faq.categoryId,
-              order: faqsInCategory.length + 1
-            };
-            const docRef = await db.collection('faqs').add(faqToSave);
-            setFaqs([...faqs, { id: docRef.id, ...faqToSave }]);
-          }
-          
-          setSaveStatus('✓ FAQ saved!');
-        } catch (error) {
-          console.error('Error saving FAQ:', error);
-          setSaveStatus('⚠️ Error: ' + error.message);
-        }
-        
-        setTimeout(() => setSaveStatus(''), 3000);
-        setEditingFaq(null);
-      };
-
-      // Delete FAQ
-      const handleDeleteFaq = async (id) => {
-        if (confirm('Are you sure you want to delete this FAQ?')) {
-          try {
-            await db.collection('faqs').doc(id).delete();
-            setFaqs(faqs.filter(f => f.id !== id));
-          } catch (error) {
-            console.error('Error deleting FAQ:', error);
-            alert('Error deleting FAQ: ' + error.message);
-          }
-        }
-      };
-
-      const handleLogin = (e) => {
-        e.preventDefault();
-        if (password === ADMIN_PASSWORD) {
-          setIsAuthenticated(true);
-          setPassword('');
-        } else {
-          alert('Incorrect password');
-          setPassword('');
-        }
-      };
-
-      const toggleSelection = (faqId) => {
-        const newSelected = new Set(selected);
-        if (newSelected.has(faqId)) {
-          newSelected.delete(faqId);
-        } else {
-          newSelected.add(faqId);
-        }
-        setSelected(newSelected);
-      };
-
-      // Drag and drop handlers for categories
-      const handleCategoryDragStart = (e, index) => {
-        setDraggedItem(index);
-        e.dataTransfer.effectAllowed = 'move';
-      };
-
-      const handleCategoryDragOver = (e, index) => {
-        e.preventDefault();
-        setDragOverItem(index);
-      };
-
-      const handleCategoryDrop = async (e, dropIndex) => {
-        e.preventDefault();
-        
-        if (draggedItem === null || draggedItem === dropIndex) {
-          setDraggedItem(null);
-          setDragOverItem(null);
-          return;
-        }
-
-        const newCategories = [...categories];
-        const draggedCategory = newCategories[draggedItem];
-        newCategories.splice(draggedItem, 1);
-        newCategories.splice(dropIndex, 0, draggedCategory);
-
-        // Update orders
-        const updatedCategories = newCategories.map((cat, idx) => ({
-          ...cat,
-          order: idx + 1
-        }));
-
-        setCategories(updatedCategories);
-
-        // Save to Firestore
-        try {
-          const batch = db.batch();
-          updatedCategories.forEach(cat => {
-            const docRef = db.collection('categories').doc(cat.id);
-            batch.update(docRef, { order: cat.order });
-          });
-          await batch.commit();
-        } catch (error) {
-          console.error('Error updating category order:', error);
-        }
-
-        setDraggedItem(null);
-        setDragOverItem(null);
-      };
-
-      const handleCategoryDragEnd = () => {
-        setDraggedItem(null);
-        setDragOverItem(null);
-      };
-
-      // Drag and drop handlers for FAQs
-      const handleFaqDragStart = (e, index) => {
-        setDraggedItem(index);
-        e.dataTransfer.effectAllowed = 'move';
-      };
-
-      const handleFaqDragOver = (e, index) => {
-        e.preventDefault();
-        setDragOverItem(index);
-      };
-
-      const handleFaqDrop = async (e, dropIndex) => {
-        e.preventDefault();
-        
-        if (draggedItem === null || draggedItem === dropIndex) {
-          setDraggedItem(null);
-          setDragOverItem(null);
-          return;
-        }
-
-        const newFaqs = [...faqs];
-        const draggedFaq = newFaqs[draggedItem];
-        newFaqs.splice(draggedItem, 1);
-        newFaqs.splice(dropIndex, 0, draggedFaq);
-
-        // Update orders
-        const updatedFaqs = newFaqs.map((faq, idx) => ({
-          ...faq,
-          order: idx + 1
-        }));
-
-        setFaqs(updatedFaqs);
-
-        // Save to Firestore
-        try {
-          const batch = db.batch();
-          updatedFaqs.forEach(faq => {
-            const docRef = db.collection('faqs').doc(faq.id);
-            batch.update(docRef, { order: faq.order });
-          });
-          await batch.commit();
-        } catch (error) {
-          console.error('Error updating FAQ order:', error);
-        }
-
-        setDraggedItem(null);
-        setDragOverItem(null);
-      };
-
-      const handleFaqDragEnd = () => {
-        setDraggedItem(null);
-        setDragOverItem(null);
-      };
-
-      // Loading state
-      if (loading) {
-        return (
-          <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
-            <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', textAlign: 'center' }}>
-              <div className="text-[#004E7C] text-xl font-bold">Loading...</div>
-            </div>
-          </div>
-        );
-      }
-
-      // Error state
-      if (error) {
-        return (
-          <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
-            <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', maxWidth: '500px' }}>
-              <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Oops!</h2>
-              <p style={{ color: '#666', marginBottom: '16px' }}>{error}</p>
-              <button
-                onClick={() => setError(null)}
-                style={{
-                  marginTop: '16px',
-                  backgroundColor: '#004E7C',
-                  color: 'white',
-                  padding: '12px 24px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        );
-      }
-
-      // Admin Panel
-      if (showAdmin) {
-        if (!isAuthenticated) {
-          return (
-            <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
-              <div style={{
-                backdropFilter: 'blur(20px)',
-                backgroundColor: 'rgba(255,255,255,0.25)',
-                borderRadius: '24px',
-                border: '1px solid rgba(255,255,255,0.3)',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                padding: '32px',
-                maxWidth: '28rem',
-                width: '100%'
-              }}>
-                <button
-                  onClick={() => setShowAdmin(false)}
-                  className="flex items-center gap-2 text-[#004E7C] font-semibold mb-6 hover:opacity-70 transition-opacity"
-                >
-                  <ChevronLeft size={20} />
-                  Back to App
-                </button>
-                <h2 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">Admin Login</h2>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleLogin(e);
-                    }
-                  }}
-                  placeholder="Enter password"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#004E7C] mb-4"
-                  autoFocus
-                />
-                <button
-                  onClick={handleLogin}
-                  className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg"
-                >
-                  Login to Admin Panel
-                </button>
-              </div>
-            </div>
-          );
-        }
-
-        if (editingCategory !== null) {
-          return <CategoryEditor category={editingCategory} onSave={handleSaveCategory} onCancel={() => setEditingCategory(null)} />;
-        }
-
-        if (editingFaq !== null) {
-          return <FaqEditor faq={editingFaq} categories={categories} onSave={handleSaveFaq} onCancel={() => setEditingFaq(null)} />;
-        }
-
-        return (
-          <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
-            <div className="max-w-4xl mx-auto">
-              <div className="flex justify-between items-center mb-6">
-                <button
-                  onClick={() => {
-                    setShowAdmin(false);
-                    setIsAuthenticated(false);
-                  }}
-                  className="flex items-center gap-2 text-[#004E7C] font-semibold hover:opacity-70"
-                >
-                  <ChevronLeft size={20} />
-                  Back to App
-                </button>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setAdminView('categories')}
-                    style={{
-                      backgroundColor: adminView === 'categories' ? '#004E7C' : '#d1d5db',
-                      color: adminView === 'categories' ? 'white' : '#374151',
-                      padding: '12px 24px',
-                      borderRadius: '12px',
-                      fontWeight: 'bold',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Categories
-                  </button>
-                  <button
-                    onClick={() => setAdminView('faqs')}
-                    style={{
-                      backgroundColor: adminView === 'faqs' ? '#004E7C' : '#d1d5db',
-                      color: adminView === 'faqs' ? 'white' : '#374151',
-                      padding: '12px 24px',
-                      borderRadius: '12px',
-                      fontWeight: 'bold',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    FAQs
-                  </button>
-                </div>
-              </div>
-
-              {saveStatus && (
-                <div className="mb-4 text-center">
-                  <span className="inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-semibold">
-                    {saveStatus}
-                  </span>
-                </div>
-              )}
-
-              {adminView === 'categories' ? (
-                <>
-                  <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-[#004E7C]">Manage Categories</h1>
-                    <button
-                      onClick={() => setEditingCategory({ name: '', order: categories.length + 1 })}
-                      style={{
-                        backgroundColor: '#004E7C',
-                        color: 'white',
-                        padding: '12px 24px',
-                        borderRadius: '12px',
-                        fontWeight: 'bold',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <Plus size={20} />
-                      <span>Add Category</span>
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {categories.sort((a, b) => a.order - b.order).map((category, index) => {
-                      const faqCount = faqs.filter(f => f.categoryId === category.id).length;
-                      return (
-                        <div
-                          key={category.id}
-                          draggable
-                          onDragStart={(e) => handleCategoryDragStart(e, index)}
-                          onDragEnd={handleCategoryDragEnd}
-                          onDragOver={(e) => handleCategoryDragOver(e, index)}
-                          onDrop={(e) => handleCategoryDrop(e, index)}
-                          className={`bg-white rounded-2xl border shadow-md transition-all ${
-                            dragOverItem === index ? 'border-[#004E7C] border-2' : 'border-gray-200'
-                          }`}
-                          style={{
-                            cursor: 'grab',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          <div className="p-4 flex items-center gap-4">
-                            <div className="flex-shrink-0 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
-                              <GripVertical size={24} />
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-lg mb-1 text-gray-900 flex items-center gap-2">
-                                <Folder size={20} className="text-[#004E7C]" />
-                                {category.name}
-                              </h3>
-                              <div className="flex items-center gap-3 text-xs text-gray-500">
-                                <span className="bg-gray-100 px-2 py-1 rounded-full">
-                                  {faqCount} {faqCount === 1 ? 'FAQ' : 'FAQs'}
-                                </span>
-                                <span className="text-gray-400">•</span>
-                                <span>Order: {category.order}</span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex gap-2 flex-shrink-0">
-                              <button
-                                onClick={() => setEditingCategory(category)}
-                                className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-sm"
-                                style={{ border: 'none', cursor: 'pointer' }}
-                              >
-                                <Edit2 size={18} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteCategory(category.id)}
-                                className="p-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-sm"
-                                style={{ border: 'none', cursor: 'pointer' }}
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-[#004E7C]">Manage FAQs</h1>
-                    <button
-                      onClick={() => setEditingFaq({
-                        question: '',
-                        summary: '',
-                        steps: [],
-                        contact: '(808) 532-5364',
-                        categoryId: categories.length > 0 ? categories[0].id : '',
-                        order: faqs.length + 1
-                      })}
-                      style={{
-                        backgroundColor: '#004E7C',
-                        color: 'white',
-                        padding: '12px 24px',
-                        borderRadius: '12px',
-                        fontWeight: 'bold',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <Plus size={20} />
-                      <span>Add FAQ</span>
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {faqs.sort((a, b) => a.order - b.order).map((faq, index) => {
-                      const category = categories.find(c => c.id === faq.categoryId);
-                      return (
-                        <div
-                          key={faq.id}
-                          draggable
-                          onDragStart={(e) => handleFaqDragStart(e, index)}
-                          onDragEnd={handleFaqDragEnd}
-                          onDragOver={(e) => handleFaqDragOver(e, index)}
-                          onDrop={(e) => handleFaqDrop(e, index)}
-                          className={`bg-white rounded-2xl border shadow-md transition-all ${
-                            dragOverItem === index ? 'border-[#004E7C] border-2' : 'border-gray-200'
-                          }`}
-                          style={{
-                            cursor: 'grab',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          <div className="p-4 flex items-center gap-4">
-                            <div className="flex-shrink-0 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
-                              <GripVertical size={24} />
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-lg mb-1 text-gray-900">{faq.question}</h3>
-                              <p className="text-sm text-gray-600 mb-1 line-clamp-2">{faq.summary}</p>
-                              <div className="flex items-center gap-3 text-xs text-gray-500">
-                                {category && (
-                                  <>
-                                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-semibold">
-                                      {category.name}
-                                    </span>
-                                    <span className="text-gray-400">•</span>
-                                  </>
-                                )}
-                                {faq.steps && faq.steps.length > 0 && (
-                                  <>
-                                    <span className="bg-gray-100 px-2 py-1 rounded-full">
-                                      {faq.steps.length} {faq.steps.length === 1 ? 'step' : 'steps'}
-                                    </span>
-                                    <span className="text-gray-400">•</span>
-                                  </>
-                                )}
-                                <span>Order: {faq.order}</span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex gap-2 flex-shrink-0">
-                              <button
-                                onClick={() => setEditingFaq(faq)}
-                                className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-sm"
-                                style={{ border: 'none', cursor: 'pointer' }}
-                              >
-                                <Edit2 size={18} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteFaq(faq.id)}
-                                className="p-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-sm"
-                                style={{ border: 'none', cursor: 'pointer' }}
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        );
-      }
-
-      // Action Guide View
-      if (showGuide) {
-        const selectedFaqs = faqs.filter(faq => selected.has(faq.id));
-        
-        return (
-          <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
-            <div className="max-w-2xl mx-auto">
-              <button
-                onClick={() => setShowGuide(false)}
-                className="flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity"
-              >
-                <ChevronLeft size={20} />
-                Back
-              </button>
-              
-              <h1 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">
-                My Action Guide
-              </h1>
-              
-              <div style={{
-                backdropFilter: 'blur(20px)',
-                backgroundColor: 'rgba(255,255,255,0.25)',
-                borderRadius: '24px',
-                border: '1px solid rgba(255,255,255,0.3)',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                padding: '24px'
-              }}>
-                <div className="space-y-8">
-                  {selectedFaqs.map((faq, i) => (
-                    <div key={faq.id} className="pb-8 border-b border-gray-200 last:border-0 last:pb-0">
-                      <h3 className="font-bold text-xl mb-3 text-gray-900">{faq.question}</h3>
-                      
-                      {faq.summary && (
-                        <p className="text-gray-700 mb-4 leading-relaxed">{faq.summary}</p>
-                      )}
-                      
-                      {faq.steps && faq.steps.length > 0 && (
-                        <div className="mb-4">
-                          <ul className="space-y-2">
-                            {faq.steps.map((step, idx) => (
-                              <li key={idx} className="flex gap-3">
-                                <span className="font-bold text-[#004E7C] min-w-[24px]">{idx + 1}.</span>
-                                <span className="text-gray-700">{step}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      
-                      {faq.contact && (
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          <p className="text-sm text-gray-600">
-                            <strong>Contact:</strong> {faq.contact}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <button
-                    onClick={() => window.print()}
-                    className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg flex items-center justify-center gap-2"
-                  >
-                    <Share size={20} />
-                    Print or Share Guide
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      // Category Selection View (Main User View)
-      if (!selectedCategory) {
-        return (
-          <div className="min-h-screen p-2" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
-            <div className="max-w-2xl mx-auto">
-              {/* Logo Section */}
-              <div className="text-center mb-2 mt-2">
-                <div className="mb-2 flex justify-center">
-                  <div style={{
-                    backgroundColor: 'white',
-                    borderRadius: '24px',
-                    padding: '16px',
-                    display: 'inline-block'
-                  }}>
-                    <img 
-                      src="https://danpoahu.github.io/LDAH/logo.jpg" 
-                      alt="LDAH Logo"
-                      style={{ width: '180px', height: '180px', display: 'block' }}
-                    />
-                  </div>
-                </div>
-                
-                <h3 className="text-lg font-bold text-[#004E7C] mb-1">
-                  Hawaiʻi & Pacific Island Parent Training & Information Center
-                </h3>
-                <p className="text-gray-600 text-xs mb-2">
-                  Empowering families through information, training, and advocacy
-                </p>
-              </div>
-
-              {/* Admin Button */}
-              <div className="flex justify-end mb-4">
-                <button
-                  onClick={() => setShowAdmin(true)}
-                  className="flex items-center gap-2 text-[#004E7C] hover:opacity-70 transition-opacity"
-                >
-                  <Settings size={20} />
-                  <span className="text-sm font-semibold">Admin</span>
-                </button>
-              </div>
-
-              <h2 className="text-xl font-bold text-[#004E7C] mb-4 text-center">
-                Choose a Category
-              </h2>
-
-              {categories.length === 0 ? (
-                <div style={{
-                  backgroundColor: 'white',
-                  borderRadius: '24px',
-                  padding: '32px',
-                  textAlign: 'center'
-                }}>
-                  <p className="text-gray-600 mb-4">No categories available yet.</p>
-                  <button
-                    onClick={() => setShowAdmin(true)}
-                    className="text-[#004E7C] font-semibold hover:opacity-70"
-                  >
-                    Add categories in Admin Panel →
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {categories.sort((a, b) => a.order - b.order).map(category => {
-                    const categoryFaqs = faqs.filter(f => f.categoryId === category.id);
-                    return (
-                      <button
-                        key={category.id}
-                        onClick={() => setSelectedCategory(category)}
-                        style={{
-                          width: '100%',
-                          backgroundColor: 'white',
-                          borderRadius: '24px',
-                          padding: '24px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          border: 'none',
-                          textAlign: 'left'
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.1)';
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Folder size={24} className="text-[#004E7C]" />
-                            <div>
-                              <h3 className="font-bold text-lg text-gray-900">{category.name}</h3>
-                              <p className="text-sm text-gray-600">
-                                {categoryFaqs.length} {categoryFaqs.length === 1 ? 'question' : 'questions'}
-                              </p>
-                            </div>
-                          </div>
-                          <ChevronRight size={24} className="text-[#004E7C]" />
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Show selected count and guide button if any selected */}
-              {selected.size > 0 && (
-                <div className="mt-6" style={{
-                  backgroundColor: 'white',
-                  borderRadius: '24px',
-                  padding: '20px',
-                  textAlign: 'center'
-                }}>
-                  <p className="text-gray-700 mb-3">
-                    <strong>{selected.size}</strong> {selected.size === 1 ? 'question' : 'questions'} selected
-                  </p>
-                  <button
-                    onClick={() => setShowGuide(true)}
-                    className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg"
-                  >
-                    Create My Action Guide →
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      }
-
-      // FAQ Selection View (within a category)
-      const categoryFaqs = faqs.filter(f => f.categoryId === selectedCategory.id).sort((a, b) => a.order - b.order);
-
-      return (
-        <div className="min-h-screen p-2" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
-          <div className="max-w-2xl mx-auto">
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className="flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity"
-            >
-              <ChevronLeft size={20} />
-              Back to Categories
-            </button>
-
-            <h2 className="text-xl font-bold text-[#004E7C] mb-2 text-center">
-              {selectedCategory.name}
-            </h2>
-            <p className="text-center text-gray-600 text-sm mb-4">
-              Select questions to add to your personalized action guide
-            </p>
-
-            {categoryFaqs.length === 0 ? (
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '24px',
-                padding: '32px',
-                textAlign: 'center'
-              }}>
-                <p className="text-gray-600">No questions in this category yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {categoryFaqs.map((faq) => {
-                  const isSelected = selected.has(faq.id);
-                  return (
-                    <div
-                      key={faq.id}
-                      onClick={() => toggleSelection(faq.id)}
-                      style={{
-                        backgroundColor: 'white',
-                        borderRadius: '24px',
-                        padding: '20px',
-                        cursor: 'pointer',
-                        border: isSelected ? '3px solid #004E7C' : '3px solid transparent',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '8px',
-                          border: '2px solid #004E7C',
-                          backgroundColor: isSelected ? '#004E7C' : 'white',
-                          flexShrink: 0,
-                          marginTop: '2px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          {isSelected && (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-base mb-1 text-gray-900">{faq.question}</h3>
-                          {faq.summary && (
-                            <p className="text-sm text-gray-600 line-clamp-2">{faq.summary}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div className="mt-6 space-y-3">
-              {selected.size > 0 && (
-                <div style={{
-                  backgroundColor: 'white',
-                  borderRadius: '24px',
-                  padding: '20px',
-                  textAlign: 'center'
-                }}>
-                  <p className="text-gray-700 mb-3">
-                    <strong>{selected.size}</strong> {selected.size === 1 ? 'question' : 'questions'} selected
-                  </p>
-                  <button
-                    onClick={() => setShowGuide(true)}
-                    className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg"
-                  >
-                    Create My Action Guide →
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       );
