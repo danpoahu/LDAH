@@ -265,10 +265,9 @@
       };
 
       const toggleCategory = (categoryId) => {
-        const newExpanded = new Set(expandedCategories);
-        if (newExpanded.has(categoryId)) {
-          newExpanded.delete(categoryId);
-        } else {
+        const newExpanded = new Set();
+        // Only keep the category open if it's not already open
+        if (!expandedCategories.has(categoryId)) {
           newExpanded.add(categoryId);
         }
         setExpandedCategories(newExpanded);
@@ -575,111 +574,114 @@
         );
       };
 
-      // Action Guide Component (unchanged from original)
+      // Action Guide Component
       const ActionGuide = () => {
-        const selectedFaqs = faqs.filter(f => selected.has(f.id));
-        const [editingNotes, setEditingNotes] = useState({});
-        const [sortedFaqs, setSortedFaqs] = useState(selectedFaqs);
-
-        useEffect(() => {
-          setSortedFaqs(selectedFaqs);
-        }, [selected]);
-
-        const handlePrint = () => {
-          window.print();
-        };
-
-        const handleShare = async () => {
-          const guideText = sortedFaqs.map((faq, i) => 
-            `${i + 1}. ${faq.question}\n${faq.answer}\n${editingNotes[faq.id] ? `Notes: ${editingNotes[faq.id]}` : ''}\n`
-          ).join('\n');
-          
-          if (navigator.share) {
-            try {
-              await navigator.share({
-                title: 'My LDAH Action Guide',
-                text: guideText
-              });
-            } catch (error) {
-              console.log('Share cancelled or failed:', error);
-            }
-          } else {
-            navigator.clipboard.writeText(guideText);
-            alert('Guide copied to clipboard!');
-          }
-        };
-
+        const selectedFaqs = faqs.filter(faq => selected.has(faq.id));
+        
         return (
-          <div className="min-h-screen p-2" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+          <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
             <div className="max-w-2xl mx-auto">
-              <div className="flex items-center justify-between mb-4">
-                <button
-                  onClick={() => setShowGuide(false)}
-                  className="flex items-center gap-2 text-[#004E7C] font-semibold hover:opacity-70 transition-opacity"
-                >
-                  <ChevronLeft size={20} />
-                  Back to Questions
-                </button>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleShare}
-                    className="flex items-center gap-2 bg-[#004E7C] text-white px-4 py-2 rounded-lg hover:bg-[#003a5c] transition-colors"
-                  >
-                    <Share size={18} />
-                  </button>
-                  <button
-                    onClick={handlePrint}
-                    className="flex items-center gap-2 bg-[#004E7C] text-white px-4 py-2 rounded-lg hover:bg-[#003a5c] transition-colors"
-                  >
-                    <Save size={18} />
-                    Print
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ backgroundColor: 'white', borderRadius: '24px', padding: '24px', marginBottom: '100px' }}>
-                <div className="text-center mb-6">
-                  <h1 className="text-2xl font-bold text-[#004E7C] mb-2">My Action Guide</h1>
-                  <p className="text-gray-600 text-sm">
-                    {sortedFaqs.length} {sortedFaqs.length === 1 ? 'question' : 'questions'} selected
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {sortedFaqs.map((faq, index) => (
-                    <div key={faq.id} style={{ borderBottom: '2px solid #e5e7eb', paddingBottom: '16px' }}>
-                      <div className="flex items-start gap-3 mb-3">
-                        <span className="flex-shrink-0 w-8 h-8 bg-[#004E7C] text-white rounded-full flex items-center justify-center font-bold text-sm">
-                          {index + 1}
-                        </span>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg text-gray-900 mb-2">{faq.question}</h3>
-                          <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap mb-3">
-                            {faq.answer}
-                          </p>
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">My Notes:</label>
-                            <textarea
-                              value={editingNotes[faq.id] || ''}
-                              onChange={(e) => setEditingNotes({ ...editingNotes, [faq.id]: e.target.value })}
-                              placeholder="Add your personal notes here..."
-                              className="w-full p-3 border border-gray-300 rounded-lg text-sm"
-                              rows="3"
-                            />
-                          </div>
+              <button
+                onClick={() => setShowGuide(false)}
+                className="flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity"
+              >
+                <ChevronLeft size={20} />
+                Back
+              </button>
+              
+              <h1 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">
+                My Action Guide
+              </h1>
+              
+              <div style={{
+                backdropFilter: 'blur(20px)',
+                backgroundColor: 'rgba(255,255,255,0.25)',
+                borderRadius: '24px',
+                border: '1px solid rgba(255,255,255,0.3)',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                padding: '24px'
+              }}>
+                <div className="space-y-8">
+                  {selectedFaqs.map((faq, i) => (
+                    <div key={faq.id} className="pb-8 border-b border-gray-200 last:border-0 last:pb-0">
+                      <h3 className="font-bold text-xl mb-3 text-gray-900">{faq.question}</h3>
+                      
+                      {faq.summary && (
+                        <p className="text-gray-700 mb-4 leading-relaxed">{faq.summary}</p>
+                      )}
+                      
+                      {faq.steps && faq.steps.length > 0 && (
+                        <div className="mb-4">
+                          <ul className="space-y-3">
+                            {faq.steps.map((step, idx) => (
+                              <li key={idx} className="flex gap-3 items-start">
+                                <div style={{
+                                  width: '18px',
+                                  height: '18px',
+                                  border: '2px solid #004E7C',
+                                  borderRadius: '4px',
+                                  flexShrink: 0,
+                                  marginTop: '3px',
+                                  backgroundColor: 'white'
+                                }}></div>
+                                <span className="font-bold text-[#004E7C]">{idx + 1}.</span>
+                                <span className="text-gray-700 flex-1">{step}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                      </div>
+                      )}
+                      
+                      {faq.contact && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <p className="text-sm text-gray-600">
+                            <strong>Contact:</strong>{' '}
+                            {(() => {
+                              const contact = faq.contact.trim();
+                              // Check if it's an email
+                              if (contact.includes('@')) {
+                                return (
+                                  <a 
+                                    href={`mailto:${contact}`}
+                                    className="text-[#004E7C] underline hover:opacity-70"
+                                  >
+                                    {contact}
+                                  </a>
+                                );
+                              }
+                              // Check if it's a phone number (contains digits and common phone chars)
+                              else if (/[\d\(\)\-\s]/.test(contact)) {
+                                // Remove all non-digit characters for the tel: link
+                                const cleanPhone = contact.replace(/\D/g, '');
+                                return (
+                                  <a 
+                                    href={`tel:${cleanPhone}`}
+                                    className="text-[#004E7C] underline hover:opacity-70"
+                                  >
+                                    {contact}
+                                  </a>
+                                );
+                              }
+                              // Otherwise just display as text
+                              else {
+                                return contact;
+                              }
+                            })()}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
-
-                <div className="mt-6 pt-6 border-t-2 border-gray-200 text-center text-sm text-gray-600">
-                  <p className="mb-2">
-                    <strong>Learning Disabilities Association of Hawaiʻi</strong>
-                  </p>
-                  <p>200 North Vineyard Blvd, Suite 310, Honolulu, HI 96817</p>
-                  <p>Phone: (808) 532-5364 | Toll Free: 1-800-533-9684</p>
-                  <p>Email: ldah@ldahawaii.org</p>
+                
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <button
+                    onClick={() => window.print()}
+                    className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <Share size={20} />
+                    Print or Share Guide
+                  </button>
                 </div>
               </div>
             </div>

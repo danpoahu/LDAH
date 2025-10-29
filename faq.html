@@ -52,12 +52,13 @@
       </svg>
     );
 
+
+
     const ChevronDown = ({ size = 24, className = '' }) => (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <polyline points="6 9 12 15 18 9"></polyline>
       </svg>
     );
-
     const ChevronRight = ({ size = 24, className = '' }) => (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <polyline points="9 18 15 12 9 6"></polyline>
@@ -194,8 +195,8 @@
                 <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
                   Something went wrong
                 </h2>
-                <p style={{ color: '#666', marginBottom: '24px' }}>
-                  Please refresh the page to try again.
+                <p style={{ color: '#666', marginBottom: '16px' }}>
+                  {this.state.error?.toString()}
                 </p>
                 <button
                   onClick={() => window.location.reload()}
@@ -206,10 +207,10 @@
                     borderRadius: '8px',
                     border: 'none',
                     cursor: 'pointer',
-                    fontWeight: '600'
+                    fontWeight: 'bold'
                   }}
                 >
-                  Refresh Page
+                  Reload Page
                 </button>
               </div>
             </div>
@@ -220,39 +221,529 @@
       }
     }
 
+    // Category Editor Component
+    const CategoryEditor = ({ category, onSave, onCancel }) => {
+      const [formData, setFormData] = useState({
+        name: category?.name || '',
+        order: category?.order || 0
+      });
+      const [isSaving, setIsSaving] = useState(false);
+
+      const handleSaveClick = async () => {
+        if (!formData.name.trim()) {
+          alert('Category name is required');
+          return;
+        }
+
+        setIsSaving(true);
+        try {
+          await onSave({
+            ...category,
+            ...formData
+          });
+        } finally {
+          setIsSaving(false);
+        }
+      };
+
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style={{ backdropFilter: 'blur(4px)' }}>
+          <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <form onSubmit={(e) => e.preventDefault()} style={{
+              backdropFilter: 'blur(20px)',
+              backgroundColor: 'rgba(255,255,255,0.4)',
+              borderRadius: '24px',
+              border: '1px solid rgba(255,255,255,0.3)',
+              padding: '32px'
+            }}>
+              <h2 className="text-2xl font-bold text-[#004E7C] mb-6">
+                {category?.id ? 'Edit Category' : 'New Category'}
+              </h2>
+
+              <div className="mb-6">
+                <label className="block font-semibold text-gray-700 mb-2">Category Name *</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                  placeholder="e.g., IEP Process, Parent Rights"
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    backgroundColor: '#d1d5db',
+                    color: '#374151',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveClick}
+                  disabled={isSaving}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    backgroundColor: isSaving ? '#6B7280' : '#004E7C',
+                    color: 'white',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    border: 'none',
+                    cursor: isSaving ? 'wait' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <Save size={20} />
+                  <span>{isSaving ? 'Saving...' : 'Save Category'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    };
+
+    // FAQ Editor Component
+    const FaqEditor = ({ faq, categories, onSave, onCancel }) => {
+      const [formData, setFormData] = useState({
+        question: faq?.question || '',
+        summary: faq?.summary || '',
+        steps: faq?.steps || [],
+        contact: faq?.contact || '(808) 532-5364',
+        categoryId: faq?.categoryId || (categories.length > 0 ? categories[0].id : ''),
+        order: faq?.order || 0
+      });
+      const [newStep, setNewStep] = useState('');
+      const [editingStepIndex, setEditingStepIndex] = useState(null);
+      const [editingStepText, setEditingStepText] = useState('');
+      const [isSaving, setIsSaving] = useState(false);
+
+      const handleAddStep = () => {
+        if (newStep.trim()) {
+          setFormData({ ...formData, steps: [...formData.steps, newStep.trim()] });
+          setNewStep('');
+        }
+      };
+
+      const handleEditStep = (index) => {
+        setEditingStepIndex(index);
+        setEditingStepText(formData.steps[index]);
+      };
+
+      const handleSaveStep = (index) => {
+        if (editingStepText.trim()) {
+          const newSteps = [...formData.steps];
+          newSteps[index] = editingStepText.trim();
+          setFormData({ ...formData, steps: newSteps });
+          setEditingStepIndex(null);
+          setEditingStepText('');
+        }
+      };
+
+      const handleRemoveStep = (index) => {
+        setFormData({ ...formData, steps: formData.steps.filter((_, i) => i !== index) });
+      };
+
+      const handleSaveClick = async () => {
+        if (!formData.question.trim()) {
+          alert('Question is required');
+          return;
+        }
+        if (!formData.categoryId) {
+          alert('Please select a category');
+          return;
+        }
+
+        setIsSaving(true);
+        try {
+          await onSave({
+            ...faq,
+            ...formData
+          });
+        } finally {
+          setIsSaving(false);
+        }
+      };
+
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style={{ backdropFilter: 'blur(4px)' }}>
+          <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <form onSubmit={(e) => e.preventDefault()} style={{
+              backdropFilter: 'blur(20px)',
+              backgroundColor: 'rgba(255,255,255,0.4)',
+              borderRadius: '24px',
+              border: '1px solid rgba(255,255,255,0.3)',
+              padding: '32px'
+            }}>
+              <h2 className="text-2xl font-bold text-[#004E7C] mb-6">
+                {faq?.id ? 'Edit FAQ' : 'New FAQ'}
+              </h2>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Category *</label>
+                  <select
+                    value={formData.categoryId}
+                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    required
+                  >
+                    {categories.length === 0 && (
+                      <option value="">No categories available - create one first</option>
+                    )}
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Question *</label>
+                  <input
+                    type="text"
+                    value={formData.question}
+                    onChange={(e) => setFormData({ ...formData, question: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Summary</label>
+                  <textarea
+                    value={formData.summary}
+                    onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Steps</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                    {formData.steps.map((step, idx) => (
+                      <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <span className="font-bold text-[#004E7C] mt-3" style={{ minWidth: '24px' }}>{idx + 1}.</span>
+                        {editingStepIndex === idx ? (
+                          <>
+                            <input
+                              type="text"
+                              value={editingStepText}
+                              onChange={(e) => setEditingStepText(e.target.value)}
+                              onKeyPress={(e) => e.key === 'Enter' && handleSaveStep(idx)}
+                              className="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveStep(idx)}
+                              className="p-3 bg-green-500 text-white hover:bg-green-600 rounded-lg transition-colors"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <Save size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingStepIndex(null);
+                                setEditingStepText('');
+                              }}
+                              className="p-3 bg-gray-400 text-white hover:bg-gray-500 rounded-lg transition-colors"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <X size={16} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex-1 px-4 py-3 rounded-xl border border-gray-300 bg-white">
+                              {step}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleEditStep(idx)}
+                              className="p-3 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveStep(idx)}
+                              className="p-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      value={newStep}
+                      onChange={(e) => setNewStep(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddStep())}
+                      placeholder="Add a new step..."
+                      className="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddStep}
+                      className="px-6 py-3 bg-[#004E7C] text-white rounded-xl font-semibold hover:bg-[#003a5c] transition-colors"
+                      style={{ border: 'none', cursor: 'pointer' }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Contact</label>
+                  <input
+                    type="text"
+                    value={formData.contact}
+                    onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    backgroundColor: '#d1d5db',
+                    color: '#374151',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveClick}
+                  disabled={isSaving}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    backgroundColor: isSaving ? '#6B7280' : '#004E7C',
+                    color: 'white',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    border: 'none',
+                    cursor: isSaving ? 'wait' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <Save size={20} />
+                  <span>{isSaving ? 'Saving...' : 'Save FAQ'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    };
+
     const LDAHApp = () => {
       const [categories, setCategories] = useState([]);
       const [faqs, setFaqs] = useState([]);
       const [selected, setSelected] = useState(new Set());
-      const [showAdmin, setShowAdmin] = useState(false);
-      const [showGuide, setShowGuide] = useState(false);
       const [expandedCategories, setExpandedCategories] = useState(new Set());
+      const [showGuide, setShowGuide] = useState(false);
+      const [showAdmin, setShowAdmin] = useState(false);
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [password, setPassword] = useState('');
+      const [editingFaq, setEditingFaq] = useState(null);
+      const [editingCategory, setEditingCategory] = useState(null);
       const [loading, setLoading] = useState(true);
+      const [draggedItem, setDraggedItem] = useState(null);
+      const [dragOverItem, setDragOverItem] = useState(null);
+      const [saveStatus, setSaveStatus] = useState('');
+      const [error, setError] = useState(null);
+      const [adminView, setAdminView] = useState('categories'); // 'categories' or 'faqs'
 
+      const ADMIN_PASSWORD = 'ldah2024';
+
+      // Load Categories and FAQs from Firestore
       useEffect(() => {
-        const unsubscribeCategories = db.collection('categories')
-          .onSnapshot(snapshot => {
-            const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setCategories(cats);
-            setLoading(false);
-          }, error => {
-            console.error('Error loading categories:', error);
-            setLoading(false);
-          });
+        const loadData = async () => {
+          try {
+            await auth.signInAnonymously();
+            
+            // Load categories
+            const categoriesSnapshot = await db.collection('categories').orderBy('order').get();
+            const loadedCategories = categoriesSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setCategories(loadedCategories);
 
-        const unsubscribeFaqs = db.collection('faqs')
-          .onSnapshot(snapshot => {
-            const faqList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setFaqs(faqList);
-          }, error => {
-            console.error('Error loading FAQs:', error);
-          });
-
-        return () => {
-          unsubscribeCategories();
-          unsubscribeFaqs();
+            // Load FAQs
+            const faqsSnapshot = await db.collection('faqs').orderBy('order').get();
+            const loadedFaqs = faqsSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setFaqs(loadedFaqs);
+            
+            console.log('Loaded:', loadedCategories.length, 'categories,', loadedFaqs.length, 'FAQs');
+          } catch (error) {
+            console.error('Error loading data:', error);
+            setError('Could not load data: ' + error.message);
+          }
+          setLoading(false);
         };
+
+        loadData();
       }, []);
+
+      // Save Category
+      const handleSaveCategory = async (category) => {
+        setSaveStatus('Saving category...');
+        
+        try {
+          if (!auth.currentUser) {
+            await auth.signInAnonymously();
+          }
+          
+          if (category.id) {
+            // Update existing
+            await db.collection('categories').doc(category.id).set(category);
+            setCategories(categories.map(c => c.id === category.id ? category : c));
+          } else {
+            // Add new
+            const categoryToSave = {
+              name: category.name,
+              order: categories.length + 1
+            };
+            const docRef = await db.collection('categories').add(categoryToSave);
+            setCategories([...categories, { id: docRef.id, ...categoryToSave }]);
+          }
+          
+          setSaveStatus('✓ Category saved!');
+        } catch (error) {
+          console.error('Error saving category:', error);
+          setSaveStatus('⚠️ Error: ' + error.message);
+        }
+        
+        setTimeout(() => setSaveStatus(''), 3000);
+        setEditingCategory(null);
+      };
+
+      // Delete Category
+      const handleDeleteCategory = async (id) => {
+        const faqsInCategory = faqs.filter(f => f.categoryId === id);
+        if (faqsInCategory.length > 0) {
+          alert(`Cannot delete category. It contains ${faqsInCategory.length} FAQ(s). Please reassign or delete those FAQs first.`);
+          return;
+        }
+
+        if (confirm('Are you sure you want to delete this category?')) {
+          try {
+            await db.collection('categories').doc(id).delete();
+            setCategories(categories.filter(c => c.id !== id));
+          } catch (error) {
+            console.error('Error deleting category:', error);
+            alert('Error deleting category: ' + error.message);
+          }
+        }
+      };
+
+      // Save FAQ
+      const handleSaveFaq = async (faq) => {
+        setSaveStatus('Saving FAQ...');
+        
+        try {
+          if (!auth.currentUser) {
+            await auth.signInAnonymously();
+          }
+          
+          if (faq.id) {
+            // Update existing
+            await db.collection('faqs').doc(faq.id).set(faq);
+            setFaqs(faqs.map(f => f.id === faq.id ? faq : f));
+          } else {
+            // Add new - get the max order for this category
+            const faqsInCategory = faqs.filter(f => f.categoryId === faq.categoryId);
+            const faqToSave = {
+              question: faq.question,
+              summary: faq.summary,
+              steps: faq.steps,
+              contact: faq.contact,
+              categoryId: faq.categoryId,
+              order: faqsInCategory.length + 1
+            };
+            const docRef = await db.collection('faqs').add(faqToSave);
+            setFaqs([...faqs, { id: docRef.id, ...faqToSave }]);
+          }
+          
+          setSaveStatus('✓ FAQ saved!');
+        } catch (error) {
+          console.error('Error saving FAQ:', error);
+          setSaveStatus('⚠️ Error: ' + error.message);
+        }
+        
+        setTimeout(() => setSaveStatus(''), 3000);
+        setEditingFaq(null);
+      };
+
+      // Delete FAQ
+      const handleDeleteFaq = async (id) => {
+        if (confirm('Are you sure you want to delete this FAQ?')) {
+          try {
+            await db.collection('faqs').doc(id).delete();
+            setFaqs(faqs.filter(f => f.id !== id));
+          } catch (error) {
+            console.error('Error deleting FAQ:', error);
+            alert('Error deleting FAQ: ' + error.message);
+          }
+        }
+      };
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (password === ADMIN_PASSWORD) {
+          setIsAuthenticated(true);
+          setPassword('');
+        } else {
+          alert('Incorrect password');
+          setPassword('');
+        }
+      };
 
       const toggleSelection = (faqId) => {
         const newSelected = new Set(selected);
@@ -273,309 +764,455 @@
         setExpandedCategories(newExpanded);
       };
 
-      // Admin Panel Component (unchanged from original)
-      const AdminPanel = () => {
-        const [editingCategory, setEditingCategory] = useState(null);
-        const [editingFaq, setEditingFaq] = useState(null);
-        const [newCategory, setNewCategory] = useState({ name: '', order: 0 });
-        const [newFaq, setNewFaq] = useState({ question: '', answer: '', summary: '', categoryId: '', order: 0 });
-        const [showCategoryForm, setShowCategoryForm] = useState(false);
-        const [showFaqForm, setShowFaqForm] = useState(false);
+      // Drag and drop handlers for categories
+      const handleCategoryDragStart = (e, index) => {
+        setDraggedItem(index);
+        e.dataTransfer.effectAllowed = 'move';
+      };
 
-        const saveCategory = async () => {
-          if (!newCategory.name.trim()) return;
-          try {
-            if (editingCategory) {
-              await db.collection('categories').doc(editingCategory.id).update(newCategory);
-            } else {
-              await db.collection('categories').add(newCategory);
-            }
-            setNewCategory({ name: '', order: 0 });
-            setEditingCategory(null);
-            setShowCategoryForm(false);
-          } catch (error) {
-            console.error('Error saving category:', error);
-            alert('Error saving category. Please try again.');
-          }
-        };
+      const handleCategoryDragOver = (e, index) => {
+        e.preventDefault();
+        setDragOverItem(index);
+      };
 
-        const deleteCategory = async (id) => {
-          if (!window.confirm('Delete this category and all its questions?')) return;
-          try {
-            const categoryFaqs = faqs.filter(f => f.categoryId === id);
-            await Promise.all(categoryFaqs.map(f => db.collection('faqs').doc(f.id).delete()));
-            await db.collection('categories').doc(id).delete();
-          } catch (error) {
-            console.error('Error deleting category:', error);
-            alert('Error deleting category. Please try again.');
-          }
-        };
+      const handleCategoryDrop = async (e, dropIndex) => {
+        e.preventDefault();
+        
+        if (draggedItem === null || draggedItem === dropIndex) {
+          setDraggedItem(null);
+          setDragOverItem(null);
+          return;
+        }
 
-        const saveFaq = async () => {
-          if (!newFaq.question.trim() || !newFaq.answer.trim() || !newFaq.categoryId) return;
-          try {
-            if (editingFaq) {
-              await db.collection('faqs').doc(editingFaq.id).update(newFaq);
-            } else {
-              await db.collection('faqs').add(newFaq);
-            }
-            setNewFaq({ question: '', answer: '', summary: '', categoryId: '', order: 0 });
-            setEditingFaq(null);
-            setShowFaqForm(false);
-          } catch (error) {
-            console.error('Error saving FAQ:', error);
-            alert('Error saving FAQ. Please try again.');
-          }
-        };
+        const newCategories = [...categories];
+        const draggedCategory = newCategories[draggedItem];
+        newCategories.splice(draggedItem, 1);
+        newCategories.splice(dropIndex, 0, draggedCategory);
 
-        const deleteFaq = async (id) => {
-          if (!window.confirm('Delete this question?')) return;
-          try {
-            await db.collection('faqs').doc(id).delete();
-          } catch (error) {
-            console.error('Error deleting FAQ:', error);
-            alert('Error deleting FAQ. Please try again.');
-          }
-        };
+        // Update orders
+        const updatedCategories = newCategories.map((cat, idx) => ({
+          ...cat,
+          order: idx + 1
+        }));
+
+        setCategories(updatedCategories);
+
+        // Save to Firestore
+        try {
+          const batch = db.batch();
+          updatedCategories.forEach(cat => {
+            const docRef = db.collection('categories').doc(cat.id);
+            batch.update(docRef, { order: cat.order });
+          });
+          await batch.commit();
+        } catch (error) {
+          console.error('Error updating category order:', error);
+        }
+
+        setDraggedItem(null);
+        setDragOverItem(null);
+      };
+
+      const handleCategoryDragEnd = () => {
+        setDraggedItem(null);
+        setDragOverItem(null);
+      };
+
+      // Drag and drop handlers for FAQs
+      const handleFaqDragStart = (e, index) => {
+        setDraggedItem(index);
+        e.dataTransfer.effectAllowed = 'move';
+      };
+
+      const handleFaqDragOver = (e, index) => {
+        e.preventDefault();
+        setDragOverItem(index);
+      };
+
+      const handleFaqDrop = async (e, dropIndex) => {
+        e.preventDefault();
+        
+        if (draggedItem === null || draggedItem === dropIndex) {
+          setDraggedItem(null);
+          setDragOverItem(null);
+          return;
+        }
+
+        const newFaqs = [...faqs];
+        const draggedFaq = newFaqs[draggedItem];
+        newFaqs.splice(draggedItem, 1);
+        newFaqs.splice(dropIndex, 0, draggedFaq);
+
+        // Update orders
+        const updatedFaqs = newFaqs.map((faq, idx) => ({
+          ...faq,
+          order: idx + 1
+        }));
+
+        setFaqs(updatedFaqs);
+
+        // Save to Firestore
+        try {
+          const batch = db.batch();
+          updatedFaqs.forEach(faq => {
+            const docRef = db.collection('faqs').doc(faq.id);
+            batch.update(docRef, { order: faq.order });
+          });
+          await batch.commit();
+        } catch (error) {
+          console.error('Error updating FAQ order:', error);
+        }
+
+        setDraggedItem(null);
+        setDragOverItem(null);
+      };
+
+      const handleFaqDragEnd = () => {
+        setDraggedItem(null);
+        setDragOverItem(null);
+      };
+
+      // Loading state
+      if (loading) {
+        return (
+          <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', textAlign: 'center' }}>
+              <div className="text-[#004E7C] text-xl font-bold">Loading...</div>
+            </div>
+          </div>
+        );
+      }
+
+      // Error state
+      if (error) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', maxWidth: '500px' }}>
+              <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Oops!</h2>
+              <p style={{ color: '#666', marginBottom: '16px' }}>{error}</p>
+              <button
+                onClick={() => setError(null)}
+                style={{
+                  marginTop: '16px',
+                  backgroundColor: '#004E7C',
+                  color: 'white',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // Admin Panel
+      if (showAdmin) {
+        if (!isAuthenticated) {
+          return (
+            <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+              <div style={{
+                backdropFilter: 'blur(20px)',
+                backgroundColor: 'rgba(255,255,255,0.25)',
+                borderRadius: '24px',
+                border: '1px solid rgba(255,255,255,0.3)',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                padding: '32px',
+                maxWidth: '28rem',
+                width: '100%'
+              }}>
+                <button
+                  onClick={() => setShowAdmin(false)}
+                  className="flex items-center gap-2 text-[#004E7C] font-semibold mb-6 hover:opacity-70 transition-opacity"
+                >
+                  <ChevronLeft size={20} />
+                  Back to App
+                </button>
+                <h2 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">Admin Login</h2>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleLogin(e);
+                    }
+                  }}
+                  placeholder="Enter password"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#004E7C] mb-4"
+                  autoFocus
+                />
+                <button
+                  onClick={handleLogin}
+                  className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg"
+                >
+                  Login to Admin Panel
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        if (editingCategory !== null) {
+          return <CategoryEditor category={editingCategory} onSave={handleSaveCategory} onCancel={() => setEditingCategory(null)} />;
+        }
+
+        if (editingFaq !== null) {
+          return <FaqEditor faq={editingFaq} categories={categories} onSave={handleSaveFaq} onCancel={() => setEditingFaq(null)} />;
+        }
 
         return (
-          <div className="min-h-screen p-2" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
-            <div className="max-w-2xl mx-auto">
-              <button
-                onClick={() => setShowAdmin(false)}
-                className="flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity"
-              >
-                <ChevronLeft size={20} />
-                Back to FAQ Helper
-              </button>
-
-              <div style={{ backgroundColor: 'white', borderRadius: '24px', padding: '24px', marginBottom: '16px' }}>
-                <h2 className="text-2xl font-bold text-[#004E7C] mb-4 text-center">Admin Panel</h2>
-
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-bold text-gray-900">Categories</h3>
-                    <button
-                      onClick={() => {
-                        setShowCategoryForm(!showCategoryForm);
-                        setEditingCategory(null);
-                        setNewCategory({ name: '', order: 0 });
-                      }}
-                      className="flex items-center gap-2 bg-[#004E7C] text-white px-4 py-2 rounded-lg hover:bg-[#003a5c] transition-colors"
-                    >
-                      <Plus size={18} />
-                      Add Category
-                    </button>
-                  </div>
-
-                  {showCategoryForm && (
-                    <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
-                      <input
-                        type="text"
-                        placeholder="Category name"
-                        value={newCategory.name}
-                        onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-2"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Order"
-                        value={newCategory.order}
-                        onChange={(e) => setNewCategory({ ...newCategory, order: parseInt(e.target.value) || 0 })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-3"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={saveCategory}
-                          className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold"
-                        >
-                          {editingCategory ? 'Update' : 'Save'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowCategoryForm(false);
-                            setEditingCategory(null);
-                            setNewCategory({ name: '', order: 0 });
-                          }}
-                          className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    {categories.sort((a, b) => a.order - b.order).map(cat => (
-                      <div key={cat.id} style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '12px' }}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <GripVertical size={16} className="text-gray-400" />
-                            <span className="font-semibold">{cat.name}</span>
-                            <span className="text-sm text-gray-500">(Order: {cat.order})</span>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                setEditingCategory(cat);
-                                setNewCategory({ name: cat.name, order: cat.order });
-                                setShowCategoryForm(true);
-                              }}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            >
-                              <Edit2 size={18} />
-                            </button>
-                            <button
-                              onClick={() => deleteCategory(cat.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+          <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
+            <div className="max-w-4xl mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <button
+                  onClick={() => {
+                    setShowAdmin(false);
+                    setIsAuthenticated(false);
+                  }}
+                  className="flex items-center gap-2 text-[#004E7C] font-semibold hover:opacity-70"
+                >
+                  <ChevronLeft size={20} />
+                  Back to App
+                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setAdminView('categories')}
+                    style={{
+                      backgroundColor: adminView === 'categories' ? '#004E7C' : '#d1d5db',
+                      color: adminView === 'categories' ? 'white' : '#374151',
+                      padding: '12px 24px',
+                      borderRadius: '12px',
+                      fontWeight: 'bold',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Categories
+                  </button>
+                  <button
+                    onClick={() => setAdminView('faqs')}
+                    style={{
+                      backgroundColor: adminView === 'faqs' ? '#004E7C' : '#d1d5db',
+                      color: adminView === 'faqs' ? 'white' : '#374151',
+                      padding: '12px 24px',
+                      borderRadius: '12px',
+                      fontWeight: 'bold',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    FAQs
+                  </button>
                 </div>
+              </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-bold text-gray-900">Questions</h3>
+              {saveStatus && (
+                <div className="mb-4 text-center">
+                  <span className="inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-semibold">
+                    {saveStatus}
+                  </span>
+                </div>
+              )}
+
+              {adminView === 'categories' ? (
+                <>
+                  <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold text-[#004E7C]">Manage Categories</h1>
                     <button
-                      onClick={() => {
-                        setShowFaqForm(!showFaqForm);
-                        setEditingFaq(null);
-                        setNewFaq({ question: '', answer: '', summary: '', categoryId: '', order: 0 });
+                      onClick={() => setEditingCategory({ name: '', order: categories.length + 1 })}
+                      style={{
+                        backgroundColor: '#004E7C',
+                        color: 'white',
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        fontWeight: 'bold',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
                       }}
-                      className="flex items-center gap-2 bg-[#004E7C] text-white px-4 py-2 rounded-lg hover:bg-[#003a5c] transition-colors"
                     >
-                      <Plus size={18} />
-                      Add Question
+                      <Plus size={20} />
+                      <span>Add Category</span>
                     </button>
                   </div>
 
-                  {showFaqForm && (
-                    <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
-                      <select
-                        value={newFaq.categoryId}
-                        onChange={(e) => setNewFaq({ ...newFaq, categoryId: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-2"
-                      >
-                        <option value="">Select category</option>
-                        {categories.sort((a, b) => a.order - b.order).map(cat => (
-                          <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                      </select>
-                      <input
-                        type="text"
-                        placeholder="Question"
-                        value={newFaq.question}
-                        onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-2"
-                      />
-                      <textarea
-                        placeholder="Short summary (optional)"
-                        value={newFaq.summary}
-                        onChange={(e) => setNewFaq({ ...newFaq, summary: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-2"
-                        rows="2"
-                      />
-                      <textarea
-                        placeholder="Full answer"
-                        value={newFaq.answer}
-                        onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-2"
-                        rows="4"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Order"
-                        value={newFaq.order}
-                        onChange={(e) => setNewFaq({ ...newFaq, order: parseInt(e.target.value) || 0 })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-3"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={saveFaq}
-                          className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold"
-                        >
-                          {editingFaq ? 'Update' : 'Save'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowFaqForm(false);
-                            setEditingFaq(null);
-                            setNewFaq({ question: '', answer: '', summary: '', categoryId: '', order: 0 });
-                          }}
-                          className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    {categories.sort((a, b) => a.order - b.order).map(cat => {
-                      const categoryFaqs = faqs.filter(f => f.categoryId === cat.id).sort((a, b) => a.order - b.order);
-                      if (categoryFaqs.length === 0) return null;
+                  <div className="space-y-3">
+                    {categories.sort((a, b) => a.order - b.order).map((category, index) => {
+                      const faqCount = faqs.filter(f => f.categoryId === category.id).length;
                       return (
-                        <div key={cat.id}>
-                          <h4 className="font-bold text-sm text-gray-700 mb-2 mt-4">{cat.name}</h4>
-                          {categoryFaqs.map(faq => (
-                            <div key={faq.id} style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '12px', marginBottom: '8px' }}>
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <GripVertical size={14} className="text-gray-400" />
-                                    <span className="text-sm text-gray-500">Order: {faq.order}</span>
-                                  </div>
-                                  <p className="font-semibold text-sm mb-1">{faq.question}</p>
-                                  {faq.summary && (
-                                    <p className="text-xs text-gray-600 mb-1">{faq.summary}</p>
-                                  )}
-                                  <p className="text-xs text-gray-500 line-clamp-2">{faq.answer}</p>
-                                </div>
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => {
-                                      setEditingFaq(faq);
-                                      setNewFaq({
-                                        question: faq.question,
-                                        answer: faq.answer,
-                                        summary: faq.summary || '',
-                                        categoryId: faq.categoryId,
-                                        order: faq.order
-                                      });
-                                      setShowFaqForm(true);
-                                    }}
-                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                  >
-                                    <Edit2 size={16} />
-                                  </button>
-                                  <button
-                                    onClick={() => deleteFaq(faq.id)}
-                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
-                                </div>
+                        <div
+                          key={category.id}
+                          draggable
+                          onDragStart={(e) => handleCategoryDragStart(e, index)}
+                          onDragEnd={handleCategoryDragEnd}
+                          onDragOver={(e) => handleCategoryDragOver(e, index)}
+                          onDrop={(e) => handleCategoryDrop(e, index)}
+                          className={`bg-white rounded-2xl border shadow-md transition-all ${
+                            dragOverItem === index ? 'border-[#004E7C] border-2' : 'border-gray-200'
+                          }`}
+                          style={{
+                            cursor: 'grab',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div className="p-4 flex items-center gap-4">
+                            <div className="flex-shrink-0 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                              <GripVertical size={24} />
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-lg mb-1 text-gray-900 flex items-center gap-2">
+                                <Folder size={20} className="text-[#004E7C]" />
+                                {category.name}
+                              </h3>
+                              <div className="flex items-center gap-3 text-xs text-gray-500">
+                                <span className="bg-gray-100 px-2 py-1 rounded-full">
+                                  {faqCount} {faqCount === 1 ? 'FAQ' : 'FAQs'}
+                                </span>
+                                <span className="text-gray-400">•</span>
+                                <span>Order: {category.order}</span>
                               </div>
                             </div>
-                          ))}
+                            
+                            <div className="flex gap-2 flex-shrink-0">
+                              <button
+                                onClick={() => setEditingCategory(category)}
+                                className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-sm"
+                                style={{ border: 'none', cursor: 'pointer' }}
+                              >
+                                <Edit2 size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(category.id)}
+                                className="p-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-sm"
+                                style={{ border: 'none', cursor: 'pointer' }}
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       );
                     })}
                   </div>
-                </div>
-              </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold text-[#004E7C]">Manage FAQs</h1>
+                    <button
+                      onClick={() => setEditingFaq({
+                        question: '',
+                        summary: '',
+                        steps: [],
+                        contact: '(808) 532-5364',
+                        categoryId: categories.length > 0 ? categories[0].id : '',
+                        order: faqs.length + 1
+                      })}
+                      style={{
+                        backgroundColor: '#004E7C',
+                        color: 'white',
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        fontWeight: 'bold',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      <Plus size={20} />
+                      <span>Add FAQ</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {faqs.sort((a, b) => a.order - b.order).map((faq, index) => {
+                      const category = categories.find(c => c.id === faq.categoryId);
+                      return (
+                        <div
+                          key={faq.id}
+                          draggable
+                          onDragStart={(e) => handleFaqDragStart(e, index)}
+                          onDragEnd={handleFaqDragEnd}
+                          onDragOver={(e) => handleFaqDragOver(e, index)}
+                          onDrop={(e) => handleFaqDrop(e, index)}
+                          className={`bg-white rounded-2xl border shadow-md transition-all ${
+                            dragOverItem === index ? 'border-[#004E7C] border-2' : 'border-gray-200'
+                          }`}
+                          style={{
+                            cursor: 'grab',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div className="p-4 flex items-center gap-4">
+                            <div className="flex-shrink-0 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                              <GripVertical size={24} />
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-lg mb-1 text-gray-900">{faq.question}</h3>
+                              <p className="text-sm text-gray-600 mb-1 line-clamp-2">{faq.summary}</p>
+                              <div className="flex items-center gap-3 text-xs text-gray-500">
+                                {category && (
+                                  <>
+                                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-semibold">
+                                      {category.name}
+                                    </span>
+                                    <span className="text-gray-400">•</span>
+                                  </>
+                                )}
+                                {faq.steps && faq.steps.length > 0 && (
+                                  <>
+                                    <span className="bg-gray-100 px-2 py-1 rounded-full">
+                                      {faq.steps.length} {faq.steps.length === 1 ? 'step' : 'steps'}
+                                    </span>
+                                    <span className="text-gray-400">•</span>
+                                  </>
+                                )}
+                                <span>Order: {faq.order}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2 flex-shrink-0">
+                              <button
+                                onClick={() => setEditingFaq(faq)}
+                                className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-sm"
+                                style={{ border: 'none', cursor: 'pointer' }}
+                              >
+                                <Edit2 size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteFaq(faq.id)}
+                                className="p-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-sm"
+                                style={{ border: 'none', cursor: 'pointer' }}
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         );
-      };
+      }
 
-      // Action Guide Component
-      const ActionGuide = () => {
+      // Action Guide View
+      if (showGuide) {
         const selectedFaqs = faqs.filter(faq => selected.has(faq.id));
         
         return (
@@ -687,26 +1324,9 @@
             </div>
           </div>
         );
-      };
-
-      if (showAdmin) {
-        return <AdminPanel />;
       }
 
-      if (showGuide) {
-        return <ActionGuide />;
-      }
-
-      if (loading) {
-        return (
-          <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
-            <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '24px', textAlign: 'center' }}>
-              <p className="text-[#004E7C] font-semibold">Loading...</p>
-            </div>
-          </div>
-        );
-      }
-
+      // Category Selection View (Main User View)
       // Main FAQ Selection View with Accordion
       return (
         <div className="min-h-screen p-2" style={{ background: 'linear-gradient(135deg, #E3F2FD 0%, #FFEAA7 50%, #FAD4D4 100%)' }}>
@@ -907,8 +1527,7 @@
             {selected.size > 0 && <div style={{ height: '120px' }} />}
           </div>
         </div>
-      );
-    };
+      );    };
 
     ReactDOM.render(
       <ErrorBoundary>
