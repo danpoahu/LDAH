@@ -143,8 +143,36 @@
       return (
         <div className="min-h-screen p-2" style={{ background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
           <div className="max-w-2xl mx-auto">
-            {/* Header with Logo */}
-            <div className="text-center mb-4 mt-2">
+            {/* Header with Logo and Admin Gear */}
+            <div className="text-center mb-4 mt-2 relative">
+              {/* Admin Gear Icon */}
+              <a 
+                href="admin.html" 
+                style={{
+                  position: 'absolute',
+                  top: '8px',
+                  right: '8px',
+                  color: '#004E7C',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s, opacity 0.2s',
+                  display: 'inline-block'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'rotate(90deg)';
+                  e.currentTarget.style.opacity = '0.7';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'rotate(0deg)';
+                  e.currentTarget.style.opacity = '1';
+                }}
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M12 1v6m0 6v6m0-6h6m-6 0H6"></path>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </a>
+
               <div className="mb-2 flex justify-center">
                 <a href="index.html" style={{ textDecoration: 'none' }}>
                   <div style={{
