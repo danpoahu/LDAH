@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>LDAH - Admin Panel</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Icons
+    const ChevronLeft = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    );
+
+    const Plus = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    );
+
+    const Edit2 = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+      </svg>
+    );
+
+    const Trash2 = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        <line x1="10" y1="11" x2="10" y2="17"></line>
+        <line x1="14" y1="11" x2="14" y2="17"></line>
+      </svg>
+    );
+
+    const Save = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+        <polyline points="7 3 7 8 15 8"></polyline>
+      </svg>
+    );
+
+    const GripVertical = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="9" cy="12" r="1"></circle>
+        <circle cx="9" cy="5" r="1"></circle>
+        <circle cx="9" cy="19" r="1"></circle>
+        <circle cx="15" cy="12" r="1"></circle>
+        <circle cx="15" cy="5" r="1"></circle>
+        <circle cx="15" cy="19" r="1"></circle>
+      </svg>
+    );
+
+    const Folder = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+      </svg>
+    );
+
+    const Calendar = ({ size = 24, className = '' }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    );
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAU3CQ07bCVKlJ1qGak-150kaJEyPKldLk",
+      authDomain: "ldah-932d5.firebaseapp.com",
+      projectId: "ldah-932d5",
+      storageBucket: "ldah-932d5.firebasestorage.app",
+      messagingSenderId: "662130454003",
+      appId: "1:662130454003:web:437576d5a5811ecd8df686"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    auth.signInAnonymously().catch(error => {
+      console.error('Anonymous auth failed:', error);
+    });
+
+    const ADMIN_PASSWORD = 'ldah2024';
+
+    // Category Editor Component
+    const CategoryEditor = ({ category, onSave, onCancel }) => {
+      const [formData, setFormData] = useState({
+        name: category?.name || '',
+        order: category?.order || 0
+      });
+      const [isSaving, setIsSaving] = useState(false);
+
+      const handleSaveClick = async () => {
+        if (!formData.name.trim()) {
+          alert('Category name is required');
+          return;
+        }
+
+        setIsSaving(true);
+        try {
+          await onSave({
+            ...category,
+            ...formData
+          });
+        } finally {
+          setIsSaving(false);
+        }
+      };
+
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style={{ backdropFilter: 'blur(4px)' }}>
+          <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <form onSubmit={(e) => e.preventDefault()} style={{
+              backdropFilter: 'blur(20px)',
+              backgroundColor: 'rgba(255,255,255,0.4)',
+              borderRadius: '24px',
+              border: '1px solid rgba(255,255,255,0.3)',
+              padding: '32px'
+            }}>
+              <h2 className="text-2xl font-bold text-[#004E7C] mb-6">
+                {category?.id ? 'Edit Category' : 'New Category'}
+              </h2>
+
+              <div className="mb-6">
+                <label className="block font-semibold text-gray-700 mb-2">Category Name *</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                  placeholder="e.g., IEP Process, Parent Rights"
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    backgroundColor: '#d1d5db',
+                    color: '#374151',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveClick}
+                  disabled={isSaving}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    backgroundColor: isSaving ? '#6B7280' : '#004E7C',
+                    color: 'white',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    border: 'none',
+                    cursor: isSaving ? 'wait' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <Save size={20} />
+                  <span>{isSaving ? 'Saving...' : 'Save Category'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    };
+
+    // FAQ Editor Component
+    const FaqEditor = ({ faq, categories, onSave, onCancel }) => {
+      const [formData, setFormData] = useState({
+        question: faq?.question || '',
+        summary: faq?.summary || '',
+        steps: faq?.steps || [],
+        contact: faq?.contact || '(808) 532-5364',
+        categoryId: faq?.categoryId || (categories.length > 0 ? categories[0].id : ''),
+        order: faq?.order || 0
+      });
+      const [newStep, setNewStep] = useState('');
+      const [editingStepIndex, setEditingStepIndex] = useState(null);
+      const [editingStepText, setEditingStepText] = useState('');
+      const [isSaving, setIsSaving] = useState(false);
+
+      const handleAddStep = () => {
+        if (newStep.trim()) {
+          setFormData({ ...formData, steps: [...formData.steps, newStep.trim()] });
+          setNewStep('');
+        }
+      };
+
+      const handleEditStep = (index) => {
+        setEditingStepIndex(index);
+        setEditingStepText(formData.steps[index]);
+      };
+
+      const handleSaveStep = (index) => {
+        if (editingStepText.trim()) {
+          const newSteps = [...formData.steps];
+          newSteps[index] = editingStepText.trim();
+          setFormData({ ...formData, steps: newSteps });
+          setEditingStepIndex(null);
+          setEditingStepText('');
+        }
+      };
+
+      const handleRemoveStep = (index) => {
+        setFormData({ ...formData, steps: formData.steps.filter((_, i) => i !== index) });
+      };
+
+      const handleSaveClick = async () => {
+        if (!formData.question.trim()) {
+          alert('Question is required');
+          return;
+        }
+        if (!formData.categoryId) {
+          alert('Please select a category');
+          return;
+        }
+
+        setIsSaving(true);
+        try {
+          await onSave({
+            ...faq,
+            ...formData
+          });
+        } finally {
+          setIsSaving(false);
+        }
+      };
+
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style={{ backdropFilter: 'blur(4px)' }}>
+          <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <form onSubmit={(e) => e.preventDefault()} style={{
+              backdropFilter: 'blur(20px)',
+              backgroundColor: 'rgba(255,255,255,0.4)',
+              borderRadius: '24px',
+              border: '1px solid rgba(255,255,255,0.3)',
+              padding: '32px'
+            }}>
+              <h2 className="text-2xl font-bold text-[#004E7C] mb-6">
+                {faq?.id ? 'Edit FAQ' : 'New FAQ'}
+              </h2>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Category *</label>
+                  <select
+                    value={formData.categoryId}
+                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    required
+                  >
+                    {categories.length === 0 && (
+                      <option value="">No categories available - create one first</option>
+                    )}
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Question *</label>
+                  <input
+                    type="text"
+                    value={formData.question}
+                    onChange={(e) => setFormData({ ...formData, question: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    placeholder="Enter the question"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Summary</label>
+                  <textarea
+                    value={formData.summary}
+                    onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    rows="3"
+                    placeholder="Brief summary or preview"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Action Steps</label>
+                  <div className="space-y-2 mb-3">
+                    {formData.steps.map((step, index) => (
+                      <div key={index} className="flex items-start gap-2 bg-white p-3 rounded-lg">
+                        {editingStepIndex === index ? (
+                          <>
+                            <input
+                              type="text"
+                              value={editingStepText}
+                              onChange={(e) => setEditingStepText(e.target.value)}
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveStep(index)}
+                              className="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingStepIndex(null)}
+                              className="px-3 py-2 bg-gray-300 rounded-lg text-sm"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="flex-1 text-sm">{index + 1}. {step}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleEditStep(index)}
+                              className="text-blue-500 hover:text-blue-700"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveStep(index)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newStep}
+                      onChange={(e) => setNewStep(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddStep();
+                        }
+                      }}
+                      placeholder="Add a new step"
+                      className="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddStep}
+                      className="px-4 py-3 bg-[#004E7C] text-white rounded-xl hover:bg-[#003a5c] transition-colors"
+                    >
+                      <Plus size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Contact Info</label>
+                  <input
+                    type="text"
+                    value={formData.contact}
+                    onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    placeholder="Phone, email, or contact info"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    backgroundColor: '#d1d5db',
+                    color: '#374151',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveClick}
+                  disabled={isSaving}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    backgroundColor: isSaving ? '#6B7280' : '#004E7C',
+                    color: 'white',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    border: 'none',
+                    cursor: isSaving ? 'wait' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <Save size={20} />
+                  <span>{isSaving ? 'Saving...' : 'Save FAQ'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    };
+
+    // Event Editor Component
+    const EventEditor = ({ event, onSave, onCancel }) => {
+      const [formData, setFormData] = useState({
+        title: event?.title || '',
+        description: event?.description || '',
+        imageUrl: event?.imageUrl || '',
+        eventDate: event?.eventDate || '',
+        startDate: event?.startDate || '',
+        moveToPastDate: event?.moveToPastDate || '',
+        removeDate: event?.removeDate || ''
+      });
+      const [isSaving, setIsSaving] = useState(false);
+
+      const handleSaveClick = async () => {
+        if (!formData.title.trim()) {
+          alert('Event title is required');
+          return;
+        }
+        if (!formData.startDate || !formData.moveToPastDate || !formData.removeDate) {
+          alert('All dates are required');
+          return;
+        }
+
+        setIsSaving(true);
+        try {
+          await onSave({
+            ...event,
+            ...formData
+          });
+        } finally {
+          setIsSaving(false);
+        }
+      };
+
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style={{ backdropFilter: 'blur(4px)' }}>
+          <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <form onSubmit={(e) => e.preventDefault()} style={{
+              backdropFilter: 'blur(20px)',
+              backgroundColor: 'rgba(255,255,255,0.4)',
+              borderRadius: '24px',
+              border: '1px solid rgba(255,255,255,0.3)',
+              padding: '32px'
+            }}>
+              <h2 className="text-2xl font-bold text-[#004E7C] mb-6">
+                {event?.id ? 'Edit Event' : 'New Event'}
+              </h2>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Event Title *</label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    placeholder="e.g., Short Film Contest"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Description *</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    rows="6"
+                    placeholder="Event details..."
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Image URL</label>
+                  <input
+                    type="url"
+                    value={formData.imageUrl}
+                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Event Date</label>
+                  <input
+                    type="date"
+                    value={formData.eventDate}
+                    onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">The actual date of the event</p>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Start Date (Post Online) *</label>
+                  <input
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">When to start showing this event</p>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Move to Past Date *</label>
+                  <input
+                    type="date"
+                    value={formData.moveToPastDate}
+                    onChange={(e) => setFormData({ ...formData, moveToPastDate: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">When to move this to "Past Events"</p>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Remove Date *</label>
+                  <input
+                    type="date"
+                    value={formData.removeDate}
+                    onChange={(e) => setFormData({ ...formData, removeDate: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">When to completely remove this event</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    backgroundColor: '#d1d5db',
+                    color: '#374151',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveClick}
+                  disabled={isSaving}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    backgroundColor: isSaving ? '#6B7280' : '#004E7C',
+                    color: 'white',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    border: 'none',
+                    cursor: isSaving ? 'wait' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <Save size={20} />
+                  <span>{isSaving ? 'Saving...' : 'Save Event'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    };
+
+    // Main Admin App
+    const AdminApp = () => {
+      const [categories, setCategories] = useState([]);
+      const [faqs, setFaqs] = useState([]);
+      const [events, setEvents] = useState([]);
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [password, setPassword] = useState('');
+      const [editingFaq, setEditingFaq] = useState(null);
+      const [editingCategory, setEditingCategory] = useState(null);
+      const [editingEvent, setEditingEvent] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [saveStatus, setSaveStatus] = useState('');
+      const [adminView, setAdminView] = useState('categories');
+      const [draggedItem, setDraggedItem] = useState(null);
+      const [dragOverItem, setDragOverItem] = useState(null);
+
+      // Load data
+      useEffect(() => {
+        const loadData = async () => {
+          try {
+            await auth.signInAnonymously();
+            
+            const categoriesSnapshot = await db.collection('categories').orderBy('order').get();
+            const loadedCategories = categoriesSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setCategories(loadedCategories);
+
+            const faqsSnapshot = await db.collection('faqs').orderBy('order').get();
+            const loadedFaqs = faqsSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setFaqs(loadedFaqs);
+
+            const eventsSnapshot = await db.collection('events').get();
+            const loadedEvents = eventsSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setEvents(loadedEvents);
+            
+            console.log('Loaded:', loadedCategories.length, 'categories,', loadedFaqs.length, 'FAQs,', loadedEvents.length, 'events');
+          } catch (error) {
+            console.error('Error loading data:', error);
+            alert('Error loading data: ' + error.message);
+          }
+          setLoading(false);
+        };
+
+        loadData();
+      }, []);
+
+      // Category handlers
+      const handleSaveCategory = async (category) => {
+        setSaveStatus('Saving category...');
+        
+        try {
+          if (!auth.currentUser) {
+            await auth.signInAnonymously();
+          }
+          
+          if (category.id) {
+            await db.collection('categories').doc(category.id).set(category);
+            setCategories(categories.map(c => c.id === category.id ? category : c));
+          } else {
+            const categoryToSave = {
+              name: category.name,
+              order: categories.length + 1
+            };
+            const docRef = await db.collection('categories').add(categoryToSave);
+            setCategories([...categories, { id: docRef.id, ...categoryToSave }]);
+          }
+          
+          setSaveStatus('✓ Category saved!');
+        } catch (error) {
+          console.error('Error saving category:', error);
+          setSaveStatus('⚠️ Error: ' + error.message);
+        }
+        
+        setTimeout(() => setSaveStatus(''), 3000);
+        setEditingCategory(null);
+      };
+
+      const handleDeleteCategory = async (id) => {
+        const faqsInCategory = faqs.filter(f => f.categoryId === id);
+        if (faqsInCategory.length > 0) {
+          alert(`Cannot delete category. It contains ${faqsInCategory.length} FAQ(s). Please reassign or delete those FAQs first.`);
+          return;
+        }
+
+        if (confirm('Are you sure you want to delete this category?')) {
+          try {
+            await db.collection('categories').doc(id).delete();
+            setCategories(categories.filter(c => c.id !== id));
+          } catch (error) {
+            console.error('Error deleting category:', error);
+            alert('Error deleting category: ' + error.message);
+          }
+        }
+      };
+
+      // FAQ handlers
+      const handleSaveFaq = async (faq) => {
+        setSaveStatus('Saving FAQ...');
+        
+        try {
+          if (!auth.currentUser) {
+            await auth.signInAnonymously();
+          }
+          
+          if (faq.id) {
+            await db.collection('faqs').doc(faq.id).set(faq);
+            setFaqs(faqs.map(f => f.id === faq.id ? faq : f));
+          } else {
+            const faqsInCategory = faqs.filter(f => f.categoryId === faq.categoryId);
+            const faqToSave = {
+              question: faq.question,
+              summary: faq.summary,
+              steps: faq.steps,
+              contact: faq.contact,
+              categoryId: faq.categoryId,
+              order: faqsInCategory.length + 1
+            };
+            const docRef = await db.collection('faqs').add(faqToSave);
+            setFaqs([...faqs, { id: docRef.id, ...faqToSave }]);
+          }
+          
+          setSaveStatus('✓ FAQ saved!');
+        } catch (error) {
+          console.error('Error saving FAQ:', error);
+          setSaveStatus('⚠️ Error: ' + error.message);
+        }
+        
+        setTimeout(() => setSaveStatus(''), 3000);
+        setEditingFaq(null);
+      };
+
+      const handleDeleteFaq = async (id) => {
+        if (confirm('Are you sure you want to delete this FAQ?')) {
+          try {
+            await db.collection('faqs').doc(id).delete();
+            setFaqs(faqs.filter(f => f.id !== id));
+          } catch (error) {
+            console.error('Error deleting FAQ:', error);
+            alert('Error deleting FAQ: ' + error.message);
+          }
+        }
+      };
+
+      // Event handlers
+      const handleSaveEvent = async (event) => {
+        setSaveStatus('Saving event...');
+        
+        try {
+          if (!auth.currentUser) {
+            await auth.signInAnonymously();
+          }
+          
+          if (event.id) {
+            await db.collection('events').doc(event.id).set(event);
+            setEvents(events.map(e => e.id === event.id ? event : e));
+          } else {
+            const eventToSave = {
+              title: event.title,
+              description: event.description,
+              imageUrl: event.imageUrl,
+              eventDate: event.eventDate,
+              startDate: event.startDate,
+              moveToPastDate: event.moveToPastDate,
+              removeDate: event.removeDate
+            };
+            const docRef = await db.collection('events').add(eventToSave);
+            setEvents([...events, { id: docRef.id, ...eventToSave }]);
+          }
+          
+          setSaveStatus('✓ Event saved!');
+        } catch (error) {
+          console.error('Error saving event:', error);
+          setSaveStatus('⚠️ Error: ' + error.message);
+        }
+        
+        setTimeout(() => setSaveStatus(''), 3000);
+        setEditingEvent(null);
+      };
+
+      const handleDeleteEvent = async (id) => {
+        if (confirm('Are you sure you want to delete this event?')) {
+          try {
+            await db.collection('events').doc(id).delete();
+            setEvents(events.filter(e => e.id !== id));
+          } catch (error) {
+            console.error('Error deleting event:', error);
+            alert('Error deleting event: ' + error.message);
+          }
+        }
+      };
+
+      // Drag and drop for categories
+      const handleCategoryDragStart = (e, index) => {
+        setDraggedItem(index);
+        e.dataTransfer.effectAllowed = 'move';
+      };
+
+      const handleCategoryDragOver = (e, index) => {
+        e.preventDefault();
+        setDragOverItem(index);
+      };
+
+      const handleCategoryDrop = async (e, dropIndex) => {
+        e.preventDefault();
+        
+        if (draggedItem === null || draggedItem === dropIndex) {
+          setDraggedItem(null);
+          setDragOverItem(null);
+          return;
+        }
+
+        const newCategories = [...categories];
+        const draggedCategory = newCategories[draggedItem];
+        newCategories.splice(draggedItem, 1);
+        newCategories.splice(dropIndex, 0, draggedCategory);
+
+        const updatedCategories = newCategories.map((cat, idx) => ({
+          ...cat,
+          order: idx + 1
+        }));
+
+        setCategories(updatedCategories);
+
+        try {
+          const batch = db.batch();
+          updatedCategories.forEach(cat => {
+            const docRef = db.collection('categories').doc(cat.id);
+            batch.update(docRef, { order: cat.order });
+          });
+          await batch.commit();
+        } catch (error) {
+          console.error('Error updating category order:', error);
+        }
+
+        setDraggedItem(null);
+        setDragOverItem(null);
+      };
+
+      const handleCategoryDragEnd = () => {
+        setDraggedItem(null);
+        setDragOverItem(null);
+      };
+
+      // Drag and drop for FAQs
+      const handleFaqDragStart = (e, index) => {
+        setDraggedItem(index);
+        e.dataTransfer.effectAllowed = 'move';
+      };
+
+      const handleFaqDragOver = (e, index) => {
+        e.preventDefault();
+        setDragOverItem(index);
+      };
+
+      const handleFaqDrop = async (e, dropIndex) => {
+        e.preventDefault();
+        
+        if (draggedItem === null || draggedItem === dropIndex) {
+          setDraggedItem(null);
+          setDragOverItem(null);
+          return;
+        }
+
+        const newFaqs = [...faqs];
+        const draggedFaq = newFaqs[draggedItem];
+        newFaqs.splice(draggedItem, 1);
+        newFaqs.splice(dropIndex, 0, draggedFaq);
+
+        const updatedFaqs = newFaqs.map((faq, idx) => ({
+          ...faq,
+          order: idx + 1
+        }));
+
+        setFaqs(updatedFaqs);
+
+        try {
+          const batch = db.batch();
+          updatedFaqs.forEach(faq => {
+            const docRef = db.collection('faqs').doc(faq.id);
+            batch.update(docRef, { order: faq.order });
+          });
+          await batch.commit();
+        } catch (error) {
+          console.error('Error updating FAQ order:', error);
+        }
+
+        setDraggedItem(null);
+        setDragOverItem(null);
+      };
+
+      const handleFaqDragEnd = () => {
+        setDraggedItem(null);
+        setDragOverItem(null);
+      };
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (password === ADMIN_PASSWORD) {
+          setIsAuthenticated(true);
+          setPassword('');
+        } else {
+          alert('Incorrect password');
+          setPassword('');
+        }
+      };
+
+      if (loading) {
+        return (
+          <div className="min-h-screen flex items-center justify-center">
+            <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', textAlign: 'center' }}>
+              <div className="text-[#004E7C] text-xl font-bold">Loading...</div>
+            </div>
+          </div>
+        );
+      }
+
+      if (!isAuthenticated) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div style={{
+              backdropFilter: 'blur(20px)',
+              backgroundColor: 'rgba(255,255,255,0.25)',
+              borderRadius: '24px',
+              border: '1px solid rgba(255,255,255,0.3)',
+              boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+              padding: '32px',
+              maxWidth: '28rem',
+              width: '100%'
+            }}>
+              <a href="index.html" className="flex items-center gap-2 text-[#004E7C] font-semibold mb-6 hover:opacity-70 transition-opacity">
+                <ChevronLeft size={20} />
+                Back to Home
+              </a>
+              <h2 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">Admin Login</h2>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleLogin(e);
+                  }
+                }}
+                placeholder="Enter password"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#004E7C] mb-4"
+                autoFocus
+              />
+              <button
+                onClick={handleLogin}
+                className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg"
+              >
+                Login to Admin Panel
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      if (editingCategory !== null) {
+        return <CategoryEditor category={editingCategory} onSave={handleSaveCategory} onCancel={() => setEditingCategory(null)} />;
+      }
+
+      if (editingFaq !== null) {
+        return <FaqEditor faq={editingFaq} categories={categories} onSave={handleSaveFaq} onCancel={() => setEditingFaq(null)} />;
+      }
+
+      if (editingEvent !== null) {
+        return <EventEditor event={editingEvent} onSave={handleSaveEvent} onCancel={() => setEditingEvent(null)} />;
+      }
+
+      return (
+        <div className="min-h-screen p-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
+              <a href="index.html" className="flex items-center gap-2 text-[#004E7C] font-semibold hover:opacity-70">
+                <ChevronLeft size={20} />
+                Back to Home
+              </a>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setAdminView('categories')}
+                  style={{
+                    backgroundColor: adminView === 'categories' ? '#004E7C' : '#d1d5db',
+                    color: adminView === 'categories' ? 'white' : '#374151',
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Categories
+                </button>
+                <button
+                  onClick={() => setAdminView('faqs')}
+                  style={{
+                    backgroundColor: adminView === 'faqs' ? '#004E7C' : '#d1d5db',
+                    color: adminView === 'faqs' ? 'white' : '#374151',
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  FAQs
+                </button>
+                <button
+                  onClick={() => setAdminView('events')}
+                  style={{
+                    backgroundColor: adminView === 'events' ? '#004E7C' : '#d1d5db',
+                    color: adminView === 'events' ? 'white' : '#374151',
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Events
+                </button>
+              </div>
+            </div>
+
+            {saveStatus && (
+              <div className="mb-4 text-center">
+                <span className="inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-semibold">
+                  {saveStatus}
+                </span>
+              </div>
+            )}
+
+            <div style={{ minHeight: '600px' }}>
+            {adminView === 'categories' ? (
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <h1 className="text-2xl font-bold text-[#004E7C]">Manage Categories</h1>
+                  <button
+                    onClick={() => setEditingCategory({ name: '', order: categories.length + 1 })}
+                    style={{
+                      backgroundColor: '#004E7C',
+                      color: 'white',
+                      padding: '12px 24px',
+                      borderRadius: '12px',
+                      fontWeight: 'bold',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <Plus size={20} />
+                    <span>Add Category</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {categories.sort((a, b) => a.order - b.order).map((category, index) => {
+                    const faqCount = faqs.filter(f => f.categoryId === category.id).length;
+                    return (
+                      <div
+                        key={category.id}
+                        draggable
+                        onDragStart={(e) => handleCategoryDragStart(e, index)}
+                        onDragEnd={handleCategoryDragEnd}
+                        onDragOver={(e) => handleCategoryDragOver(e, index)}
+                        onDrop={(e) => handleCategoryDrop(e, index)}
+                        className={`bg-white rounded-2xl border shadow-md transition-all ${
+                          dragOverItem === index ? 'border-[#004E7C] border-2' : 'border-gray-200'
+                        }`}
+                        style={{
+                          cursor: 'grab',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div className="p-4 flex items-center gap-4">
+                          <div className="flex-shrink-0 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                            <GripVertical size={24} />
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-lg mb-1 text-gray-900 flex items-center gap-2">
+                              <Folder size={20} className="text-[#004E7C]" />
+                              {category.name}
+                            </h3>
+                            <div className="flex items-center gap-3 text-xs text-gray-500">
+                              <span className="bg-gray-100 px-2 py-1 rounded-full">
+                                {faqCount} {faqCount === 1 ? 'FAQ' : 'FAQs'}
+                              </span>
+                              <span className="text-gray-400">•</span>
+                              <span>Order: {category.order}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2 flex-shrink-0">
+                            <button
+                              onClick={() => setEditingCategory(category)}
+                              className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-sm"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <Edit2 size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCategory(category.id)}
+                              className="p-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-sm"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : adminView === 'faqs' ? (
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <h1 className="text-2xl font-bold text-[#004E7C]">Manage FAQs</h1>
+                  <button
+                    onClick={() => setEditingFaq({
+                      question: '',
+                      summary: '',
+                      steps: [],
+                      contact: '(808) 532-5364',
+                      categoryId: categories.length > 0 ? categories[0].id : '',
+                      order: faqs.length + 1
+                    })}
+                    style={{
+                      backgroundColor: '#004E7C',
+                      color: 'white',
+                      padding: '12px 24px',
+                      borderRadius: '12px',
+                      fontWeight: 'bold',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <Plus size={20} />
+                    <span>Add FAQ</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {faqs.sort((a, b) => a.order - b.order).map((faq, index) => {
+                    const category = categories.find(c => c.id === faq.categoryId);
+                    return (
+                      <div
+                        key={faq.id}
+                        draggable
+                        onDragStart={(e) => handleFaqDragStart(e, index)}
+                        onDragEnd={handleFaqDragEnd}
+                        onDragOver={(e) => handleFaqDragOver(e, index)}
+                        onDrop={(e) => handleFaqDrop(e, index)}
+                        className={`bg-white rounded-2xl border shadow-md transition-all ${
+                          dragOverItem === index ? 'border-[#004E7C] border-2' : 'border-gray-200'
+                        }`}
+                        style={{
+                          cursor: 'grab',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div className="p-4 flex items-start gap-4">
+                          <div className="flex-shrink-0 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing mt-1">
+                            <GripVertical size={24} />
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              {category && (
+                                <span className="bg-[#004E7C] text-white text-xs px-2 py-1 rounded-full">
+                                  {category.name}
+                                </span>
+                              )}
+                              <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                                Order: {faq.order}
+                              </span>
+                            </div>
+                            <h3 className="font-bold text-base mb-1 text-gray-900">{faq.question}</h3>
+                            {faq.summary && (
+                              <p className="text-sm text-gray-600 mb-2">{faq.summary}</p>
+                            )}
+                            {faq.steps && faq.steps.length > 0 && (
+                              <p className="text-xs text-gray-500">{faq.steps.length} action steps</p>
+                            )}
+                          </div>
+                          
+                          <div className="flex gap-2 flex-shrink-0">
+                            <button
+                              onClick={() => setEditingFaq(faq)}
+                              className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-sm"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <Edit2 size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFaq(faq.id)}
+                              className="p-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-sm"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <h1 className="text-2xl font-bold text-[#004E7C]">Manage Events</h1>
+                  <button
+                    onClick={() => setEditingEvent({
+                      title: '',
+                      description: '',
+                      imageUrl: '',
+                      eventDate: '',
+                      startDate: '',
+                      moveToPastDate: '',
+                      removeDate: ''
+                    })}
+                    style={{
+                      backgroundColor: '#004E7C',
+                      color: 'white',
+                      padding: '12px 24px',
+                      borderRadius: '12px',
+                      fontWeight: 'bold',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <Plus size={20} />
+                    <span>Add Event</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {events.sort((a, b) => new Date(a.startDate) - new Date(b.startDate)).map((event) => {
+                    const now = new Date();
+                    const startDate = new Date(event.startDate);
+                    const moveToPastDate = new Date(event.moveToPastDate);
+                    const removeDate = new Date(event.removeDate);
+                    
+                    let status = 'Scheduled';
+                    let statusColor = 'bg-blue-100 text-blue-700';
+                    if (now >= startDate && now < moveToPastDate) {
+                      status = 'Current';
+                      statusColor = 'bg-green-100 text-green-700';
+                    } else if (now >= moveToPastDate && now < removeDate) {
+                      status = 'Past';
+                      statusColor = 'bg-gray-100 text-gray-700';
+                    } else if (now >= removeDate) {
+                      status = 'Expired';
+                      statusColor = 'bg-red-100 text-red-700';
+                    }
+
+                    return (
+                      <div
+                        key={event.id}
+                        className="bg-white rounded-2xl border border-gray-200 shadow-md"
+                      >
+                        <div className="p-4">
+                          <div className="flex items-start gap-4">
+                            {event.imageUrl && (
+                              <img 
+                                src={event.imageUrl}
+                                alt={event.title}
+                                style={{
+                                  width: '100px',
+                                  height: '100px',
+                                  objectFit: 'cover',
+                                  borderRadius: '12px'
+                                }}
+                              />
+                            )}
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-bold text-lg text-gray-900">{event.title}</h3>
+                                <span className={`text-xs px-2 py-1 rounded-full ${statusColor}`}>
+                                  {status}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2 line-clamp-2">{event.description}</p>
+                              <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                                {event.eventDate && <span>📅 Event: {event.eventDate}</span>}
+                                <span>🚀 Start: {event.startDate}</span>
+                                <span>📦 Past: {event.moveToPastDate}</span>
+                                <span>🗑️ Remove: {event.removeDate}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2 flex-shrink-0">
+                              <button
+                                onClick={() => setEditingEvent(event)}
+                                className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-sm"
+                                style={{ border: 'none', cursor: 'pointer' }}
+                              >
+                                <Edit2 size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteEvent(event.id)}
+                                className="p-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-sm"
+                                style={{ border: 'none', cursor: 'pointer' }}
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<AdminApp />, document.getElementById('root'));
+  </script>
+</body>
+</html>
