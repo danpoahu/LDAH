@@ -151,6 +151,20 @@
         setCurrentIndex(0);
       }, [isPastEvents]);
 
+      // Reset index and auto-switch view when events data changes
+      useEffect(() => {
+        // If we're on current events but there are none, switch to past events
+        if (!isPastEvents && currentEvents.length === 0 && pastEvents.length > 0) {
+          setIsPastEvents(true);
+        }
+        // If we're on past events but there are none, switch to current events
+        if (isPastEvents && pastEvents.length === 0 && currentEvents.length > 0) {
+          setIsPastEvents(false);
+        }
+        // Reset carousel index when the active events list changes
+        setCurrentIndex(0);
+      }, [events, currentEvents.length, pastEvents.length]);
+
       if (loading) {
         return (
           <div className="min-h-screen flex items-center justify-center" style={{ background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
