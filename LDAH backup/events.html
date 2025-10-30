@@ -79,7 +79,6 @@
     const EventsApp = () => {
       const [events, setEvents] = useState([]);
       const [loading, setLoading] = useState(true);
-      const [selectedEvent, setSelectedEvent] = useState(null);
 
       useEffect(() => {
         const unsubscribe = db.collection('events')
@@ -166,34 +165,23 @@
               </div>
               <h1 className="text-2xl font-bold text-[#004E7C] mb-1">Events</h1>
               <p className="text-gray-600 text-sm mb-2">
-                Tap any event to view full details
+                Stay updated with our upcoming events and activities
               </p>
             </div>
 
-            {/* Current Events - Vertical Compact Cards */}
+            {/* Current Events */}
             {currentEvents.length > 0 && (
               <>
                 <h2 className="text-xl font-bold text-[#004E7C] mb-3 text-center">Upcoming Events</h2>
-                <div className="space-y-3 mb-8">
+                <div className="space-y-4 mb-8">
                   {currentEvents.map(event => (
                     <div 
                       key={event.id}
-                      onClick={() => setSelectedEvent(event)}
                       style={{
                         backgroundColor: 'white',
-                        borderRadius: '16px',
-                        overflow: 'hidden',
-                        border: '2px solid #004E7C',
-                        cursor: 'pointer',
-                        transition: 'transform 0.2s, box-shadow 0.2s'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.15)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'none';
+                        borderRadius: '24px',
+                        padding: '24px',
+                        border: '2px solid #004E7C'
                       }}
                     >
                       {event.imageUrl && (
@@ -202,42 +190,41 @@
                           alt={event.title}
                           style={{
                             width: '100%',
-                            height: 'auto',
-                            display: 'block'
+                            borderRadius: '16px',
+                            marginBottom: '16px',
+                            maxHeight: '400px',
+                            objectFit: 'cover'
                           }}
                         />
                       )}
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">{event.title}</h3>
+                      <div className="flex items-center gap-2 text-sm text-[#004E7C] mb-3">
+                        <Calendar size={16} />
+                        <span>{formatDate(event.eventDate)}</span>
+                      </div>
+                      <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                        {event.description}
+                      </p>
                     </div>
                   ))}
                 </div>
               </>
             )}
 
-            {/* Past Events - Vertical Compact Cards */}
+            {/* Past Events */}
             {pastEvents.length > 0 && (
               <>
                 <h2 className="text-xl font-bold text-[#004E7C] mb-3 text-center">Past Events</h2>
-                <div className="space-y-3 mb-8">
+                <div className="space-y-4 mb-8">
                   {pastEvents.map(event => (
                     <div 
                       key={event.id}
-                      onClick={() => setSelectedEvent(event)}
                       style={{
                         backgroundColor: 'white',
-                        borderRadius: '16px',
-                        overflow: 'hidden',
+                        borderRadius: '24px',
+                        padding: '24px',
                         border: '2px solid #9CA3AF',
-                        cursor: 'pointer',
-                        transition: 'transform 0.2s, box-shadow 0.2s',
-                        opacity: 0.7
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.15)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'none';
+                        opacity: 0.8
                       }}
                     >
                       {event.imageUrl && (
@@ -246,12 +233,22 @@
                           alt={event.title}
                           style={{
                             width: '100%',
-                            height: 'auto',
-                            display: 'block',
+                            borderRadius: '16px',
+                            marginBottom: '16px',
+                            maxHeight: '300px',
+                            objectFit: 'cover',
                             filter: 'grayscale(30%)'
                           }}
                         />
                       )}
+                      <h3 className="text-lg font-bold text-gray-700 mb-2">{event.title}</h3>
+                      <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                        <Calendar size={16} />
+                        <span>{formatDate(event.eventDate)}</span>
+                      </div>
+                      <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+                        {event.description}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -274,7 +271,7 @@
             )}
 
             {/* Back Button */}
-            <div className="mt-6 text-center pb-6">
+            <div className="mt-6 text-center">
               <a 
                 href="index.html"
                 className="inline-flex items-center gap-2 text-[#004E7C] font-semibold hover:opacity-70 transition-opacity"
@@ -284,67 +281,6 @@
               </a>
             </div>
           </div>
-
-          {/* Full-Screen Modal */}
-          {selectedEvent && (
-            <div 
-              onClick={() => setSelectedEvent(null)}
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'rgba(0, 0, 0, 0.95)',
-                zIndex: 1000,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '20px'
-              }}
-            >
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedEvent(null)}
-                style={{
-                  position: 'absolute',
-                  top: '20px',
-                  right: '20px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  border: 'none',
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 1001,
-                  fontWeight: 'bold'
-                }}
-              >
-                ×
-              </button>
-
-              {/* Full-Screen Image */}
-              {selectedEvent.imageUrl && (
-                <img 
-                  src={selectedEvent.imageUrl}
-                  alt={selectedEvent.title}
-                  onClick={(e) => e.stopPropagation()}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
-                    borderRadius: '8px'
-                  }}
-                />
-              )}
-            </div>
-          )}
         </div>
       );
     };
