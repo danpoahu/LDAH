@@ -264,10 +264,10 @@
                   <div style={{ position: 'relative', marginBottom: '32px' }}>
                     {/* Carousel Container */}
                     <div style={{
-                      backgroundColor: 'white',
+                      backgroundColor: 'transparent',
                       borderRadius: '24px',
                       padding: '40px 20px 32px',
-                      border: `2px solid ${isPastEvents ? '#9CA3AF' : '#004E7C'}`,
+                      border: 'none',
                       position: 'relative'
                     }}>
                       {/* Left Arrow */}
@@ -308,14 +308,20 @@
                       )}
 
                       {/* Event Content */}
-                      <div style={{ textAlign: 'center' }}>
+                      <div style={{ 
+                        textAlign: 'center',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                      }}>
                         {activeEvents[currentIndex].imageUrl && (
                           <div 
                             onClick={() => setSelectedEvent(activeEvents[currentIndex])}
                             style={{
                               cursor: 'pointer',
                               marginBottom: '20px',
-                              display: 'inline-block'
+                              display: 'flex',
+                              justifyContent: 'center'
                             }}
                           >
                             <img 
@@ -327,7 +333,8 @@
                                 borderRadius: '16px',
                                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                 transition: 'transform 0.2s',
-                                filter: isPastEvents ? 'grayscale(30%)' : 'none'
+                                filter: isPastEvents ? 'grayscale(30%)' : 'none',
+                                display: 'block'
                               }}
                               onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
                               onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
