@@ -80,6 +80,8 @@
       const [events, setEvents] = useState([]);
       const [loading, setLoading] = useState(true);
       const [selectedEvent, setSelectedEvent] = useState(null);
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [isPastEvents, setIsPastEvents] = useState(false);
 
       useEffect(() => {
         const unsubscribe = db.collection('events')
@@ -129,6 +131,25 @@
       const pastEvents = events.filter(isEventPast).sort((a, b) => 
         new Date(b.moveToPastDate) - new Date(a.moveToPastDate)
       );
+
+      const activeEvents = isPastEvents ? pastEvents : currentEvents;
+
+      const goToNext = () => {
+        setCurrentIndex((prev) => (prev + 1) % activeEvents.length);
+      };
+
+      const goToPrev = () => {
+        setCurrentIndex((prev) => (prev - 1 + activeEvents.length) % activeEvents.length);
+      };
+
+      const goToSlide = (index) => {
+        setCurrentIndex(index);
+      };
+
+      // Reset index when switching between current and past events
+      useEffect(() => {
+        setCurrentIndex(0);
+      }, [isPastEvents]);
 
       if (loading) {
         return (
@@ -198,91 +219,199 @@
               </p>
             </div>
 
-            {/* Current Events - Vertical Compact Cards */}
-            {currentEvents.length > 0 && (
+            {/* Carousel Section */}
+            {(currentEvents.length > 0 || pastEvents.length > 0) && (
               <>
-                <h2 className="text-xl font-bold text-[#004E7C] mb-3 text-center">Upcoming Events</h2>
-                <div className="space-y-3 mb-8">
-                  {currentEvents.map(event => (
-                    <div 
-                      key={event.id}
-                      onClick={() => setSelectedEvent(event)}
+                {/* Toggle buttons for Current/Past Events */}
+                {currentEvents.length > 0 && pastEvents.length > 0 && (
+                  <div className="flex gap-2 justify-center mb-4">
+                    <button
+                      onClick={() => setIsPastEvents(false)}
                       style={{
-                        backgroundColor: 'white',
-                        borderRadius: '16px',
-                        overflow: 'hidden',
+                        backgroundColor: !isPastEvents ? '#004E7C' : 'white',
+                        color: !isPastEvents ? 'white' : '#004E7C',
                         border: '2px solid #004E7C',
+                        borderRadius: '20px',
+                        padding: '8px 24px',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
                         cursor: 'pointer',
-                        transition: 'transform 0.2s, box-shadow 0.2s'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.15)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'none';
+                        transition: 'all 0.2s'
                       }}
                     >
-                      {event.imageUrl && (
-                        <img 
-                          src={event.imageUrl}
-                          alt={event.title}
-                          style={{
-                            width: '100%',
-                            height: 'auto',
-                            display: 'block'
-                          }}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Past Events - Vertical Compact Cards */}
-            {pastEvents.length > 0 && (
-              <>
-                <h2 className="text-xl font-bold text-[#004E7C] mb-3 text-center">Past Events</h2>
-                <div className="space-y-3 mb-8">
-                  {pastEvents.map(event => (
-                    <div 
-                      key={event.id}
-                      onClick={() => setSelectedEvent(event)}
+                      Upcoming Events
+                    </button>
+                    <button
+                      onClick={() => setIsPastEvents(true)}
                       style={{
-                        backgroundColor: 'white',
-                        borderRadius: '16px',
-                        overflow: 'hidden',
-                        border: '2px solid #9CA3AF',
+                        backgroundColor: isPastEvents ? '#004E7C' : 'white',
+                        color: isPastEvents ? 'white' : '#004E7C',
+                        border: '2px solid #004E7C',
+                        borderRadius: '20px',
+                        padding: '8px 24px',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
                         cursor: 'pointer',
-                        transition: 'transform 0.2s, box-shadow 0.2s',
-                        opacity: 0.7
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.15)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'none';
+                        transition: 'all 0.2s'
                       }}
                     >
-                      {event.imageUrl && (
-                        <img 
-                          src={event.imageUrl}
-                          alt={event.title}
+                      Past Events
+                    </button>
+                  </div>
+                )}
+
+                {activeEvents.length > 0 ? (
+                  <div style={{ position: 'relative', marginBottom: '32px' }}>
+                    {/* Carousel Container */}
+                    <div style={{
+                      backgroundColor: 'white',
+                      borderRadius: '24px',
+                      padding: '40px 20px 32px',
+                      border: `2px solid ${isPastEvents ? '#9CA3AF' : '#004E7C'}`,
+                      position: 'relative'
+                    }}>
+                      {/* Left Arrow */}
+                      {activeEvents.length > 1 && (
+                        <button
+                          onClick={goToPrev}
                           style={{
-                            width: '100%',
-                            height: 'auto',
-                            display: 'block',
-                            filter: 'grayscale(30%)'
+                            position: 'absolute',
+                            left: '-20px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            backgroundColor: '#004E7C',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '60px',
+                            height: '60px',
+                            fontSize: '32px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 10,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                            transition: 'all 0.2s'
                           }}
-                        />
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = '#003A5D';
+                            e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = '#004E7C';
+                            e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                          }}
+                        >
+                          ‹
+                        </button>
+                      )}
+
+                      {/* Event Content */}
+                      <div style={{ textAlign: 'center' }}>
+                        {activeEvents[currentIndex].imageUrl && (
+                          <div 
+                            onClick={() => setSelectedEvent(activeEvents[currentIndex])}
+                            style={{
+                              cursor: 'pointer',
+                              marginBottom: '20px',
+                              display: 'inline-block'
+                            }}
+                          >
+                            <img 
+                              src={activeEvents[currentIndex].imageUrl}
+                              alt={activeEvents[currentIndex].title}
+                              style={{
+                                width: '50%',
+                                height: 'auto',
+                                borderRadius: '16px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                transition: 'transform 0.2s',
+                                filter: isPastEvents ? 'grayscale(30%)' : 'none'
+                              }}
+                              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right Arrow */}
+                      {activeEvents.length > 1 && (
+                        <button
+                          onClick={goToNext}
+                          style={{
+                            position: 'absolute',
+                            right: '-20px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            backgroundColor: '#004E7C',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '60px',
+                            height: '60px',
+                            fontSize: '32px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 10,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = '#003A5D';
+                            e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = '#004E7C';
+                            e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                          }}
+                        >
+                          ›
+                        </button>
+                      )}
+
+                      {/* Dots Navigation */}
+                      {activeEvents.length > 1 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          marginTop: '24px'
+                        }}>
+                          {activeEvents.map((_, index) => (
+                            <button
+                              key={index}
+                              onClick={() => goToSlide(index)}
+                              style={{
+                                width: '12px',
+                                height: '12px',
+                                borderRadius: '50%',
+                                border: 'none',
+                                backgroundColor: index === currentIndex ? '#004E7C' : '#D1D5DB',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                padding: 0
+                              }}
+                              onMouseOver={(e) => {
+                                if (index !== currentIndex) {
+                                  e.currentTarget.style.backgroundColor = '#9CA3AF';
+                                }
+                              }}
+                              onMouseOut={(e) => {
+                                if (index !== currentIndex) {
+                                  e.currentTarget.style.backgroundColor = '#D1D5DB';
+                                }
+                              }}
+                            />
+                          ))}
+                        </div>
                       )}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : null}
               </>
             )}
 
