@@ -151,19 +151,14 @@
         setCurrentIndex(0);
       }, [isPastEvents]);
 
-      // Reset index and auto-switch view when events data changes
+      // Reset index when events data changes or when switching views
       useEffect(() => {
-        // If we're on current events but there are none, switch to past events
-        if (!isPastEvents && currentEvents.length === 0 && pastEvents.length > 0) {
-          setIsPastEvents(true);
+        // Reset carousel index to 0 when the active events list changes
+        const activeCount = isPastEvents ? pastEvents.length : currentEvents.length;
+        if (currentIndex >= activeCount && activeCount > 0) {
+          setCurrentIndex(0);
         }
-        // If we're on past events but there are none, switch to current events
-        if (isPastEvents && pastEvents.length === 0 && currentEvents.length > 0) {
-          setIsPastEvents(false);
-        }
-        // Reset carousel index when the active events list changes
-        setCurrentIndex(0);
-      }, [events, currentEvents.length, pastEvents.length]);
+      }, [events, isPastEvents]);
 
       if (loading) {
         return (
@@ -253,7 +248,7 @@
                         transition: 'all 0.2s'
                       }}
                     >
-                      Upcoming Events
+                      Current Events
                     </button>
                     <button
                       onClick={() => setIsPastEvents(true)}
@@ -274,7 +269,7 @@
                   </div>
                 )}
 
-                {activeEvents.length > 0 ? (
+                {activeEvents.length > 0 && currentIndex < activeEvents.length && activeEvents[currentIndex] ? (
                   <div style={{ position: 'relative', marginBottom: '32px' }}>
                     {/* Carousel Container */}
                     <div style={{
