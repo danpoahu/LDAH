@@ -45,12 +45,80 @@
         </p>
       </div>
 
-      <!-- Card 1: Who We Are -->
+      <!-- Menu Buttons -->
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <!-- Events Button -->
+        <a href="events.html" style="text-decoration: none;">
+          <div style="
+            backgroundColor: white;
+            borderRadius: 24px;
+            padding: 24px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid #004E7C;
+            text-align: center;
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            <div class="text-4xl mb-2">📅</div>
+            <h3 class="font-bold text-base text-[#004E7C]">Events</h3>
+          </div>
+        </a>
+
+        <!-- Volunteer Opportunities Button -->
+        <a href="volunteer.html" style="text-decoration: none;">
+          <div style="
+            backgroundColor: white;
+            borderRadius: 24px;
+            padding: 24px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid #004E7C;
+            text-align: center;
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            <div class="text-4xl mb-2">🤝</div>
+            <h3 class="font-bold text-base text-[#004E7C]">Volunteer</h3>
+          </div>
+        </a>
+
+        <!-- Quick Help (FAQ) Button -->
+        <a href="faq.html" style="text-decoration: none;">
+          <div style="
+            backgroundColor: white;
+            borderRadius: 24px;
+            padding: 24px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid #004E7C;
+            text-align: center;
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            <div class="text-4xl mb-2">❓</div>
+            <h3 class="font-bold text-base text-[#004E7C]">Quick Help</h3>
+          </div>
+        </a>
+
+        <!-- Contact Us Button -->
+        <a href="#contact" style="text-decoration: none;">
+          <div style="
+            backgroundColor: white;
+            borderRadius: 24px;
+            padding: 24px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid #004E7C;
+            text-align: center;
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            <div class="text-4xl mb-2">📞</div>
+            <h3 class="font-bold text-base text-[#004E7C]">Contact Us</h3>
+          </div>
+        </a>
+      </div>
+
+      <!-- Who We Are Card (moved below menu) -->
       <div style="
         backgroundColor: white;
         borderRadius: 24px;
         padding: 24px;
         marginBottom: 16px;
+        border: 2px solid #004E7C;
       ">
         <h2 class="text-xl font-bold text-[#004E7C] mb-3 text-center">Who We Are</h2>
         <p class="text-gray-700 text-sm leading-relaxed text-center">
@@ -58,30 +126,8 @@
         </p>
       </div>
 
-      <!-- Card 2: FAQ Helper -->
-      <a href="faq.html" style="text-decoration: none;">
-        <div style="
-          backgroundColor: white;
-          borderRadius: 24px;
-          padding: 24px;
-          marginBottom: 16px;
-          cursor: pointer;
-          transition: transform 0.2s, box-shadow 0.2s;
-        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-          <h2 class="text-xl font-bold text-[#004E7C] mb-3 text-center">FAQ Helper</h2>
-          <p class="text-gray-700 text-sm leading-relaxed text-center mb-3">
-            Get quick answers to common questions about special education, IEPs, and parent rights. Create your personalized action guide.
-          </p>
-          <div class="text-center">
-            <span class="inline-block bg-[#004E7C] text-white px-6 py-2 rounded-full font-semibold text-sm">
-              Get Started →
-            </span>
-          </div>
-        </div>
-      </a>
-
       <!-- Card 3: Contact Us -->
-      <div style="
+      <div id="contact" style="
         backgroundColor: white;
         borderRadius: 24px;
         padding: 24px;
