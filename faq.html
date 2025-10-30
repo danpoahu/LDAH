@@ -225,7 +225,6 @@
       const [categories, setCategories] = useState([]);
       const [faqs, setFaqs] = useState([]);
       const [selected, setSelected] = useState(new Set());
-      const [showAdmin, setShowAdmin] = useState(false);
       const [showGuide, setShowGuide] = useState(false);
       const [expandedCategories, setExpandedCategories] = useState(new Set());
       const [loading, setLoading] = useState(true);
@@ -274,313 +273,7 @@
         setExpandedCategories(newExpanded);
       };
 
-      // Admin Panel Component (unchanged from original)
-      const AdminPanel = () => {
-        const [editingCategory, setEditingCategory] = useState(null);
-        const [editingFaq, setEditingFaq] = useState(null);
-        const [newCategory, setNewCategory] = useState({ name: '', order: 0 });
-        const [newFaq, setNewFaq] = useState({ question: '', answer: '', summary: '', categoryId: '', order: 0 });
-        const [showCategoryForm, setShowCategoryForm] = useState(false);
-        const [showFaqForm, setShowFaqForm] = useState(false);
-
-        const saveCategory = async () => {
-          if (!newCategory.name.trim()) return;
-          try {
-            if (editingCategory) {
-              await db.collection('categories').doc(editingCategory.id).update(newCategory);
-            } else {
-              await db.collection('categories').add(newCategory);
-            }
-            setNewCategory({ name: '', order: 0 });
-            setEditingCategory(null);
-            setShowCategoryForm(false);
-          } catch (error) {
-            console.error('Error saving category:', error);
-            alert('Error saving category. Please try again.');
-          }
-        };
-
-        const deleteCategory = async (id) => {
-          if (!window.confirm('Delete this category and all its questions?')) return;
-          try {
-            const categoryFaqs = faqs.filter(f => f.categoryId === id);
-            await Promise.all(categoryFaqs.map(f => db.collection('faqs').doc(f.id).delete()));
-            await db.collection('categories').doc(id).delete();
-          } catch (error) {
-            console.error('Error deleting category:', error);
-            alert('Error deleting category. Please try again.');
-          }
-        };
-
-        const saveFaq = async () => {
-          if (!newFaq.question.trim() || !newFaq.answer.trim() || !newFaq.categoryId) return;
-          try {
-            if (editingFaq) {
-              await db.collection('faqs').doc(editingFaq.id).update(newFaq);
-            } else {
-              await db.collection('faqs').add(newFaq);
-            }
-            setNewFaq({ question: '', answer: '', summary: '', categoryId: '', order: 0 });
-            setEditingFaq(null);
-            setShowFaqForm(false);
-          } catch (error) {
-            console.error('Error saving FAQ:', error);
-            alert('Error saving FAQ. Please try again.');
-          }
-        };
-
-        const deleteFaq = async (id) => {
-          if (!window.confirm('Delete this question?')) return;
-          try {
-            await db.collection('faqs').doc(id).delete();
-          } catch (error) {
-            console.error('Error deleting FAQ:', error);
-            alert('Error deleting FAQ. Please try again.');
-          }
-        };
-
-        return (
-          <div className="min-h-screen p-2" style={{ background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
-            <div className="max-w-2xl mx-auto">
-              <button
-                onClick={() => setShowAdmin(false)}
-                className="flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity"
-              >
-                <ChevronLeft size={20} />
-                Back to FAQ Helper
-              </button>
-
-              <div style={{ 
-                backgroundColor: 'rgba(255, 255, 255, 0.1)', 
-                borderRadius: '20px', 
-                padding: '24px', 
-                marginBottom: '16px',
-                border: '2px solid #004E7C',
-                backdropFilter: 'blur(10px)'
-              }}>
-                <h2 className="text-2xl font-bold text-[#004E7C] mb-4 text-center">Admin Panel</h2>
-
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-bold text-gray-900">Categories</h3>
-                    <button
-                      onClick={() => {
-                        setShowCategoryForm(!showCategoryForm);
-                        setEditingCategory(null);
-                        setNewCategory({ name: '', order: 0 });
-                      }}
-                      className="flex items-center gap-2 bg-[#004E7C] text-white px-4 py-2 rounded-lg hover:bg-[#003a5c] transition-colors"
-                    >
-                      <Plus size={18} />
-                      Add Category
-                    </button>
-                  </div>
-
-                  {showCategoryForm && (
-                    <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
-                      <input
-                        type="text"
-                        placeholder="Category name"
-                        value={newCategory.name}
-                        onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-2"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Order"
-                        value={newCategory.order}
-                        onChange={(e) => setNewCategory({ ...newCategory, order: parseInt(e.target.value) || 0 })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-3"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={saveCategory}
-                          className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold"
-                        >
-                          {editingCategory ? 'Update' : 'Save'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowCategoryForm(false);
-                            setEditingCategory(null);
-                            setNewCategory({ name: '', order: 0 });
-                          }}
-                          className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    {categories.sort((a, b) => a.order - b.order).map(cat => (
-                      <div key={cat.id} style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '12px' }}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <GripVertical size={16} className="text-gray-400" />
-                            <span className="font-semibold">{cat.name}</span>
-                            <span className="text-sm text-gray-500">(Order: {cat.order})</span>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                setEditingCategory(cat);
-                                setNewCategory({ name: cat.name, order: cat.order });
-                                setShowCategoryForm(true);
-                              }}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            >
-                              <Edit2 size={18} />
-                            </button>
-                            <button
-                              onClick={() => deleteCategory(cat.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-bold text-gray-900">Questions</h3>
-                    <button
-                      onClick={() => {
-                        setShowFaqForm(!showFaqForm);
-                        setEditingFaq(null);
-                        setNewFaq({ question: '', answer: '', summary: '', categoryId: '', order: 0 });
-                      }}
-                      className="flex items-center gap-2 bg-[#004E7C] text-white px-4 py-2 rounded-lg hover:bg-[#003a5c] transition-colors"
-                    >
-                      <Plus size={18} />
-                      Add Question
-                    </button>
-                  </div>
-
-                  {showFaqForm && (
-                    <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
-                      <select
-                        value={newFaq.categoryId}
-                        onChange={(e) => setNewFaq({ ...newFaq, categoryId: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-2"
-                      >
-                        <option value="">Select category</option>
-                        {categories.sort((a, b) => a.order - b.order).map(cat => (
-                          <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                      </select>
-                      <input
-                        type="text"
-                        placeholder="Question"
-                        value={newFaq.question}
-                        onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-2"
-                      />
-                      <textarea
-                        placeholder="Short summary (optional)"
-                        value={newFaq.summary}
-                        onChange={(e) => setNewFaq({ ...newFaq, summary: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-2"
-                        rows="2"
-                      />
-                      <textarea
-                        placeholder="Full answer"
-                        value={newFaq.answer}
-                        onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-2"
-                        rows="4"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Order"
-                        value={newFaq.order}
-                        onChange={(e) => setNewFaq({ ...newFaq, order: parseInt(e.target.value) || 0 })}
-                        className="w-full p-3 border border-gray-300 rounded-lg mb-3"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={saveFaq}
-                          className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold"
-                        >
-                          {editingFaq ? 'Update' : 'Save'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowFaqForm(false);
-                            setEditingFaq(null);
-                            setNewFaq({ question: '', answer: '', summary: '', categoryId: '', order: 0 });
-                          }}
-                          className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    {categories.sort((a, b) => a.order - b.order).map(cat => {
-                      const categoryFaqs = faqs.filter(f => f.categoryId === cat.id).sort((a, b) => a.order - b.order);
-                      if (categoryFaqs.length === 0) return null;
-                      return (
-                        <div key={cat.id}>
-                          <h4 className="font-bold text-sm text-gray-700 mb-2 mt-4">{cat.name}</h4>
-                          {categoryFaqs.map(faq => (
-                            <div key={faq.id} style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '12px', marginBottom: '8px' }}>
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <GripVertical size={14} className="text-gray-400" />
-                                    <span className="text-sm text-gray-500">Order: {faq.order}</span>
-                                  </div>
-                                  <p className="font-semibold text-sm mb-1">{faq.question}</p>
-                                  {faq.summary && (
-                                    <p className="text-xs text-gray-600 mb-1">{faq.summary}</p>
-                                  )}
-                                  <p className="text-xs text-gray-500 line-clamp-2">{faq.answer}</p>
-                                </div>
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => {
-                                      setEditingFaq(faq);
-                                      setNewFaq({
-                                        question: faq.question,
-                                        answer: faq.answer,
-                                        summary: faq.summary || '',
-                                        categoryId: faq.categoryId,
-                                        order: faq.order
-                                      });
-                                      setShowFaqForm(true);
-                                    }}
-                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                  >
-                                    <Edit2 size={16} />
-                                  </button>
-                                  <button
-                                    onClick={() => deleteFaq(faq.id)}
-                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      };
+      // Admin Panel is now in separate admin.html file
 
       // Action Guide Component
       const ActionGuide = () => {
@@ -697,10 +390,6 @@
         );
       };
 
-      if (showAdmin) {
-        return <AdminPanel />;
-      }
-
       if (showGuide) {
         return <ActionGuide />;
       }
@@ -750,13 +439,13 @@
 
             {/* Admin button */}
             <div className="text-center mb-4">
-              <button
-                onClick={() => setShowAdmin(true)}
-                className="text-[#004E7C] text-sm hover:underline flex items-center gap-1 mx-auto"
+              <a
+                href="admin.html"
+                className="text-[#004E7C] text-sm hover:underline flex items-center gap-1 mx-auto justify-center"
               >
                 <Settings size={16} />
                 Admin Panel
-              </button>
+              </a>
             </div>
 
             {/* Categories with Accordion */}
@@ -771,12 +460,12 @@
                   backdropFilter: 'blur(10px)'
                 }}>
                   <p className="text-gray-600 mb-4">No categories yet. Get started by adding some!</p>
-                  <button
-                    onClick={() => setShowAdmin(true)}
+                  <a
+                    href="admin.html"
                     className="text-[#004E7C] font-semibold hover:opacity-70"
                   >
                     Add categories in Admin Panel →
-                  </button>
+                  </a>
                 </div>
               ) : (
                 categories.sort((a, b) => a.order - b.order).map(category => {
