@@ -1915,7 +1915,27 @@
                         <p className="text-gray-600">No applications yet</p>
                       </div>
                     ) : (
-                      applications.map((app) => {
+                      applications.sort((a, b) => {
+                        // Define status priority order
+                        const statusOrder = {
+                          'new': 1,
+                          'read': 2,
+                          'contacted': 3,
+                          'in-progress': 4,
+                          'approved': 5,
+                          'rejected': 6
+                        };
+                        
+                        const aOrder = statusOrder[a.status] || 999;
+                        const bOrder = statusOrder[b.status] || 999;
+                        
+                        // If same status, sort by submission date (newest first)
+                        if (aOrder === bOrder) {
+                          return new Date(b.submittedAt) - new Date(a.submittedAt);
+                        }
+                        
+                        return aOrder - bOrder;
+                      }).map((app) => {
                         const opportunity = opportunities.find(o => o.id === app.opportunityId);
                         const isExpanded = expandedAppId === app.id;
                         const isUnread = app.status === 'new';
