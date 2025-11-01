@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>LDAH - Volunteer Opportunities</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+    }
+    .volunteer-card {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 2px solid #004E7C;
+      backdrop-filter: blur(10px);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .volunteer-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    .opportunity-card {
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(0, 78, 124, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen p-2">
+    <div class="max-w-2xl mx-auto">
+      <!-- Logo Section -->
+      <div class="text-center mb-2 mt-2">
+        <div class="mb-2 flex justify-center">
+          <div style="padding: 16px; display: inline-block;">
+            <img 
+              src="https://danpoahu.github.io/LDAH/logo_transparent.png" 
+              alt="LDAH Logo"
+              style="width: 180px; height: 180px; display: block;"
+            />
+          </div>
+        </div>
+        
+        <h3 class="text-lg font-bold text-[#004E7C] mb-1">
+          Volunteer Opportunities
+        </h3>
+        <p class="text-gray-600 text-xs mb-2">
+          Join our mission to empower families
+        </p>
+      </div>
+
+      <!-- Back Button -->
+      <div class="mb-3">
+        <a href="index.html" style="
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          padding: 8px 16px;
+          cursor: pointer;
+          transition: transform 0.2s;
+          border: 2px solid #004E7C;
+          text-decoration: none;
+          color: #004E7C;
+          font-weight: bold;
+          backdrop-filter: blur(10px);
+          font-size: 14px;
+        " onmouseover="this.style.transform='translateX(-2px)';" onmouseout="this.style.transform='translateX(0)';">
+          <span>←</span>
+          <span>Back to Home</span>
+        </a>
+      </div>
+
+      <!-- Parents as Partners (PAP) Program -->
+      <div class="volunteer-card">
+        <div class="flex items-start gap-3 mb-3">
+          <div class="text-3xl">🤝</div>
+          <div>
+            <h2 class="text-lg font-bold text-[#004E7C] mb-1">Parents as Partners (PAP) Volunteer Program</h2>
+            <p class="text-xs text-gray-600 italic">Statewide Program</p>
+          </div>
+        </div>
+        <p class="text-gray-700 text-sm mb-3 leading-relaxed">
+          The Parents as Partners (PAP) volunteer program, operated statewide, empowers parents to become more involved and better equipped to support their child with disabilities. PAP volunteers support other parents of children with disabilities by sharing information and resources; modeling mentoring and advocacy skills; partnering with community resources to improve local service systems, and contributing to increased parental involvement at all levels affecting their children with disabilities.
+        </p>
+        <div class="flex gap-2">
+          <img 
+            src="https://danpoahu.github.io/LDAH/volunteer1-1024x768.jpg" 
+            alt="PAP Volunteer"
+            style="width: 48%; height: 120px; object-fit: cover; border-radius: 12px;"
+          />
+          <img 
+            src="https://danpoahu.github.io/LDAH/Jason-Volunteer.png" 
+            alt="PAP Volunteer"
+            style="width: 48%; height: 120px; object-fit: cover; border-radius: 12px;"
+          />
+        </div>
+      </div>
+
+      <!-- Community Volunteers -->
+      <div class="volunteer-card">
+        <div class="flex items-start gap-3 mb-3">
+          <div class="text-3xl">🏘️</div>
+          <div>
+            <h2 class="text-lg font-bold text-[#004E7C] mb-1">Community Volunteers</h2>
+            <p class="text-xs text-gray-600 italic">Ages 18+</p>
+          </div>
+        </div>
+        <p class="text-gray-700 text-sm mb-3 leading-relaxed">
+          Individuals who are 18 and over, looking to support and offer a helping hand in their community are welcome to come and offer support with LDAH. Community volunteers assist LDAH members with various office tasks. Also, they are able to assist at the several events that LDAH participates in all year round.
+        </p>
+        <img 
+          src="https://danpoahu.github.io/LDAH/volunteer_2.jpg" 
+          alt="Community Volunteer"
+          style="width: 100%; height: 150px; object-fit: cover; border-radius: 12px;"
+        />
+      </div>
+
+      <!-- Student Volunteers -->
+      <div class="volunteer-card">
+        <div class="flex items-start gap-3 mb-3">
+          <div class="text-3xl">🎓</div>
+          <div>
+            <h2 class="text-lg font-bold text-[#004E7C] mb-1">Students</h2>
+            <p class="text-xs text-gray-600 italic">Middle School through College</p>
+          </div>
+        </div>
+        <p class="text-gray-700 text-sm mb-3 leading-relaxed">
+          Calling all students! Do you need volunteer hours for high school or college? We are accepting a range of students, from Middle School through College, that need volunteering hours. You need to be connected to a school. Student volunteers will fulfill various tasks around our LDAH office and the many events that we participate and host. Come and join our fun and energetic team!
+        </p>
+      </div>
+
+      <!-- Current Volunteer Opportunities Section -->
+      <div class="volunteer-card">
+        <h2 class="text-lg font-bold text-[#004E7C] mb-3 text-center">Current Opportunities</h2>
+        <div id="opportunities-container">
+          <div class="text-center py-8">
+            <div class="text-4xl mb-2">⏳</div>
+            <p class="text-gray-600 text-sm">Loading opportunities...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Section -->
+      <div class="volunteer-card">
+        <h2 class="text-lg font-bold text-[#004E7C] mb-3 text-center">Get Involved</h2>
+        <p class="text-gray-700 text-sm mb-3 text-center leading-relaxed">
+          Interested in volunteering? Contact us to learn more about these opportunities and how you can make a difference in the lives of families with children with disabilities.
+        </p>
+        <div class="text-center">
+          <p class="text-gray-700 text-sm mb-2">
+            <strong>Phone:</strong> (808) 532-5364
+          </p>
+          <p class="text-gray-700 text-sm mb-2">
+            <strong>Email:</strong> <a href="mailto:ldah@ldahawaii.org" class="text-[#004E7C] underline">ldah@ldahawaii.org</a>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAU3CQ07bCVKlJ1qGak-150kaJEyPKldLk",
+      authDomain: "ldah-932d5.firebaseapp.com",
+      projectId: "ldah-932d5",
+      storageBucket: "ldah-932d5.firebasestorage.app",
+      messagingSenderId: "662130454003",
+      appId: "1:662130454003:web:437576d5a5811ecd8df686"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Sign in anonymously
+    auth.signInAnonymously().catch(error => {
+      console.error('Anonymous auth failed:', error);
+    });
+
+    // Load volunteer opportunities
+    async function loadOpportunities() {
+      const container = document.getElementById('opportunities-container');
+      const now = new Date();
+
+      try {
+        const snapshot = await db.collection('volunteerOpportunities')
+          .orderBy('order')
+          .get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="text-center py-8">
+              <div class="text-4xl mb-2">📋</div>
+              <p class="text-gray-600 text-sm">No specific opportunities posted at this time.</p>
+              <p class="text-gray-600 text-sm mt-2">Please contact us to discuss volunteer options!</p>
+            </div>
+          `;
+          return;
+        }
+
+        const opportunities = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const startDate = data.startDate ? new Date(data.startDate) : null;
+          const endDate = data.endDate ? new Date(data.endDate) : null;
+
+          // Show if always post is true, or if within date range
+          if (data.alwaysPost || (!startDate && !endDate) || 
+              (startDate && endDate && now >= startDate && now <= endDate) ||
+              (startDate && !endDate && now >= startDate) ||
+              (!startDate && endDate && now <= endDate)) {
+            opportunities.push({ id: doc.id, ...data });
+          }
+        });
+
+        if (opportunities.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-8">
+              <div class="text-4xl mb-2">📋</div>
+              <p class="text-gray-600 text-sm">No active opportunities at this time.</p>
+              <p class="text-gray-600 text-sm mt-2">Check back soon or contact us directly!</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = opportunities.map(opp => `
+          <div class="opportunity-card">
+            <div class="flex items-start gap-2 mb-2">
+              <div class="text-2xl">🎯</div>
+              <div class="flex-1">
+                <h3 class="font-bold text-base text-[#004E7C]">${opp.title}</h3>
+                ${opp.alwaysPost ? 
+                  '<span class="text-xs text-green-600 font-semibold">Ongoing Opportunity</span>' : 
+                  ''}
+              </div>
+            </div>
+            <p class="text-gray-700 text-sm leading-relaxed">${opp.description}</p>
+            ${opp.requirements ? `
+              <div class="mt-2">
+                <p class="text-xs font-semibold text-gray-700 mb-1">Requirements:</p>
+                <p class="text-xs text-gray-600">${opp.requirements}</p>
+              </div>
+            ` : ''}
+            ${opp.startDate || opp.endDate ? `
+              <div class="mt-2 text-xs text-gray-600">
+                ${opp.startDate ? `<span>Start: ${new Date(opp.startDate).toLocaleDateString()}</span>` : ''}
+                ${opp.startDate && opp.endDate ? ' • ' : ''}
+                ${opp.endDate ? `<span>End: ${new Date(opp.endDate).toLocaleDateString()}</span>` : ''}
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+
+      } catch (error) {
+        console.error('Error loading opportunities:', error);
+        container.innerHTML = `
+          <div class="text-center py-8">
+            <div class="text-4xl mb-2">⚠️</div>
+            <p class="text-gray-600 text-sm">Unable to load opportunities.</p>
+            <p class="text-gray-600 text-sm mt-2">Please contact us directly for information.</p>
+          </div>
+        `;
+      }
+    }
+
+    // Load opportunities when page loads
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        loadOpportunities();
+      }
+    });
+  </script>
+</body>
+</html>
