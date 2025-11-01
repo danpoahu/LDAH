@@ -1239,6 +1239,35 @@
         }
       };
 
+      const handleUpdateApplicationStatus = async (id, newStatus) => {
+        try {
+          await db.collection('volunteers').doc(id).update({
+            status: newStatus,
+            lastStatusUpdate: new Date().toISOString()
+          });
+          
+          // Update local state
+          setApplications(applications.map(app => 
+            app.id === id ? { ...app, status: newStatus, lastStatusUpdate: new Date().toISOString() } : app
+          ));
+        } catch (error) {
+          console.error('Error updating application status:', error);
+          alert('Failed to update status: ' + error.message);
+        }
+      };
+
+      const handleUpdateApplicationNotes = async (id, notes) => {
+        try {
+          await db.collection('volunteers').doc(id).update({
+            adminNotes: notes,
+            lastNotesUpdate: new Date().toISOString()
+          });
+        } catch (error) {
+          console.error('Error updating application notes:', error);
+          alert('Failed to update notes: ' + error.message);
+        }
+      };
+
       const unreadCount = applications.filter(app => app.status === 'new').length;
 
       // Drag and drop for categories
@@ -1906,11 +1935,22 @@
                                     <h3 className="font-bold text-lg text-gray-900">
                                       {app.firstName} {app.lastName}
                                     </h3>
-                                    {isUnread && (
-                                      <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-semibold">
-                                        New
-                                      </span>
-                                    )}
+                                    {(() => {
+                                      const statusConfig = {
+                                        'new': { label: 'New', color: 'bg-red-100 text-red-700' },
+                                        'read': { label: 'Read', color: 'bg-gray-100 text-gray-700' },
+                                        'contacted': { label: 'Contacted', color: 'bg-blue-100 text-blue-700' },
+                                        'in-progress': { label: 'In Progress', color: 'bg-yellow-100 text-yellow-700' },
+                                        'approved': { label: 'Approved', color: 'bg-green-100 text-green-700' },
+                                        'rejected': { label: 'Rejected', color: 'bg-red-100 text-red-700' }
+                                      };
+                                      const config = statusConfig[app.status] || statusConfig['new'];
+                                      return (
+                                        <span className={`${config.color} text-xs px-2 py-1 rounded-full font-semibold`}>
+                                          {config.label}
+                                        </span>
+                                      );
+                                    })()}
                                   </div>
                                   <p className="text-sm text-gray-600 mb-1">
                                     <strong>Email:</strong> <a href={`mailto:${app.email}`} className="text-[#004E7C] hover:underline">{app.email}</a>
@@ -1937,10 +1977,68 @@
 
                                 {app.notes && (
                                   <div className="mb-4">
-                                    <h4 className="font-semibold text-gray-700 mb-2">Notes/Questions:</h4>
+                                    <h4 className="font-semibold text-gray-700 mb-2">Applicant Notes/Questions:</h4>
                                     <p className="text-gray-600 whitespace-pre-wrap">{app.notes}</p>
                                   </div>
                                 )}
+
+                                {/* Status Management */}
+                                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                                  <h4 className="font-semibold text-gray-700 mb-3">Application Status</h4>
+                                  <div className="flex flex-wrap gap-2 mb-3">
+                                    {['new', 'read', 'contacted', 'in-progress', 'approved', 'rejected'].map(statusOption => {
+                                      const statusConfig = {
+                                        'new': { label: 'New', color: 'bg-red-100 text-red-700 border-red-300' },
+                                        'read': { label: 'Read', color: 'bg-gray-100 text-gray-700 border-gray-300' },
+                                        'contacted': { label: 'Contacted', color: 'bg-blue-100 text-blue-700 border-blue-300' },
+                                        'in-progress': { label: 'In Progress', color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
+                                        'approved': { label: 'Approved', color: 'bg-green-100 text-green-700 border-green-300' },
+                                        'rejected': { label: 'Rejected', color: 'bg-red-100 text-red-700 border-red-300' }
+                                      };
+                                      const config = statusConfig[statusOption];
+                                      const isActive = app.status === statusOption;
+                                      
+                                      return (
+                                        <button
+                                          key={statusOption}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleUpdateApplicationStatus(app.id, statusOption);
+                                          }}
+                                          className={`px-3 py-1 rounded-full text-xs font-semibold border-2 transition-all ${
+                                            isActive ? config.color : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                                          }`}
+                                        >
+                                          {config.label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                  
+                                  {/* Admin Notes */}
+                                  <div className="mt-3">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Admin Notes:</label>
+                                    <textarea
+                                      value={app.adminNotes || ''}
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        // Update locally first for immediate feedback
+                                        const updatedApps = applications.map(a => 
+                                          a.id === app.id ? { ...a, adminNotes: e.target.value } : a
+                                        );
+                                        setApplications(updatedApps);
+                                      }}
+                                      onBlur={(e) => {
+                                        e.stopPropagation();
+                                        handleUpdateApplicationNotes(app.id, e.target.value);
+                                      }}
+                                      placeholder="Add internal notes about this application..."
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#004E7C] focus:border-transparent text-sm"
+                                      rows="3"
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  </div>
+                                </div>
 
                                 <div className="flex gap-2 mt-4">
                                   <a
