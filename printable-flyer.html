@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LDAH App - Printable Flyer</title>
+  <style>
+    @media print {
+      body { margin: 0; }
+      .no-print { display: none; }
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    
+    .flyer {
+      background: white;
+      width: 8.5in;
+      margin: 0 auto;
+      padding: 0.5in;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .header {
+      text-align: center;
+      border-bottom: 4px solid #004E7C;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .header h1 {
+      color: #004E7C;
+      font-size: 36px;
+      margin: 10px 0;
+    }
+    
+    .header p {
+      color: #666;
+      font-size: 18px;
+      margin: 5px 0;
+    }
+    
+    .main-content {
+      display: flex;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+    
+    .left-column {
+      flex: 1;
+    }
+    
+    .qr-section {
+      text-align: center;
+      padding: 30px;
+      background: #f9f9f9;
+      border: 3px dashed #004E7C;
+      border-radius: 15px;
+    }
+    
+    .qr-placeholder {
+      width: 250px;
+      height: 250px;
+      margin: 0 auto 15px;
+      background: white;
+      border: 2px solid #004E7C;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #666;
+      border-radius: 10px;
+    }
+    
+    .instructions {
+      margin: 30px 0;
+    }
+    
+    .step {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 10px;
+    }
+    
+    .step-number {
+      width: 40px;
+      height: 40px;
+      background: #004E7C;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 20px;
+      flex-shrink: 0;
+      margin-right: 15px;
+    }
+    
+    .step-content h3 {
+      margin: 0 0 5px 0;
+      color: #004E7C;
+      font-size: 18px;
+    }
+    
+    .step-content p {
+      margin: 0;
+      color: #333;
+      line-height: 1.5;
+    }
+    
+    .benefits {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin: 30px 0;
+    }
+    
+    .benefit {
+      padding: 15px;
+      background: #e6f3ff;
+      border-radius: 10px;
+      text-align: center;
+    }
+    
+    .benefit-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    
+    .benefit-text {
+      font-weight: bold;
+      color: #004E7C;
+      font-size: 14px;
+    }
+    
+    .footer {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 2px solid #004E7C;
+      margin-top: 30px;
+    }
+    
+    .contact-info {
+      margin: 10px 0;
+      font-size: 14px;
+    }
+    
+    .print-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 30px;
+      background: #004E7C;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    
+    .print-button:hover {
+      background: #003a5c;
+    }
+  </style>
+</head>
+<body>
+  
+  <button class="print-button no-print" onclick="window.print()">🖨️ Print Flyer</button>
+  
+  <div class="flyer">
+    
+    <!-- Header -->
+    <div class="header">
+      <h1>📱 Get the LDAH App!</h1>
+      <p>Quick access to services right on your phone</p>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+      
+      <!-- Left Column -->
+      <div class="left-column">
+        
+        <h2 style="color: #004E7C; margin-bottom: 20px;">Simple 3-Step Install:</h2>
+        
+        <div class="instructions">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3>Scan the QR Code →</h3>
+              <p>Use your phone's camera to scan the code on the right</p>
+            </div>
+          </div>
+          
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h3>Follow Simple Instructions</h3>
+              <p><strong>iPhone:</strong> Safari → Share → Add to Home Screen<br>
+              <strong>Android:</strong> Chrome → Menu → Add to Home screen</p>
+            </div>
+          </div>
+          
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h3>That's It!</h3>
+              <p>The LDAH icon will appear on your phone's home screen</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="background: #fff3cd; padding: 15px; border-radius: 10px; border-left: 4px solid #ffc107; margin: 20px 0;">
+          <p style="margin: 0; color: #856404; font-weight: bold;">
+            💡 No app store needed! Works on iPhone and Android.
+          </p>
+        </div>
+        
+      </div>
+      
+      <!-- QR Code Section -->
+      <div class="qr-section">
+        <h3 style="color: #004E7C; margin-top: 0;">Scan Here</h3>
+        <div class="qr-placeholder">
+          Place QR Code Here<br>
+          (Generate at qr-code-generator.com)<br><br>
+          URL: danpoahu.github.io/LDAH/install.html
+        </div>
+        <p style="margin: 15px 0 0 0; color: #666; font-size: 14px;">
+          Point your camera at this code<br>
+          Tap the notification that appears
+        </p>
+      </div>
+      
+    </div>
+    
+    <!-- Benefits -->
+    <h2 style="color: #004E7C; text-align: center; margin-bottom: 20px;">Why Use the App?</h2>
+    
+    <div class="benefits">
+      <div class="benefit">
+        <div class="benefit-icon">⚡</div>
+        <div class="benefit-text">Quick Access<br>One tap to open</div>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon">📱</div>
+        <div class="benefit-text">Works Offline<br>Access info anywhere</div>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon">🎯</div>
+        <div class="benefit-text">Easy Navigation<br>Find what you need fast</div>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon">📅</div>
+        <div class="benefit-text">Event Updates<br>Stay informed</div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <h3 style="color: #004E7C; margin: 0 0 10px 0;">Need Help?</h3>
+      <div class="contact-info">
+        <p><strong>Honolulu Office:</strong> (808) 532-5364 | Toll Free: 1-800-533-9684</p>
+        <p><strong>Ma'ili Office:</strong> (808) 696-5361</p>
+        <p><strong>Email:</strong> ldah@ldahawaii.org</p>
+      </div>
+      <p style="margin-top: 15px; color: #666; font-size: 12px;">
+        Learning Disabilities Association of Hawaiʻi<br>
+        Hawaiʻi & Pacific Island Parent Training & Information Center
+      </p>
+    </div>
+    
+  </div>
+  
+  <div class="no-print" style="max-width: 8.5in; margin: 20px auto; padding: 20px; background: #fff3cd; border-radius: 10px;">
+    <h3 style="margin-top: 0;">📝 To Complete This Flyer:</h3>
+    <ol style="line-height: 1.8;">
+      <li>Go to <strong>qr-code-generator.com</strong> or any QR code generator</li>
+      <li>Create a QR code for: <code style="background: white; padding: 2px 8px; border-radius: 4px;">https://danpoahu.github.io/LDAH/install.html</code></li>
+      <li>Download the QR code image</li>
+      <li>Edit this HTML file and replace the placeholder div with your QR code image</li>
+      <li>Print and distribute!</li>
+    </ol>
+    <p style="margin-bottom: 0;"><strong>Alternative:</strong> Save as PDF and add QR code in Adobe Acrobat or Preview</p>
+  </div>
+  
+</body>
+</html>
