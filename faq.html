@@ -61,7 +61,30 @@
       min-height: 100vh;
       min-height: -webkit-fill-available;
     }
+    /* Screen-only styles */
+    @media screen {
+      .action-guide-wrapper {
+        background: url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed;
+        background-size: cover;
+      }
+      .content-box {
+        backdrop-filter: blur(20px);
+        background-color: rgba(255,255,255,0.25);
+        border-radius: 24px;
+        border: 1px solid rgba(255,255,255,0.3);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        padding: 24px;
+      }
+    }
+    
+    /* Print-only styles */
     @media print {
+      * {
+        background-image: none !important;
+        background: white !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+      }
       body {
         background: white !important;
       }
@@ -71,15 +94,20 @@
       .print-container {
         background: white !important;
         backdrop-filter: none !important;
+        padding: 24px !important;
       }
       .no-print {
         display: none !important;
       }
-      /* Remove all background images when printing */
-      * {
-        background-image: none !important;
+      .action-guide-wrapper {
         background: white !important;
+        min-height: auto !important;
+      }
+      .content-box {
+        background: white !important;
+        border: none !important;
         box-shadow: none !important;
+        padding: 0 !important;
       }
     }
   </style>
@@ -333,7 +361,7 @@
         const selectedFaqs = faqs.filter(faq => selected.has(faq.id));
         
         return (
-          <div className="min-h-screen p-4" style={{ background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
+          <div className="min-h-screen p-4 action-guide-wrapper">
             <div className="max-w-2xl mx-auto">
               <button
                 onClick={() => setShowGuide(false)}
@@ -347,14 +375,7 @@
                 My Action Guide
               </h1>
               
-              <div className="print-container" style={{
-                backdropFilter: 'blur(20px)',
-                backgroundColor: 'rgba(255,255,255,0.25)',
-                borderRadius: '24px',
-                border: '1px solid rgba(255,255,255,0.3)',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                padding: '24px'
-              }}>
+              <div className="print-container content-box">
                 <div className="space-y-8">
                   {selectedFaqs.map((faq, i) => (
                     <div key={faq.id} className="pb-8 border-b border-gray-200 last:border-0 last:pb-0">
