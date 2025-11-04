@@ -46,6 +46,20 @@
       overflow-x: hidden;
     }
     
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .checkbox-box {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #004E7C;
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-top: 3px;
+      background-color: white;
+    }
+    
     body {
       margin: 0;
       padding: 0;
@@ -79,35 +93,44 @@
     
     /* Print-only styles */
     @media print {
+      @page {
+        margin: 0.5in;
+      }
+      
       * {
         background-image: none !important;
         background: white !important;
         box-shadow: none !important;
         backdrop-filter: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
+      
       body {
         background: white !important;
       }
-      button {
+      
+      button, .no-print {
         display: none !important;
       }
-      .print-container {
+      
+      .print-container, .action-guide-wrapper, .content-box {
         background: white !important;
         backdrop-filter: none !important;
-        padding: 24px !important;
-      }
-      .no-print {
-        display: none !important;
-      }
-      .action-guide-wrapper {
-        background: white !important;
-        min-height: auto !important;
-      }
-      .content-box {
-        background: white !important;
+        padding: 0 !important;
         border: none !important;
         box-shadow: none !important;
-        padding: 0 !important;
+        min-height: auto !important;
+      }
+      
+      .checkbox-box {
+        border: 1px solid #004E7C !important;
+      }
+      
+      /* Optimize text rendering for print */
+      h1, h2, h3, p, span {
+        orphans: 3;
+        widows: 3;
       }
     }
   </style>
@@ -359,6 +382,17 @@
       // Action Guide Component
       const ActionGuide = () => {
         const selectedFaqs = faqs.filter(faq => selected.has(faq.id));
+        const [isPrinting, setIsPrinting] = useState(false);
+        
+        const handlePrint = () => {
+          setIsPrinting(true);
+          // Use setTimeout to let React render the loading state first
+          setTimeout(() => {
+            window.print();
+            // Reset loading state after print dialog closes
+            setTimeout(() => setIsPrinting(false), 100);
+          }, 50);
+        };
         
         return (
           <div className="min-h-screen p-4 action-guide-wrapper">
@@ -390,15 +424,7 @@
                           <ul className="space-y-3">
                             {faq.steps.map((step, idx) => (
                               <li key={idx} className="flex gap-3 items-start">
-                                <div style={{
-                                  width: '18px',
-                                  height: '18px',
-                                  border: '2px solid #004E7C',
-                                  borderRadius: '4px',
-                                  flexShrink: 0,
-                                  marginTop: '3px',
-                                  backgroundColor: 'white'
-                                }}></div>
+                                <div className="checkbox-box"></div>
                                 <span className="font-bold text-[#004E7C]">{idx + 1}.</span>
                                 <span className="text-gray-700 flex-1">{step}</span>
                               </li>
@@ -449,13 +475,30 @@
                   ))}
                 </div>
                 
-                <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="mt-6 pt-6 border-t border-gray-200 no-print">
                   <button
-                    onClick={() => window.print()}
-                    className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg flex items-center justify-center gap-2"
+                    onClick={handlePrint}
+                    disabled={isPrinting}
+                    className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Share size={20} />
-                    Print or Share Guide
+                    {isPrinting ? (
+                      <>
+                        <div style={{
+                          width: '20px',
+                          height: '20px',
+                          border: '3px solid rgba(255,255,255,0.3)',
+                          borderTopColor: 'white',
+                          borderRadius: '50%',
+                          animation: 'spin 0.8s linear infinite'
+                        }}></div>
+                        Preparing...
+                      </>
+                    ) : (
+                      <>
+                        <Share size={20} />
+                        Print or Share Guide
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
