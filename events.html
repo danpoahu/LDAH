@@ -616,26 +616,30 @@
             >
               {/* Close Button */}
               <button
-                onClick={() => setSelectedEvent(null)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedEvent(null);
+                }}
                 style={{
-                  position: 'absolute',
-                  top: '20px',
-                  right: '20px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  border: 'none',
-                  width: '40px',
-                  height: '40px',
+                  position: 'fixed',
+                  top: 'calc(env(safe-area-inset-top) + 20px)',
+                  right: 'calc(env(safe-area-inset-right) + 20px)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  border: '2px solid #004E7C',
+                  width: '48px',
+                  height: '48px',
                   borderRadius: '50%',
-                  fontSize: '24px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   zIndex: 1001,
-                  fontWeight: 'bold'
+                  color: '#004E7C',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  padding: 0
                 }}
               >
-                ×
+                <X size={24} />
               </button>
 
               {/* Full-Screen Image */}
