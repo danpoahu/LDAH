@@ -68,6 +68,19 @@
       button {
         display: none !important;
       }
+      .print-container {
+        background: white !important;
+        backdrop-filter: none !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      /* Remove all background images when printing */
+      * {
+        background-image: none !important;
+        background: white !important;
+        box-shadow: none !important;
+      }
     }
   </style>
 </head>
@@ -324,7 +337,7 @@
             <div className="max-w-2xl mx-auto">
               <button
                 onClick={() => setShowGuide(false)}
-                className="flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity"
+                className="no-print flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity"
               >
                 <ChevronLeft size={20} />
                 Back
@@ -334,7 +347,7 @@
                 My Action Guide
               </h1>
               
-              <div style={{
+              <div className="print-container" style={{
                 backdropFilter: 'blur(20px)',
                 backgroundColor: 'rgba(255,255,255,0.25)',
                 borderRadius: '24px',
