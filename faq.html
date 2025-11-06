@@ -327,10 +327,77 @@
         const handlePrint = () => {
           setIsPrinting(true);
 
-          const cleanup = (iframe) => {
-            try { if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe); } catch {}
-            setIsPrinting(false);
+          const src = document.querySelector('.print-container');
+          if (!src) { try { window.print(); } finally { setIsPrinting(false); } return; }
+
+          const clone = src.cloneNode(true);
+          clone.querySelectorAll('.no-print').forEach(n => n.remove());
+          const innerHTML = clone.innerHTML;
+
+          const isIOS = () => {
+            const ua = window.navigator.userAgent || '';
+            const platform = window.navigator.platform || '';
+            const touchMac = /Mac/.test(platform) && navigator.maxTouchPoints > 1; // iPadOS masquerades as Mac
+            return /iPad|iPhone|iPod/.test(ua) || touchMac;
           };
+
+          if (isIOS()) {
+            const originalHTML = document.body.innerHTML;
+            const styleId = '__printStyle';
+            const styleTag = document.createElement('style');
+            styleTag.id = styleId;
+            styleTag.textContent = `@page{margin:0.5in}*{background:#fff!important;box-shadow:none!important}html,body{height:auto}body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111827}h1,h2,h3{margin:0 0 12px;break-after:avoid;page-break-after:avoid}.section{padding-bottom:16px;border-bottom:1px solid #e5e7eb;margin-bottom:16px;break-inside:avoid;page-break-inside:avoid}.checkbox-box{width:18px;height:18px;border:1px solid #004E7C;border-radius:4px;margin-top:3px;flex-shrink:0}ul{padding-left:0;margin:0;list-style:none;break-inside:avoid;page-break-inside:avoid}li{display:flex;gap:12px;align-items:flex-start;margin:8px 0;break-inside:avoid;page-break-inside:avoid}.num{font-weight:700;color:#004E7C}a{color:#004E7C;text-decoration:underline}img{display:none!important}.container{max-width:750px;margin:0 auto}.print-header{text-align:center;margin-bottom:12px}.print-logo{display:block!important;width:110px;height:auto;margin:0 auto 8px}.title{text-align:center;font-weight:700;margin:0 0 24px;font-size:24px}`;
+            document.head.appendChild(styleTag);
+
+            const printRoot = document.createElement('div');
+            printRoot.id = '__printRoot';
+            printRoot.innerHTML = `<div class="container"><div class="print-header"><img src="https://danpoahu.github.io/LDAH/logo_transparent.png" alt="LDAH Logo" class="print-logo" /><h1 class="title">My Action Guide</h1></div>${innerHTML}</div>`;
+
+            document.body.innerHTML = '';
+            document.body.appendChild(printRoot);
+
+            let finished = false;
+            const restore = () => {
+              if (finished) return; finished = true;
+              try { document.body.innerHTML = originalHTML; } catch {}
+              try { const st = document.getElementById(styleId); if (st) st.remove(); } catch {}
+              setIsPrinting(false);
+            };
+
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              try { window.print(); } catch {}
+              try { window.addEventListener('afterprint', restore, { once:true }); } catch {}
+              setTimeout(restore, 1500);
+            }));
+
+            return;
+          }
+
+          const html = buildPrintableHTML(innerHTML);
+          const iframe = document.createElement('iframe');
+          iframe.setAttribute('aria-hidden', 'true');
+          Object.assign(iframe.style, { position:'fixed', right:'0', bottom:'0', width:'0', height:'0', border:'0' });
+          document.body.appendChild(iframe);
+
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+          let didPrint = false;
+          let safetyTimer = null;
+
+          const finish = () => { try { if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe); } catch {} setIsPrinting(false); };
+          const tryPrint = () => {
+            if (didPrint) return; didPrint = true;
+            try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } finally {
+              try { iframe.contentWindow.addEventListener('afterprint', finish, { once:true }); } catch {}
+              if (safetyTimer) clearTimeout(safetyTimer);
+              safetyTimer = setTimeout(finish, 1500);
+            }
+          };
+
+          doc.open(); doc.write(html); doc.close();
+          const whenReady = async () => { try { if (doc.fonts && doc.fonts.ready) await doc.fonts.ready; } catch {} requestAnimationFrame(() => requestAnimationFrame(tryPrint)); };
+          if (doc.readyState === 'complete') whenReady();
+          else { doc.addEventListener('readystatechange', () => { if (doc.readyState === 'complete') whenReady(); }); safetyTimer = setTimeout(whenReady, 600); }
+        };
 
           const guideEl = document.querySelector('.print-container');
           if (!guideEl) {
