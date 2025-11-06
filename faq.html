@@ -14,7 +14,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-32PRRS0W85"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag(){dataLayer.push(arguments);} 
     gtag('js', new Date());
     gtag('config', 'G-32PRRS0W85');
   </script>
@@ -93,10 +93,7 @@
     
     /* Print-only styles */
     @media print {
-      @page {
-        margin: 0.5in;
-      }
-      
+      @page { margin: 0.5in; }
       * {
         background-image: none !important;
         background: white !important;
@@ -105,15 +102,8 @@
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
-      
-      body {
-        background: white !important;
-      }
-      
-      button, .no-print {
-        display: none !important;
-      }
-      
+      body { background: white !important; }
+      button, .no-print { display: none !important; }
       .print-container, .action-guide-wrapper, .content-box {
         background: white !important;
         backdrop-filter: none !important;
@@ -122,16 +112,8 @@
         box-shadow: none !important;
         min-height: auto !important;
       }
-      
-      .checkbox-box {
-        border: 1px solid #004E7C !important;
-      }
-      
-      /* Optimize text rendering for print */
-      h1, h2, h3, p, span {
-        orphans: 3;
-        widows: 3;
-      }
+      .checkbox-box { border: 1px solid #004E7C !important; }
+      h1, h2, h3, p, span { orphans: 3; widows: 3; }
     }
   </style>
 </head>
@@ -249,77 +231,40 @@
       appId: "1:662130454003:web:437576d5a5811ecd8df686"
     };
 
-    // Initialize Firebase
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
-
     const db = firebase.firestore();
     const auth = firebase.auth();
+    // Sign in anonymously so Firestore rules that require auth will allow reads
+    auth.signInAnonymously().catch(err => console.error('Anonymous auth failed:', err));
 
-    // Sign in anonymously
-    auth.signInAnonymously().catch(error => {
-      console.error('Anonymous auth failed:', error);
-    });
-
-    // Error boundary wrapper
     class ErrorBoundary extends React.Component {
       constructor(props) {
         super(props);
-        this.state = { hasError: false, error: null };
+        this.state = { hasError: false };
       }
 
       static getDerivedStateFromError(error) {
-        return { hasError: true, error: error };
+        return { hasError: true };
       }
 
       componentDidCatch(error, errorInfo) {
-        console.error('React Error:', error, errorInfo);
+        console.error('Error caught by error boundary:', error, errorInfo);
       }
 
       render() {
         if (this.state.hasError) {
           return (
-            <div style={{ 
-              minHeight: '100vh', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              padding: '20px',
-              background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover'
-            }}>
-              <div style={{ 
-                backgroundColor: 'white', 
-                padding: '32px', 
-                borderRadius: '16px', 
-                maxWidth: '500px',
-                textAlign: 'center'
-              }}>
-                <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
-                  Something went wrong
-                </h2>
-                <p style={{ color: '#666', marginBottom: '24px' }}>
-                  Please refresh the page to try again.
-                </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  style={{
-                    backgroundColor: '#004E7C',
-                    color: 'white',
-                    padding: '12px 24px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontWeight: '600'
-                  }}
-                >
-                  Refresh Page
-                </button>
+            <div className="min-h-screen flex items-center justify-center" style={{ background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
+              <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', maxWidth: '500px', textAlign: 'center' }}>
+                <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Something went wrong</h2>
+                <p style={{ color: '#666', marginBottom: '24px' }}>Please refresh the page to try again.</p>
+                <button onClick={() => window.location.reload()} style={{ backgroundColor: '#004E7C', color: 'white', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Refresh Page</button>
               </div>
             </div>
           );
         }
-
         return this.props.children;
       }
     }
@@ -334,23 +279,27 @@
       const [loading, setLoading] = useState(true);
 
       useEffect(() => {
-        const unsubscribeCategories = db.collection('categories')
-          .onSnapshot(snapshot => {
-            const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const unsubscribeCategories = db.collection('categories').onSnapshot(
+          (snapshot) => {
+            const cats = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
             setCategories(cats);
             setLoading(false);
-          }, error => {
+          },
+          (error) => {
             console.error('Error loading categories:', error);
             setLoading(false);
-          });
+          }
+        );
 
-        const unsubscribeFaqs = db.collection('faqs')
-          .onSnapshot(snapshot => {
-            const faqList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const unsubscribeFaqs = db.collection('faqs').onSnapshot(
+          (snapshot) => {
+            const faqList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
             setFaqs(faqList);
-          }, error => {
+          },
+          (error) => {
             console.error('Error loading FAQs:', error);
-          });
+          }
+        );
 
         return () => {
           unsubscribeCategories();
@@ -360,111 +309,135 @@
 
       const toggleSelection = (faqId) => {
         const newSelected = new Set(selected);
-        if (newSelected.has(faqId)) {
-          newSelected.delete(faqId);
-        } else {
-          newSelected.add(faqId);
-        }
+        if (newSelected.has(faqId)) newSelected.delete(faqId); else newSelected.add(faqId);
         setSelected(newSelected);
       };
 
       const toggleCategory = (categoryId) => {
         const newExpanded = new Set();
-        // Only keep the category open if it's not already open
-        if (!expandedCategories.has(categoryId)) {
-          newExpanded.add(categoryId);
-        }
+        if (!expandedCategories.has(categoryId)) newExpanded.add(categoryId);
         setExpandedCategories(newExpanded);
       };
 
-      // Admin Panel is now in separate admin.html file
-
       // Action Guide Component
       const ActionGuide = () => {
-        const selectedFaqs = faqs.filter(faq => selected.has(faq.id));
+        const selectedFaqs = faqs.filter((faq) => selected.has(faq.id));
         const [isPrinting, setIsPrinting] = useState(false);
-        
+
         const handlePrint = () => {
           setIsPrinting(true);
-          // Use setTimeout to let React render the loading state first
-          setTimeout(() => {
-            window.print();
-            // Reset loading state after print dialog closes
-            setTimeout(() => setIsPrinting(false), 100);
-          }, 50);
+
+          // Grab the guide markup
+          const guideEl = document.querySelector('.print-container');
+          const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Action Guide</title>
+  <style>
+    @page { margin: 0.5in; }
+    * { background: white !important; box-shadow: none !important; }
+    body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; color: #111827; }
+    h1,h2,h3 { color: #111827; margin: 0 0 12px; }
+    .section { padding-bottom: 16px; border-bottom: 1px solid #e5e7eb; margin-bottom: 16px; }
+    .section:last-child { border: 0; margin-bottom: 0; padding-bottom: 0; }
+    .checkbox-box{ width:18px;height:18px;border:1px solid #004E7C;border-radius:4px;margin-top:3px;flex-shrink:0; }
+    ul{ padding-left:0; margin:0; list-style:none; }
+    li{ display:flex; gap:12px; align-items:flex-start; margin:8px 0; }
+    .num{ font-weight:700; color:#004E7C; }
+    a{ color:#004E7C; text-decoration:underline; }
+    img{ display:none !important; }
+    .container{ max-width: 750px; margin: 0 auto; }
+    .title{ text-align:center; font-weight:700; margin: 0 0 24px; font-size: 24px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">My Action Guide</h1>
+    ${guideEl ? guideEl.innerHTML : '<p>No content.</p>'}
+  </div>
+</body>
+</html>`;
+
+          // Create a hidden iframe and print only that minimal document
+          const iframe = document.createElement('iframe');
+          iframe.setAttribute('aria-hidden', 'true');
+          iframe.style.position = 'fixed';
+          iframe.style.right = '0';
+          iframe.style.bottom = '0';
+          iframe.style.width = '0';
+          iframe.style.height = '0';
+          iframe.style.border = '0';
+          document.body.appendChild(iframe);
+
+          const doc = iframe.contentWindow.document;
+          doc.open();
+          doc.write(html);
+          doc.close();
+
+          // On iOS/Safari a small delay helps layout before print
+          iframe.onload = () => {
+            setTimeout(() => {
+              try {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+              } finally {
+                // clean up once the print dialog is triggered
+                setTimeout(() => {
+                  document.body.removeChild(iframe);
+                  setIsPrinting(false);
+                }, 400);
+              }
+            }, 60);
+          };
         };
-        
+
         return (
           <div className="min-h-screen p-4 action-guide-wrapper">
             <div className="max-w-2xl mx-auto">
-              <button
-                onClick={() => setShowGuide(false)}
-                className="no-print flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity"
-              >
+              <button onClick={() => setShowGuide(false)} className="no-print flex items-center gap-2 text-[#004E7C] font-semibold mb-4 hover:opacity-70 transition-opacity">
                 <ChevronLeft size={20} />
                 Back
               </button>
-              
-              <h1 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">
-                My Action Guide
-              </h1>
-              
+
+              <h1 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">My Action Guide</h1>
+
               <div className="print-container content-box">
                 <div className="space-y-8">
-                  {selectedFaqs.map((faq, i) => (
-                    <div key={faq.id} className="pb-8 border-b border-gray-200 last:border-0 last:pb-0">
+                  {selectedFaqs.map((faq) => (
+                    <div key={faq.id} className="pb-8 border-b border-gray-200 last:border-0 last:pb-0 section">
                       <h3 className="font-bold text-xl mb-3 text-gray-900">{faq.question}</h3>
-                      
-                      {faq.summary && (
-                        <p className="text-gray-700 mb-4 leading-relaxed">{faq.summary}</p>
-                      )}
-                      
+                      {faq.summary && <p className="text-gray-700 mb-4 leading-relaxed">{faq.summary}</p>}
                       {faq.steps && faq.steps.length > 0 && (
                         <div className="mb-4">
                           <ul className="space-y-3">
                             {faq.steps.map((step, idx) => (
                               <li key={idx} className="flex gap-3 items-start">
                                 <div className="checkbox-box"></div>
-                                <span className="font-bold text-[#004E7C]">{idx + 1}.</span>
+                                <span className="font-bold text-[#004E7C] num">{idx + 1}.</span>
                                 <span className="text-gray-700 flex-1">{step}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
                       )}
-                      
                       {faq.contact && (
                         <div className="mt-3 pt-3 border-t border-gray-200">
                           <p className="text-sm text-gray-600">
                             <strong>Contact:</strong>{' '}
                             {(() => {
                               const contact = faq.contact.trim();
-                              // Check if it's an email
                               if (contact.includes('@')) {
                                 return (
-                                  <a 
-                                    href={`mailto:${contact}`}
-                                    className="text-[#004E7C] underline hover:opacity-70"
-                                  >
-                                    {contact}
-                                  </a>
+                                  <a href={`mailto:${contact}`} className="text-[#004E7C] underline hover:opacity-70">{contact}</a>
                                 );
-                              }
-                              // Check if it's a phone number (contains digits and common phone chars)
-                              else if (/[\d\(\)\-\s]/.test(contact)) {
-                                // Remove all non-digit characters for the tel: link
+                              } else if (/[^\s]/.test(contact) && /[\d\(\)\-\s]/.test(contact)) {
                                 const cleanPhone = contact.replace(/\D/g, '');
                                 return (
-                                  <a 
-                                    href={`tel:${cleanPhone}`}
-                                    className="text-[#004E7C] underline hover:opacity-70"
-                                  >
-                                    {contact}
-                                  </a>
+                                  <a href={`tel:${cleanPhone}`} className="text-[#004E7C] underline hover:opacity-70">{contact}</a>
                                 );
-                              }
-                              // Otherwise just display as text
-                              else {
+                              } else {
                                 return contact;
                               }
                             })()}
@@ -474,23 +447,12 @@
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="mt-6 pt-6 border-t border-gray-200 no-print">
-                  <button
-                    onClick={handlePrint}
-                    disabled={isPrinting}
-                    className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
+                  <button onClick={handlePrint} disabled={isPrinting} className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                     {isPrinting ? (
                       <>
-                        <div style={{
-                          width: '20px',
-                          height: '20px',
-                          border: '3px solid rgba(255,255,255,0.3)',
-                          borderTopColor: 'white',
-                          borderRadius: '50%',
-                          animation: 'spin 0.8s linear infinite'
-                        }}></div>
+                        <div style={{ width: '20px', height: '20px', border: '3px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
                         Preparing...
                       </>
                     ) : (
@@ -507,9 +469,7 @@
         );
       };
 
-      if (showGuide) {
-        return <ActionGuide />;
-      }
+      if (showGuide) return <ActionGuide />;
 
       if (loading) {
         return (
@@ -528,205 +488,57 @@
             {/* Logo Section */}
             <div className="text-center mb-4 mt-2 relative">
               {/* Hamburger Menu Icon */}
-              <button 
-                onClick={() => setMenuOpen(!menuOpen)}
-                style={{
-                  position: 'absolute',
-                  top: '8px',
-                  right: '8px',
-                  color: '#004E7C',
-                  cursor: 'pointer',
-                  transition: 'opacity 0.2s',
-                  display: 'inline-block',
-                  background: 'none',
-                  border: 'none',
-                  padding: '4px'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.opacity = '0.7';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.opacity = '1';
-                }}
-              >
+              <button onClick={() => setMenuOpen(!menuOpen)} style={{ position: 'absolute', top: '8px', right: '8px', color: '#004E7C', cursor: 'pointer', transition: 'opacity 0.2s', display: 'inline-block', background: 'none', border: 'none', padding: '4px' }} onMouseOver={(e) => { e.currentTarget.style.opacity = '0.7'; }} onMouseOut={(e) => { e.currentTarget.style.opacity = '1'; }}>
                 {menuOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
 
               {/* Dropdown Menu */}
               {menuOpen && (
-                <div style={{
-                  position: 'absolute',
-                  top: '40px',
-                  right: '8px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                  borderRadius: '10px',
-                  border: '2px solid #004E7C',
-                  backdropFilter: 'blur(10px)',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                  zIndex: 1000,
-                  minWidth: '140px',
-                  fontSize: '13px'
-                }}>
-                  <a href="index.html" style={{
-                    display: 'block',
-                    padding: '8px 14px',
-                    color: '#004E7C',
-                    textDecoration: 'none',
-                    fontWeight: 'bold',
-                    borderBottom: '1px solid rgba(0, 78, 124, 0.1)',
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    🏠 Home
-                  </a>
-                  <a href="events.html" style={{
-                    display: 'block',
-                    padding: '8px 14px',
-                    color: '#004E7C',
-                    textDecoration: 'none',
-                    fontWeight: 'bold',
-                    borderBottom: '1px solid rgba(0, 78, 124, 0.1)',
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    📅 Events
-                  </a>
-                  <a href="faq.html" style={{
-                    display: 'block',
-                    padding: '8px 14px',
-                    color: '#004E7C',
-                    textDecoration: 'none',
-                    fontWeight: 'bold',
-                    borderBottom: '1px solid rgba(0, 78, 124, 0.1)',
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    ❓ Quick Help
-                  </a>
-                  <a href="volunteer.html" style={{
-                    display: 'block',
-                    padding: '8px 14px',
-                    color: '#004E7C',
-                    textDecoration: 'none',
-                    fontWeight: 'bold',
-                    borderBottom: '1px solid rgba(0, 78, 124, 0.1)',
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    🤝 Volunteer
-                  </a>
-                  <a href="contact.html" style={{
-                    display: 'block',
-                    padding: '8px 14px',
-                    color: '#004E7C',
-                    textDecoration: 'none',
-                    fontWeight: 'bold',
-                    transition: 'background 0.2s',
-                    borderRadius: '0 0 8px 8px'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    📞 Contact Us
-                  </a>
+                <div style={{ position: 'absolute', top: '40px', right: '8px', backgroundColor: 'rgba(255, 255, 255, 0.98)', borderRadius: '10px', border: '2px solid #004E7C', backdropFilter: 'blur(10px)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', zIndex: 1000, minWidth: '140px', fontSize: '13px' }}>
+                  <a href="index.html" style={{ display: 'block', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>🏠 Home</a>
+                  <a href="events.html" style={{ display: 'block', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>📅 Events</a>
+                  <a href="faq.html" style={{ display: 'block', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>❓ Quick Help</a>
+                  <a href="volunteer.html" style={{ display: 'block', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>🤝 Volunteer</a>
+                  <a href="contact.html" style={{ display: 'block', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', transition: 'background 0.2s', borderRadius: '0 0 8px 8px' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>📞 Contact Us</a>
                 </div>
               )}
 
               <div className="mb-2 flex justify-center">
                 <a href="index.html" style={{ textDecoration: 'none' }}>
-                  <div style={{
-                    backgroundColor: 'transparent',
-                    borderRadius: '20px',
-                    padding: '16px',
-                    display: 'inline-block',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                  >
-                    <img 
-                      src="https://danpoahu.github.io/LDAH/logo_transparent.png" 
-                      alt="LDAH Logo"
-                      style={{ width: '120px', height: '120px', display: 'block' }}
-                    />
+                  <div style={{ backgroundColor: 'transparent', borderRadius: '20px', padding: '16px', display: 'inline-block', cursor: 'pointer', transition: 'transform 0.2s' }} onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'} onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                    <img src="https://danpoahu.github.io/LDAH/logo_transparent.png" alt="LDAH Logo" style={{ width: '120px', height: '120px', display: 'block' }} />
                   </div>
                 </a>
               </div>
               <h1 className="text-2xl font-bold text-[#004E7C] mb-1">FAQ Helper</h1>
-              <p className="text-gray-600 text-sm mb-2">
-                Select questions to create your personalized action guide
-              </p>
+              <p className="text-gray-600 text-sm mb-2">Select questions to create your personalized action guide</p>
             </div>
 
             {/* Categories with Accordion */}
             <div className="space-y-3 mb-6">
               {categories.length === 0 ? (
-                <div style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '20px',
-                  padding: '32px',
-                  textAlign: 'center',
-                  border: '2px solid #004E7C',
-                  backdropFilter: 'blur(10px)'
-                }}>
+                <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '20px', padding: '32px', textAlign: 'center', border: '2px solid #004E7C', backdropFilter: 'blur(10px)' }}>
                   <p className="text-gray-600 mb-4">No categories yet. Check back soon!</p>
                 </div>
               ) : (
-                categories.sort((a, b) => a.order - b.order).map(category => {
-                  const categoryFaqs = faqs.filter(f => f.categoryId === category.id).sort((a, b) => a.order - b.order);
+                categories.sort((a, b) => a.order - b.order).map((category) => {
+                  const categoryFaqs = faqs.filter((f) => f.categoryId === category.id).sort((a, b) => a.order - b.order);
                   const isExpanded = expandedCategories.has(category.id);
-                  const selectedInCategory = categoryFaqs.filter(f => selected.has(f.id)).length;
+                  const selectedInCategory = categoryFaqs.filter((f) => selected.has(f.id)).length;
 
                   return (
-                    <div key={category.id} style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      borderRadius: '20px',
-                      overflow: 'hidden',
-                      border: '2px solid #004E7C',
-                      backdropFilter: 'blur(10px)'
-                    }}>
+                    <div key={category.id} style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '20px', overflow: 'hidden', border: '2px solid #004E7C', backdropFilter: 'blur(10px)' }}>
                       {/* Category Header - Always Visible */}
-                      <button
-                        onClick={() => toggleCategory(category.id)}
-                        style={{
-                          width: '100%',
-                          padding: '20px',
-                          cursor: 'pointer',
-                          border: 'none',
-                          backgroundColor: 'transparent',
-                          textAlign: 'left',
-                          transition: 'background-color 0.2s'
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'}
-                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
+                      <button onClick={() => toggleCategory(category.id)} style={{ width: '100%', padding: '20px', cursor: 'pointer', border: 'none', backgroundColor: 'transparent', textAlign: 'left', transition: 'background-color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <Folder size={24} className="text-[#004E7C]" />
                             <div>
                               <h3 className="font-bold text-lg text-gray-900">{category.name}</h3>
-                              <p className="text-sm text-gray-600">
-                                {categoryFaqs.length} {categoryFaqs.length === 1 ? 'question' : 'questions'}
-                                {selectedInCategory > 0 && (
-                                  <span className="text-[#004E7C] font-semibold ml-2">
-                                    • {selectedInCategory} selected
-                                  </span>
-                                )}
-                              </p>
+                              <p className="text-sm text-gray-600">{categoryFaqs.length} {categoryFaqs.length === 1 ? 'question' : 'questions'}{selectedInCategory > 0 && (<span className="text-[#004E7C] font-semibold ml-2">• {selectedInCategory} selected</span>)}</p>
                             </div>
                           </div>
-                          <div className="transform transition-transform" style={{
-                            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'
-                          }}>
+                          <div className="transform transition-transform" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                             <ChevronDown size={24} className="text-[#004E7C]" />
                           </div>
                         </div>
@@ -734,45 +546,17 @@
 
                       {/* Expanded Questions */}
                       {isExpanded && (
-                        <div style={{
-                          borderTop: '1px solid #e5e7eb',
-                          padding: '12px 20px 20px 20px'
-                        }}>
+                        <div style={{ borderTop: '1px solid #e5e7eb', padding: '12px 20px 20px 20px' }}>
                           {categoryFaqs.length === 0 ? (
-                            <p className="text-gray-500 text-sm text-center py-4">
-                              No questions in this category yet.
-                            </p>
+                            <p className="text-gray-500 text-sm text-center py-4">No questions in this category yet.</p>
                           ) : (
                             <div className="space-y-2">
                               {categoryFaqs.map((faq) => {
                                 const isSelected = selected.has(faq.id);
                                 return (
-                                  <div
-                                    key={faq.id}
-                                    onClick={() => toggleSelection(faq.id)}
-                                    style={{
-                                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                                      borderRadius: '12px',
-                                      padding: '16px',
-                                      cursor: 'pointer',
-                                      border: isSelected ? '2px solid #004E7C' : '2px solid rgba(0, 78, 124, 0.3)',
-                                      transition: 'all 0.2s',
-                                      backdropFilter: 'blur(10px)'
-                                    }}
-                                  >
+                                  <div key={faq.id} onClick={() => toggleSelection(faq.id)} style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '16px', cursor: 'pointer', border: isSelected ? '2px solid #004E7C' : '2px solid rgba(0, 78, 124, 0.3)', transition: 'all 0.2s', backdropFilter: 'blur(10px)' }}>
                                     <div className="flex items-start gap-3">
-                                      <div style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        borderRadius: '6px',
-                                        border: '2px solid #004E7C',
-                                        backgroundColor: isSelected ? '#004E7C' : 'white',
-                                        flexShrink: 0,
-                                        marginTop: '2px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                      }}>
+                                      <div style={{ width: '20px', height: '20px', borderRadius: '6px', border: '2px solid #004E7C', backgroundColor: isSelected ? '#004E7C' : 'white', flexShrink: 0, marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         {isSelected && (
                                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
                                             <polyline points="20 6 9 17 4 12"></polyline>
@@ -781,9 +565,7 @@
                                       </div>
                                       <div className="flex-1">
                                         <h4 className="font-semibold text-sm mb-1 text-gray-900">{faq.question}</h4>
-                                        {faq.summary && (
-                                          <p className="text-xs text-gray-600">{faq.summary}</p>
-                                        )}
+                                        {faq.summary && (<p className="text-xs text-gray-600">{faq.summary}</p>)}
                                       </div>
                                     </div>
                                   </div>
@@ -801,26 +583,10 @@
 
             {/* Fixed Bottom Button */}
             {selected.size > 0 && (
-              <div style={{
-                position: 'fixed',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: 'white',
-                padding: '16px',
-                borderTop: '2px solid #e5e7eb',
-                boxShadow: '0 -4px 6px rgba(0,0,0,0.1)'
-              }}>
+              <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: 'white', padding: '16px', borderTop: '2px solid #e5e7eb', boxShadow: '0 -4px 6px rgba(0,0,0,0.1)' }}>
                 <div className="max-w-2xl mx-auto">
-                  <p className="text-center text-gray-700 mb-2 text-sm">
-                    <strong>{selected.size}</strong> {selected.size === 1 ? 'question' : 'questions'} selected
-                  </p>
-                  <button
-                    onClick={() => setShowGuide(true)}
-                    className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg"
-                  >
-                    Create My Action Guide →
-                  </button>
+                  <p className="text-center text-gray-700 mb-2 text-sm"><strong>{selected.size}</strong> {selected.size === 1 ? 'question' : 'questions'} selected</p>
+                  <button onClick={() => setShowGuide(true)} className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg">Create My Action Guide →</button>
                 </div>
               </div>
             )}
@@ -835,7 +601,7 @@
     ReactDOM.render(
       <ErrorBoundary>
         <LDAHApp />
-      </ErrorBoundary>, 
+      </ErrorBoundary>,
       document.getElementById('root')
     );
   </script>
