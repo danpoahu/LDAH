@@ -327,8 +327,18 @@
         const handlePrint = () => {
           setIsPrinting(true);
 
-          // Grab the guide markup
+          const cleanup = (iframe) => {
+            try { if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe); } catch {}
+            setIsPrinting(false);
+          };
+
           const guideEl = document.querySelector('.print-container');
+          if (!guideEl) {
+            // Fallback: just use normal print
+            try { window.print(); } finally { setIsPrinting(false); }
+            return;
+          }
+
           const html = `<!doctype html>
 <html>
 <head>
@@ -355,12 +365,18 @@
 <body>
   <div class="container">
     <h1 class="title">My Action Guide</h1>
-    ${guideEl ? guideEl.innerHTML : '<p>No content.</p>'}
+    ${guideEl.innerHTML}
   </div>
+  <script>
+    // iOS sometimes defers printing until user gesture; provide a manual hook
+    window.startPrint = function(){ try{ window.focus(); window.print(); }catch(e){} };
+    // If the document is already ready, auto print after a tick
+    if (document.readyState === 'complete') { setTimeout(window.startPrint, 50); }
+    else { document.addEventListener('readystatechange', function(){ if (document.readyState === 'complete') setTimeout(window.startPrint, 50); }); }
+  <\/script>
 </body>
 </html>`;
 
-          // Create a hidden iframe and print only that minimal document
           const iframe = document.createElement('iframe');
           iframe.setAttribute('aria-hidden', 'true');
           iframe.style.position = 'fixed';
@@ -371,26 +387,33 @@
           iframe.style.border = '0';
           document.body.appendChild(iframe);
 
-          const doc = iframe.contentWindow.document;
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
           doc.open();
           doc.write(html);
           doc.close();
 
-          // On iOS/Safari a small delay helps layout before print
-          iframe.onload = () => {
-            setTimeout(() => {
-              try {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-              } finally {
-                // clean up once the print dialog is triggered
-                setTimeout(() => {
-                  document.body.removeChild(iframe);
-                  setIsPrinting(false);
-                }, 400);
-              }
-            }, 60);
+          const tryPrint = () => {
+            try { iframe.contentWindow.startPrint(); } finally {
+              // In desktop Safari/Chrome, afterprint fires; keep a hard fallback too
+              setTimeout(() => cleanup(iframe), 1200);
+            }
           };
+
+          // Best-effort readiness checks (some browsers don't fire iframe onload after document.write)
+          if (doc.readyState === 'complete') {
+            setTimeout(tryPrint, 60);
+          } else {
+            doc.addEventListener('readystatechange', () => {
+              if (doc.readyState === 'complete') setTimeout(tryPrint, 60);
+            });
+            // absolute fallback in case readystatechange doesn't fire
+            setTimeout(tryPrint, 600);
+          }
+
+          // Also clean up after the print dialog actually closes
+          try {
+            iframe.contentWindow.addEventListener('afterprint', () => cleanup(iframe));
+          } catch {}
         };
 
         return (
