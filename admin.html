@@ -1509,26 +1509,81 @@
           return;
         }
 
-        // Create CSV content
-        const headers = ['Name', 'Email', 'Phone', 'Preferred Contact', 'Selected Dates', 'Participation Type', 'Group Name', 'Group Size', 'Additional Comments', 'Status', 'Submitted At'];
-        const rows = eventSignups.map(signup => [
-          signup.name || '',
-          signup.email || '',
-          signup.phone || '',
-          signup.preferredContact || '',
-          (signup.selectedDates || []).join('; '),
-          signup.participationType || '',
-          signup.groupName || '',
-          signup.groupSize || '',
-          signup.additionalComments || '',
-          signup.status || 'pending',
-          signup.timestamp ? new Date(signup.timestamp.seconds * 1000).toLocaleString() : ''
-        ]);
+        // Group signups by date (same logic as card display)
+        const dateGroups = {};
+        
+        eventSignups.forEach(signup => {
+          if (signup.selectedDates && signup.selectedDates.length > 0) {
+            signup.selectedDates.forEach(date => {
+              if (!dateGroups[date]) {
+                dateGroups[date] = [];
+              }
+              dateGroups[date].push(signup);
+            });
+          } else {
+            if (!dateGroups['No Date Selected']) {
+              dateGroups['No Date Selected'] = [];
+            }
+            dateGroups['No Date Selected'].push(signup);
+          }
+        });
 
-        const csvContent = [
-          headers.join(','),
-          ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-        ].join('\n');
+        // Sort dates chronologically
+        const sortedDates = Object.keys(dateGroups).sort((a, b) => {
+          if (a === 'No Date Selected') return 1;
+          if (b === 'No Date Selected') return -1;
+          return a.localeCompare(b);
+        });
+
+        // Build CSV content grouped by date
+        const csvLines = [];
+        const headers = ['DATE/TIME', 'NAME', 'EMAIL', 'PHONE', 'PREFERRED CONTACT', 'PARTICIPATION TYPE', 'GROUP NAME', 'GROUP SIZE', 'ALL SELECTED DATES', 'ADDITIONAL COMMENTS', 'STATUS', 'SUBMITTED AT'];
+        
+        sortedDates.forEach(date => {
+          // Add blank line before each date group (except first)
+          if (csvLines.length > 0) {
+            csvLines.push('');
+          }
+          
+          // Add date header row
+          csvLines.push(`"=== ${date} ==="`);
+          
+          // Add column headers (uppercase for emphasis)
+          csvLines.push(headers.map(h => `"${h}"`).join(','));
+          
+          // Get unique signups for this date
+          const uniqueSignups = Array.from(new Set(dateGroups[date].map(s => s.id)))
+            .map(id => dateGroups[date].find(s => s.id === id));
+          
+          // Sort by status
+          const statusOrder = { 'pending': 1, 'contacted': 2, 'confirmed': 3, 'declined': 4 };
+          const sortedSignups = uniqueSignups.sort((a, b) => {
+            const statusA = statusOrder[a.status || 'pending'] || 999;
+            const statusB = statusOrder[b.status || 'pending'] || 999;
+            return statusA - statusB;
+          });
+          
+          // Add signup rows for this date
+          sortedSignups.forEach(signup => {
+            const row = [
+              date, // Current date/time group
+              signup.name || '',
+              signup.email || '',
+              signup.phone || '',
+              signup.preferredContact || '',
+              signup.participationType || '',
+              signup.groupName || '',
+              signup.groupSize || '',
+              (signup.selectedDates || []).join('; '), // All dates they selected
+              signup.additionalComments || '',
+              signup.status || 'pending',
+              signup.timestamp ? new Date(signup.timestamp.seconds * 1000).toLocaleString() : ''
+            ];
+            csvLines.push(row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','));
+          });
+        });
+
+        const csvContent = csvLines.join('\n');
 
         // Create download link
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1658,6 +1713,30 @@
       };
 
       const unreadCount = applications.filter(app => app.status === 'new').length;
+      
+      // Count pending signups across all events
+      const [allEventSignups, setAllEventSignups] = useState([]);
+      
+      useEffect(() => {
+        const loadAllSignups = async () => {
+          try {
+            const allSignups = [];
+            for (const event of events) {
+              const signupsSnapshot = await db.collection('events').doc(event.id).collection('signups').where('status', '==', 'pending').get();
+              allSignups.push(...signupsSnapshot.docs);
+            }
+            setAllEventSignups(allSignups);
+          } catch (error) {
+            console.error('Error loading event signups count:', error);
+          }
+        };
+        
+        if (events.length > 0) {
+          loadAllSignups();
+        }
+      }, [events, eventSignups]); // Reload when events change or when signups are updated
+      
+      const pendingSignupsCount = allEventSignups.length;
 
       // Drag and drop for categories
       const handleCategoryDragStart = (e, index) => {
@@ -1910,10 +1989,26 @@
                     fontWeight: 'bold',
                     fontSize: '14px',
                     border: 'none',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    position: 'relative'
                   }}
                 >
                   Event Signups
+                  {pendingSignupsCount > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-8px',
+                      right: '-8px',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      borderRadius: '12px',
+                      padding: '2px 8px',
+                      fontSize: '12px',
+                      fontWeight: 'bold'
+                    }}>
+                      {pendingSignupsCount}
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => {
