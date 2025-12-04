@@ -144,6 +144,7 @@
         preferredContact: '',
         participationType: '',
         groupName: '',
+        groupSize: '',
         selectedDates: [],
         customAnswers: {},
         additionalComments: ''
@@ -224,6 +225,7 @@
           preferredContact: '',
           participationType: '',
           groupName: '',
+          groupSize: '',
           selectedDates: [],
           customAnswers: {},
           additionalComments: ''
@@ -1035,28 +1037,47 @@
                       </div>
                     </div>
 
-                    {/* Group Name (conditional) */}
+                    {/* Group Name & Size (conditional) */}
                     {formData.participationType === 'Group' && (
                       <div style={{ marginBottom: '20px', paddingLeft: '26px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                          If with a group, please list group name or organization in the next question *
+                          What is the name of your group, and number of volunteers? *
                         </label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.groupName}
-                          onChange={(e) => handleFormChange('groupName', e.target.value)}
-                          disabled={submitting}
-                          placeholder="Your answer"
-                          style={{
-                            width: '100%',
-                            padding: '12px',
-                            border: '1px solid #D1D5DB',
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            opacity: submitting ? 0.6 : 1
-                          }}
-                        />
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          <input
+                            type="text"
+                            required
+                            value={formData.groupName}
+                            onChange={(e) => handleFormChange('groupName', e.target.value)}
+                            disabled={submitting}
+                            placeholder="Group name"
+                            style={{
+                              flex: 2,
+                              padding: '12px',
+                              border: '1px solid #D1D5DB',
+                              borderRadius: '8px',
+                              fontSize: '14px',
+                              opacity: submitting ? 0.6 : 1
+                            }}
+                          />
+                          <input
+                            type="number"
+                            required
+                            min="1"
+                            value={formData.groupSize}
+                            onChange={(e) => handleFormChange('groupSize', e.target.value)}
+                            disabled={submitting}
+                            placeholder="# of volunteers"
+                            style={{
+                              flex: 1,
+                              padding: '12px',
+                              border: '1px solid #D1D5DB',
+                              borderRadius: '8px',
+                              fontSize: '14px',
+                              opacity: submitting ? 0.6 : 1
+                            }}
+                          />
+                        </div>
                       </div>
                     )}
 

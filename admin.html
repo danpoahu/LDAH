@@ -1254,6 +1254,7 @@
       const [adminView, setAdminView] = useState('categories');
       const [showApplications, setShowApplications] = useState(false);
       const [expandedAppId, setExpandedAppId] = useState(null);
+      const [expandedSignupId, setExpandedSignupId] = useState(null);
       const [draggedItem, setDraggedItem] = useState(null);
       const [dragOverItem, setDragOverItem] = useState(null);
 
@@ -1509,16 +1510,16 @@
         }
 
         // Create CSV content
-        const headers = ['Name', 'Email', 'Phone', 'Preferred Contact', 'Selected Dates', 'Prior Experience', 'Participation Type', 'Group Name', 'Additional Comments', 'Status', 'Submitted At'];
+        const headers = ['Name', 'Email', 'Phone', 'Preferred Contact', 'Selected Dates', 'Participation Type', 'Group Name', 'Group Size', 'Additional Comments', 'Status', 'Submitted At'];
         const rows = eventSignups.map(signup => [
           signup.name || '',
           signup.email || '',
           signup.phone || '',
           signup.preferredContact || '',
           (signup.selectedDates || []).join('; '),
-          signup.priorExperience || '',
           signup.participationType || '',
           signup.groupName || '',
+          signup.groupSize || '',
           signup.additionalComments || '',
           signup.status || 'pending',
           signup.timestamp ? new Date(signup.timestamp.seconds * 1000).toLocaleString() : ''
@@ -2457,106 +2458,137 @@
                                 </div>
 
                                 <div className="space-y-3">
-                                  {sortedSignups.map((signup) => (
-                                    <div
-                                      key={signup.id}
-                                      className="bg-white rounded-xl border-2 border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-                                    >
-                                      <div className="p-4">
-                                        <div className="flex items-start justify-between gap-4 mb-3">
-                                          <div className="flex-1">
-                                            <h4 className="font-bold text-lg text-gray-900 mb-1">{signup.name}</h4>
-                                            <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+                                  {sortedSignups.map((signup) => {
+                                    const isExpanded = expandedSignupId === signup.id;
+                                    return (
+                                      <div
+                                        key={signup.id}
+                                        className="bg-white rounded-xl border-2 border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                                      >
+                                        {/* Header - Always Visible */}
+                                        <div 
+                                          className="p-4 cursor-pointer"
+                                          onClick={() => setExpandedSignupId(isExpanded ? null : signup.id)}
+                                          style={{ cursor: 'pointer' }}
+                                        >
+                                          <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1 flex items-center gap-3">
+                                              <span style={{ fontSize: '20px' }}>
+                                                {isExpanded ? '▼' : '▶'}
+                                              </span>
+                                              <div>
+                                                <h4 className="font-bold text-lg text-gray-900">{signup.name}</h4>
+                                                {signup.groupName && (
+                                                  <span className="text-sm text-gray-600">
+                                                    👥 {signup.groupName}
+                                                    {signup.groupSize && ` (${signup.groupSize} volunteers)`}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </div>
+                                            <select
+                                              value={signup.status || 'pending'}
+                                              onChange={(e) => {
+                                                e.stopPropagation();
+                                                handleUpdateSignupStatus(selectedEventForSignups.id, signup.id, e.target.value);
+                                              }}
+                                              onClick={(e) => e.stopPropagation()}
+                                              style={{
+                                                padding: '8px 12px',
+                                                borderRadius: '8px',
+                                                border: '2px solid #e5e7eb',
+                                                fontWeight: 'bold',
+                                                fontSize: '14px',
+                                                cursor: 'pointer',
+                                                backgroundColor: signup.status === 'confirmed' ? '#d1fae5' : 
+                                                               signup.status === 'contacted' ? '#dbeafe' :
+                                                               signup.status === 'declined' ? '#fee2e2' :
+                                                               '#fef3c7'
+                                              }}
+                                            >
+                                              <option value="pending">⏳ Pending</option>
+                                              <option value="contacted">📞 Contacted</option>
+                                              <option value="confirmed">✅ Confirmed</option>
+                                              <option value="declined">❌ Declined</option>
+                                            </select>
+                                          </div>
+                                        </div>
+
+                                        {/* Expanded Details */}
+                                        {isExpanded && (
+                                          <div className="px-4 pb-4 border-t-2 border-gray-100 pt-4">
+                                            <div className="flex flex-wrap gap-2 text-sm text-gray-600 mb-3">
                                               <span>📧 {signup.email}</span>
                                               <span>📱 {signup.phone}</span>
                                             </div>
-                                          </div>
-                                          <select
-                                            value={signup.status || 'pending'}
-                                            onChange={(e) => handleUpdateSignupStatus(selectedEventForSignups.id, signup.id, e.target.value)}
-                                            style={{
-                                              padding: '8px 12px',
-                                              borderRadius: '8px',
-                                              border: '2px solid #e5e7eb',
-                                              fontWeight: 'bold',
-                                              fontSize: '14px',
-                                              cursor: 'pointer',
-                                              backgroundColor: signup.status === 'confirmed' ? '#d1fae5' : 
-                                                             signup.status === 'contacted' ? '#dbeafe' :
-                                                             signup.status === 'declined' ? '#fee2e2' :
-                                                             '#fef3c7'
-                                            }}
-                                          >
-                                            <option value="pending">⏳ Pending</option>
-                                            <option value="contacted">📞 Contacted</option>
-                                            <option value="confirmed">✅ Confirmed</option>
-                                            <option value="declined">❌ Declined</option>
-                                          </select>
-                                        </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-3">
-                                          <div>
-                                            <span className="font-semibold text-gray-700">Preferred Contact:</span>{' '}
-                                            <span className="text-gray-600">{signup.preferredContact}</span>
-                                          </div>
-                                          <div>
-                                            <span className="font-semibold text-gray-700">Type:</span>{' '}
-                                            <span className="text-gray-600">{signup.participationType}</span>
-                                            {signup.groupName && <span className="text-gray-600"> - {signup.groupName}</span>}
-                                          </div>
-                                        </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-3">
+                                              <div>
+                                                <span className="font-semibold text-gray-700">Preferred Contact:</span>{' '}
+                                                <span className="text-gray-600">{signup.preferredContact}</span>
+                                              </div>
+                                              <div>
+                                                <span className="font-semibold text-gray-700">Type:</span>{' '}
+                                                <span className="text-gray-600">{signup.participationType}</span>
+                                              </div>
+                                            </div>
 
-                                        {/* Show all dates this person selected */}
-                                        {signup.selectedDates && signup.selectedDates.length > 1 && (
-                                          <div className="mb-3">
-                                            <span className="font-semibold text-gray-700 text-sm">All Selected Dates:</span>
-                                            <div className="flex flex-wrap gap-2 mt-1">
-                                              {signup.selectedDates.map((d, idx) => (
-                                                <span 
-                                                  key={idx}
-                                                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
-                                                >
-                                                  {d}
-                                                </span>
-                                              ))}
+                                            {/* Show all dates this person selected */}
+                                            {signup.selectedDates && signup.selectedDates.length > 1 && (
+                                              <div className="mb-3">
+                                                <span className="font-semibold text-gray-700 text-sm">All Selected Dates:</span>
+                                                <div className="flex flex-wrap gap-2 mt-1">
+                                                  {signup.selectedDates.map((d, idx) => (
+                                                    <span 
+                                                      key={idx}
+                                                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
+                                                    >
+                                                      {d}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            )}
+
+                                            {/* Show custom question answers */}
+                                            {signup.customAnswers && Object.keys(signup.customAnswers).length > 0 && (
+                                              <div className="mb-3 space-y-2">
+                                                {Object.entries(signup.customAnswers).map(([question, answer], idx) => (
+                                                  <div key={idx}>
+                                                    <span className="font-semibold text-gray-700 text-sm">{question}:</span>
+                                                    <p className="text-gray-600 text-sm mt-1">{answer}</p>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+
+                                            {signup.additionalComments && (
+                                              <div className="mb-3">
+                                                <span className="font-semibold text-gray-700 text-sm">Additional Comments:</span>
+                                                <p className="text-gray-600 text-sm mt-1">{signup.additionalComments}</p>
+                                              </div>
+                                            )}
+
+                                            <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                                              <span className="text-xs text-gray-500">
+                                                Submitted: {signup.timestamp ? new Date(signup.timestamp.seconds * 1000).toLocaleString() : 'N/A'}
+                                              </span>
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleDeleteSignup(selectedEventForSignups.id, signup.id);
+                                                }}
+                                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-semibold"
+                                                style={{ border: 'none', cursor: 'pointer' }}
+                                              >
+                                                Delete
+                                              </button>
                                             </div>
                                           </div>
                                         )}
-
-                                        {/* Show custom question answers */}
-                                        {signup.customAnswers && Object.keys(signup.customAnswers).length > 0 && (
-                                          <div className="mb-3 space-y-2">
-                                            {Object.entries(signup.customAnswers).map(([question, answer], idx) => (
-                                              <div key={idx}>
-                                                <span className="font-semibold text-gray-700 text-sm">{question}:</span>
-                                                <p className="text-gray-600 text-sm mt-1">{answer}</p>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        )}
-
-                                        {signup.additionalComments && (
-                                          <div className="mb-3">
-                                            <span className="font-semibold text-gray-700 text-sm">Additional Comments:</span>
-                                            <p className="text-gray-600 text-sm mt-1">{signup.additionalComments}</p>
-                                          </div>
-                                        )}
-
-                                        <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                                          <span className="text-xs text-gray-500">
-                                            Submitted: {signup.timestamp ? new Date(signup.timestamp.seconds * 1000).toLocaleString() : 'N/A'}
-                                          </span>
-                                          <button
-                                            onClick={() => handleDeleteSignup(selectedEventForSignups.id, signup.id)}
-                                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-semibold"
-                                            style={{ border: 'none', cursor: 'pointer' }}
-                                          >
-                                            Delete
-                                          </button>
-                                        </div>
                                       </div>
-                                    </div>
-                                  ))}
+                                    );
+                                  })}
                                 </div>
                               </div>
                             );
