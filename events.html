@@ -1013,6 +1013,30 @@
                       </>
                     )}
 
+                    {/* Special Accommodations */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        Any additional comments or special accommodations we should know about?
+                      </label>
+                      <textarea
+                        value={formData.additionalComments}
+                        onChange={(e) => handleFormChange('additionalComments', e.target.value)}
+                        disabled={submitting}
+                        placeholder="Your answer"
+                        rows="4"
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          border: '1px solid #D1D5DB',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          resize: 'vertical',
+                          fontFamily: 'inherit',
+                          opacity: submitting ? 0.6 : 1
+                        }}
+                      />
+                    </div>
+
                     {/* Participation Type */}
                     <div style={{ marginBottom: '20px' }}>
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
@@ -1080,30 +1104,6 @@
                         </div>
                       </div>
                     )}
-
-                    {/* Additional Comments */}
-                    <div style={{ marginBottom: '24px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                        Any additional comments or special accommodations we should know about?
-                      </label>
-                      <textarea
-                        value={formData.additionalComments}
-                        onChange={(e) => handleFormChange('additionalComments', e.target.value)}
-                        disabled={submitting}
-                        placeholder="Your answer"
-                        rows="4"
-                        style={{
-                          width: '100%',
-                          padding: '12px',
-                          border: '1px solid #D1D5DB',
-                          borderRadius: '8px',
-                          fontSize: '14px',
-                          resize: 'vertical',
-                          fontFamily: 'inherit',
-                          opacity: submitting ? 0.6 : 1
-                        }}
-                      />
-                    </div>
 
                     {/* Submit Buttons */}
                     <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
