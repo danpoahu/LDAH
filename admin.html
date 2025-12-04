@@ -1255,6 +1255,8 @@
       const [showApplications, setShowApplications] = useState(false);
       const [expandedAppId, setExpandedAppId] = useState(null);
       const [expandedSignupId, setExpandedSignupId] = useState(null);
+      const [editingNotes, setEditingNotes] = useState({});
+      const [savingNotes, setSavingNotes] = useState({});
       const [draggedItem, setDraggedItem] = useState(null);
       const [dragOverItem, setDragOverItem] = useState(null);
 
@@ -1492,6 +1494,7 @@
       };
 
       const handleUpdateSignupNotes = async (eventId, signupId, notes) => {
+        setSavingNotes(prev => ({ ...prev, [signupId]: true }));
         try {
           await db.collection('events').doc(eventId).collection('signups').doc(signupId).update({
             adminNotes: notes
@@ -1499,9 +1502,25 @@
           setEventSignups(eventSignups.map(s => 
             s.id === signupId ? { ...s, adminNotes: notes } : s
           ));
+          // Clear editing state after successful save
+          setEditingNotes(prev => {
+            const newState = { ...prev };
+            delete newState[signupId];
+            return newState;
+          });
+          setSavingNotes(prev => {
+            const newState = { ...prev };
+            delete newState[signupId];
+            return newState;
+          });
         } catch (error) {
           console.error('Error updating signup notes:', error);
           alert('Error updating notes: ' + error.message);
+          setSavingNotes(prev => {
+            const newState = { ...prev };
+            delete newState[signupId];
+            return newState;
+          });
         }
       };
 
@@ -2706,23 +2725,56 @@
                                               <label className="font-semibold text-gray-700 text-sm block mb-2">
                                                 📝 Admin Notes (Private)
                                               </label>
-                                              <textarea
-                                                value={signup.adminNotes || ''}
-                                                onChange={(e) => handleUpdateSignupNotes(selectedEventForSignups.id, signup.id, e.target.value)}
-                                                onClick={(e) => e.stopPropagation()}
-                                                placeholder="Add internal notes here..."
-                                                rows="3"
-                                                style={{
-                                                  width: '100%',
-                                                  padding: '12px',
-                                                  border: '2px solid #E5E7EB',
-                                                  borderRadius: '8px',
-                                                  fontSize: '14px',
-                                                  resize: 'vertical',
-                                                  fontFamily: 'inherit',
-                                                  backgroundColor: '#FEF3C7'
-                                                }}
-                                              />
+                                              <div style={{ position: 'relative' }}>
+                                                <textarea
+                                                  value={editingNotes[signup.id] !== undefined ? editingNotes[signup.id] : (signup.adminNotes || '')}
+                                                  onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingNotes(prev => ({ ...prev, [signup.id]: e.target.value }));
+                                                  }}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  placeholder="Add internal notes here..."
+                                                  rows="3"
+                                                  disabled={savingNotes[signup.id]}
+                                                  style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    paddingBottom: '40px',
+                                                    border: '2px solid #E5E7EB',
+                                                    borderRadius: '8px',
+                                                    fontSize: '14px',
+                                                    resize: 'vertical',
+                                                    fontFamily: 'inherit',
+                                                    backgroundColor: '#FEF3C7',
+                                                    opacity: savingNotes[signup.id] ? 0.6 : 1
+                                                  }}
+                                                />
+                                                {editingNotes[signup.id] !== undefined && editingNotes[signup.id] !== (signup.adminNotes || '') && (
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleUpdateSignupNotes(selectedEventForSignups.id, signup.id, editingNotes[signup.id]);
+                                                    }}
+                                                    disabled={savingNotes[signup.id]}
+                                                    style={{
+                                                      position: 'absolute',
+                                                      bottom: '8px',
+                                                      right: '8px',
+                                                      padding: '6px 16px',
+                                                      backgroundColor: savingNotes[signup.id] ? '#9CA3AF' : '#004E7C',
+                                                      color: 'white',
+                                                      border: 'none',
+                                                      borderRadius: '6px',
+                                                      fontSize: '12px',
+                                                      fontWeight: 'bold',
+                                                      cursor: savingNotes[signup.id] ? 'not-allowed' : 'pointer',
+                                                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                                    }}
+                                                  >
+                                                    {savingNotes[signup.id] ? 'Saving...' : 'Save'}
+                                                  </button>
+                                                )}
+                                              </div>
                                             </div>
 
                                             <div className="flex justify-between items-center pt-3 border-t border-gray-200">
