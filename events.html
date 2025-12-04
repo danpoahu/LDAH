@@ -142,10 +142,10 @@
         email: '',
         phone: '',
         preferredContact: '',
-        priorExperience: '',
         participationType: '',
         groupName: '',
         selectedDates: [],
+        customAnswers: {},
         additionalComments: ''
       });
       const [submitting, setSubmitting] = useState(false);
@@ -222,10 +222,10 @@
           email: '',
           phone: '',
           preferredContact: '',
-          priorExperience: '',
           participationType: '',
           groupName: '',
           selectedDates: [],
+          customAnswers: {},
           additionalComments: ''
         });
         setSubmitSuccess(false);
@@ -975,29 +975,41 @@
                       </div>
                     )}
 
-                    {/* Prior Experience */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                        Do you have any prior experience working at concessions or food stands?
-                      </label>
-                      <textarea
-                        value={formData.priorExperience}
-                        onChange={(e) => handleFormChange('priorExperience', e.target.value)}
-                        disabled={submitting}
-                        placeholder="Your answer"
-                        rows="3"
-                        style={{
-                          width: '100%',
-                          padding: '12px',
-                          border: '1px solid #D1D5DB',
-                          borderRadius: '8px',
-                          fontSize: '14px',
-                          resize: 'vertical',
-                          fontFamily: 'inherit',
-                          opacity: submitting ? 0.6 : 1
-                        }}
-                      />
-                    </div>
+                    {/* Custom Questions */}
+                    {signupEvent.customQuestions && signupEvent.customQuestions.length > 0 && (
+                      <>
+                        {signupEvent.customQuestions.map((question, index) => (
+                          <div key={index} style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                              {question}
+                            </label>
+                            <textarea
+                              value={formData.customAnswers[question] || ''}
+                              onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                customAnswers: {
+                                  ...prev.customAnswers,
+                                  [question]: e.target.value
+                                }
+                              }))}
+                              disabled={submitting}
+                              placeholder="Your answer"
+                              rows="3"
+                              style={{
+                                width: '100%',
+                                padding: '12px',
+                                border: '1px solid #D1D5DB',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                resize: 'vertical',
+                                fontFamily: 'inherit',
+                                opacity: submitting ? 0.6 : 1
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </>
+                    )}
 
                     {/* Participation Type */}
                     <div style={{ marginBottom: '20px' }}>
