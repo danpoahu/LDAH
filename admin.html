@@ -1491,6 +1491,20 @@
         }
       };
 
+      const handleUpdateSignupNotes = async (eventId, signupId, notes) => {
+        try {
+          await db.collection('events').doc(eventId).collection('signups').doc(signupId).update({
+            adminNotes: notes
+          });
+          setEventSignups(eventSignups.map(s => 
+            s.id === signupId ? { ...s, adminNotes: notes } : s
+          ));
+        } catch (error) {
+          console.error('Error updating signup notes:', error);
+          alert('Error updating notes: ' + error.message);
+        }
+      };
+
       const handleDeleteSignup = async (eventId, signupId) => {
         if (confirm('Are you sure you want to delete this signup?')) {
           try {
@@ -2289,6 +2303,12 @@
                       statusColor = 'bg-red-100 text-red-700';
                     }
 
+                    // Count pending signups for this event
+                    const pendingForEvent = allEventSignups.filter(doc => {
+                      const data = doc.data();
+                      return doc.ref.parent.parent.id === event.id && (!data.status || data.status === 'pending');
+                    }).length;
+
                     return (
                       <div
                         key={event.id}
@@ -2332,10 +2352,27 @@
                                   handleViewEventSignups(event);
                                 }}
                                 className="p-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors shadow-sm"
-                                style={{ border: 'none', cursor: 'pointer' }}
+                                style={{ border: 'none', cursor: 'pointer', position: 'relative' }}
                                 title="View Signups"
                               >
                                 <Folder size={18} />
+                                {pendingForEvent > 0 && (
+                                  <span style={{
+                                    position: 'absolute',
+                                    top: '-6px',
+                                    right: '-6px',
+                                    backgroundColor: '#ef4444',
+                                    color: 'white',
+                                    borderRadius: '10px',
+                                    padding: '2px 6px',
+                                    fontSize: '11px',
+                                    fontWeight: 'bold',
+                                    minWidth: '20px',
+                                    textAlign: 'center'
+                                  }}>
+                                    {pendingForEvent}
+                                  </span>
+                                )}
                               </button>
                               <button
                                 onClick={() => setEditingEvent(event)}
@@ -2663,6 +2700,30 @@
                                                 <p className="text-gray-600 text-sm mt-1">{signup.additionalComments}</p>
                                               </div>
                                             )}
+
+                                            {/* Admin Notes */}
+                                            <div className="mb-3">
+                                              <label className="font-semibold text-gray-700 text-sm block mb-2">
+                                                📝 Admin Notes (Private)
+                                              </label>
+                                              <textarea
+                                                value={signup.adminNotes || ''}
+                                                onChange={(e) => handleUpdateSignupNotes(selectedEventForSignups.id, signup.id, e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                placeholder="Add internal notes here..."
+                                                rows="3"
+                                                style={{
+                                                  width: '100%',
+                                                  padding: '12px',
+                                                  border: '2px solid #E5E7EB',
+                                                  borderRadius: '8px',
+                                                  fontSize: '14px',
+                                                  resize: 'vertical',
+                                                  fontFamily: 'inherit',
+                                                  backgroundColor: '#FEF3C7'
+                                                }}
+                                              />
+                                            </div>
 
                                             <div className="flex justify-between items-center pt-3 border-t border-gray-200">
                                               <span className="text-xs text-gray-500">
