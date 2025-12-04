@@ -481,9 +481,81 @@
         eventDate: event?.eventDate || '',
         startDate: event?.startDate || '',
         moveToPastDate: event?.moveToPastDate || '',
-        removeDate: event?.removeDate || ''
+        removeDate: event?.removeDate || '',
+        signupDates: event?.signupDates || []
       });
       const [isSaving, setIsSaving] = useState(false);
+      const [uploading, setUploading] = useState(false);
+      const [uploadProgress, setUploadProgress] = useState(0);
+      const [newSignupDate, setNewSignupDate] = useState('');
+
+      const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+        if (!validTypes.includes(file.type)) {
+          alert('Please upload a PNG, JPG, or PDF file');
+          return;
+        }
+
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          alert('File size must be less than 10MB');
+          return;
+        }
+
+        setUploading(true);
+        setUploadProgress(0);
+
+        try {
+          const storageRef = storage.ref();
+          const fileRef = storageRef.child(`events/${Date.now()}_${file.name}`);
+          const uploadTask = fileRef.put(file);
+
+          uploadTask.on('state_changed',
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadProgress(progress);
+            },
+            (error) => {
+              console.error('Upload error:', error);
+              alert('Error uploading file: ' + error.message);
+              setUploading(false);
+            },
+            async () => {
+              const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+              setFormData({ ...formData, imageUrl: downloadURL });
+              setUploading(false);
+              setUploadProgress(0);
+            }
+          );
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          alert('Error uploading image: ' + error.message);
+          setUploading(false);
+        }
+      };
+
+      const addSignupDate = () => {
+        if (!newSignupDate.trim()) {
+          alert('Please enter a date/time');
+          return;
+        }
+        setFormData({
+          ...formData,
+          signupDates: [...formData.signupDates, newSignupDate]
+        });
+        setNewSignupDate('');
+      };
+
+      const removeSignupDate = (index) => {
+        setFormData({
+          ...formData,
+          signupDates: formData.signupDates.filter((_, i) => i !== index)
+        });
+      };
 
       const handleSaveClick = async () => {
         if (!formData.title.trim()) {
@@ -546,14 +618,142 @@
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-2">Image URL</label>
-                  <input
-                    type="url"
-                    value={formData.imageUrl}
-                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
-                    placeholder="https://example.com/image.jpg"
-                  />
+                  <label className="block font-semibold text-gray-700 mb-2">Event Image *</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,application/pdf"
+                      onChange={handleImageUpload}
+                      disabled={uploading || isSaving}
+                      style={{
+                        padding: '12px',
+                        border: '2px dashed #D1D5DB',
+                        borderRadius: '12px',
+                        cursor: uploading || isSaving ? 'not-allowed' : 'pointer'
+                      }}
+                    />
+                    {uploading && (
+                      <div style={{ width: '100%', backgroundColor: '#E5E7EB', borderRadius: '8px', height: '8px', overflow: 'hidden' }}>
+                        <div style={{
+                          width: `${uploadProgress}%`,
+                          backgroundColor: '#004E7C',
+                          height: '100%',
+                          transition: 'width 0.3s'
+                        }} />
+                      </div>
+                    )}
+                    {formData.imageUrl && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <img 
+                          src={formData.imageUrl} 
+                          alt="Preview" 
+                          style={{
+                            width: '100px',
+                            height: '100px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '2px solid #D1D5DB'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, imageUrl: '' })}
+                          disabled={uploading || isSaving}
+                          style={{
+                            padding: '8px 16px',
+                            backgroundColor: '#EF4444',
+                            color: 'white',
+                            borderRadius: '8px',
+                            border: 'none',
+                            cursor: uploading || isSaving ? 'not-allowed' : 'pointer',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          Remove Image
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Upload PNG, JPG, or PDF (max 10MB)</p>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Signup Dates/Times</label>
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                    <input
+                      type="text"
+                      value={newSignupDate}
+                      onChange={(e) => setNewSignupDate(e.target.value)}
+                      placeholder="e.g., October 11, 2025 - 2:00 p.m."
+                      disabled={isSaving}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        border: '1px solid #D1D5DB',
+                        borderRadius: '8px',
+                        fontSize: '14px'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={addSignupDate}
+                      disabled={isSaving || !newSignupDate.trim()}
+                      style={{
+                        padding: '12px 20px',
+                        backgroundColor: isSaving || !newSignupDate.trim() ? '#9CA3AF' : '#004E7C',
+                        color: 'white',
+                        borderRadius: '8px',
+                        border: 'none',
+                        cursor: isSaving || !newSignupDate.trim() ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {formData.signupDates.length > 0 && (
+                    <div style={{
+                      border: '1px solid #D1D5DB',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}>
+                      {formData.signupDates.map((date, index) => (
+                        <div key={index} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '8px 12px',
+                          backgroundColor: '#F3F4F6',
+                          borderRadius: '6px'
+                        }}>
+                          <span style={{ fontSize: '14px', color: '#374151' }}>{date}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeSignupDate(index)}
+                            disabled={isSaving}
+                            style={{
+                              padding: '4px 12px',
+                              backgroundColor: '#EF4444',
+                              color: 'white',
+                              borderRadius: '6px',
+                              border: 'none',
+                              cursor: isSaving ? 'not-allowed' : 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">Add available dates/times for volunteers to choose from</p>
                 </div>
 
                 <div>
@@ -942,6 +1142,8 @@
       const [events, setEvents] = useState([]);
       const [opportunities, setOpportunities] = useState([]);
       const [applications, setApplications] = useState([]);
+      const [eventSignups, setEventSignups] = useState([]);
+      const [selectedEventForSignups, setSelectedEventForSignups] = useState(null);
       const [isAuthenticated, setIsAuthenticated] = useState(false);
       const [password, setPassword] = useState('');
       const [editingFaq, setEditingFaq] = useState(null);
@@ -1125,7 +1327,8 @@
               eventDate: event.eventDate,
               startDate: event.startDate,
               moveToPastDate: event.moveToPastDate,
-              removeDate: event.removeDate
+              removeDate: event.removeDate,
+              signupDates: event.signupDates || []
             };
             const docRef = await db.collection('events').add(eventToSave);
             setEvents([...events, { id: docRef.id, ...eventToSave }]);
@@ -1151,6 +1354,91 @@
             alert('Error deleting event: ' + error.message);
           }
         }
+      };
+
+      // Event Signup handlers
+      const loadEventSignups = async (eventId) => {
+        try {
+          const signupsSnapshot = await db.collection('events').doc(eventId).collection('signups').orderBy('timestamp', 'desc').get();
+          const loadedSignups = signupsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setEventSignups(loadedSignups);
+        } catch (error) {
+          console.error('Error loading event signups:', error);
+          alert('Error loading signups: ' + error.message);
+        }
+      };
+
+      const handleViewEventSignups = async (event) => {
+        setSelectedEventForSignups(event);
+        await loadEventSignups(event.id);
+      };
+
+      const handleUpdateSignupStatus = async (eventId, signupId, newStatus) => {
+        try {
+          await db.collection('events').doc(eventId).collection('signups').doc(signupId).update({
+            status: newStatus
+          });
+          setEventSignups(eventSignups.map(s => 
+            s.id === signupId ? { ...s, status: newStatus } : s
+          ));
+        } catch (error) {
+          console.error('Error updating signup status:', error);
+          alert('Error updating status: ' + error.message);
+        }
+      };
+
+      const handleDeleteSignup = async (eventId, signupId) => {
+        if (confirm('Are you sure you want to delete this signup?')) {
+          try {
+            await db.collection('events').doc(eventId).collection('signups').doc(signupId).delete();
+            setEventSignups(eventSignups.filter(s => s.id !== signupId));
+          } catch (error) {
+            console.error('Error deleting signup:', error);
+            alert('Error deleting signup: ' + error.message);
+          }
+        }
+      };
+
+      const handleExportSignups = () => {
+        if (eventSignups.length === 0) {
+          alert('No signups to export');
+          return;
+        }
+
+        // Create CSV content
+        const headers = ['Name', 'Email', 'Phone', 'Preferred Contact', 'Selected Dates', 'Prior Experience', 'Participation Type', 'Group Name', 'Additional Comments', 'Status', 'Submitted At'];
+        const rows = eventSignups.map(signup => [
+          signup.name || '',
+          signup.email || '',
+          signup.phone || '',
+          signup.preferredContact || '',
+          (signup.selectedDates || []).join('; '),
+          signup.priorExperience || '',
+          signup.participationType || '',
+          signup.groupName || '',
+          signup.additionalComments || '',
+          signup.status || 'pending',
+          signup.timestamp ? new Date(signup.timestamp.seconds * 1000).toLocaleString() : ''
+        ]);
+
+        const csvContent = [
+          headers.join(','),
+          ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        ].join('\n');
+
+        // Create download link
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${selectedEventForSignups?.title || 'event'}_signups_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       };
 
       // Volunteer Opportunity handlers
@@ -1510,6 +1798,24 @@
                 </button>
                 <button
                   onClick={() => {
+                    setAdminView('eventSignups');
+                    setSelectedEventForSignups(null);
+                  }}
+                  style={{
+                    backgroundColor: adminView === 'eventSignups' ? '#004E7C' : '#d1d5db',
+                    color: adminView === 'eventSignups' ? 'white' : '#374151',
+                    padding: '10px 16px',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Event Signups
+                </button>
+                <button
+                  onClick={() => {
                     setAdminView('opportunities');
                     setShowApplications(false);
                   }}
@@ -1825,6 +2131,17 @@
                             
                             <div className="flex gap-2 flex-shrink-0">
                               <button
+                                onClick={() => {
+                                  setAdminView('eventSignups');
+                                  handleViewEventSignups(event);
+                                }}
+                                className="p-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors shadow-sm"
+                                style={{ border: 'none', cursor: 'pointer' }}
+                                title="View Signups"
+                              >
+                                <Folder size={18} />
+                              </button>
+                              <button
                                 onClick={() => setEditingEvent(event)}
                                 className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-sm"
                                 style={{ border: 'none', cursor: 'pointer' }}
@@ -1845,6 +2162,232 @@
                     );
                   })}
                 </div>
+              </>
+            ) : adminView === 'eventSignups' ? (
+              <>
+                {!selectedEventForSignups ? (
+                  <div>
+                    <h1 className="text-2xl font-bold text-[#004E7C] mb-6">Event Signups</h1>
+                    <p className="text-gray-600 mb-4">Select an event from the Events tab to view its signups</p>
+                    <button
+                      onClick={() => setAdminView('events')}
+                      style={{
+                        backgroundColor: '#004E7C',
+                        color: 'white',
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        fontWeight: 'bold',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Go to Events
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex justify-between items-center mb-6">
+                      <div>
+                        <button
+                          onClick={() => {
+                            setSelectedEventForSignups(null);
+                            setEventSignups([]);
+                          }}
+                          className="flex items-center gap-2 text-[#004E7C] font-semibold hover:opacity-70 mb-2"
+                        >
+                          <ChevronLeft size={20} />
+                          Back to Event Selection
+                        </button>
+                        <h1 className="text-2xl font-bold text-[#004E7C]">
+                          Signups for: {selectedEventForSignups.title}
+                        </h1>
+                      </div>
+                      <button
+                        onClick={handleExportSignups}
+                        disabled={eventSignups.length === 0}
+                        style={{
+                          backgroundColor: eventSignups.length === 0 ? '#9CA3AF' : '#10B981',
+                          color: 'white',
+                          padding: '12px 24px',
+                          borderRadius: '12px',
+                          fontWeight: 'bold',
+                          border: 'none',
+                          cursor: eventSignups.length === 0 ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        📥 Export CSV
+                      </button>
+                    </div>
+
+                    {/* KPIs */}
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+                      <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '16px',
+                        padding: '20px',
+                        border: '2px solid #e5e7eb',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                      }}>
+                        <div className="text-3xl font-bold text-[#004E7C] mb-1">
+                          {eventSignups.length}
+                        </div>
+                        <div className="text-sm text-gray-600 font-medium">Total Signups</div>
+                      </div>
+                      
+                      <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '16px',
+                        padding: '20px',
+                        border: '2px solid #fbbf24',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                      }}>
+                        <div className="text-3xl font-bold text-[#f59e0b] mb-1">
+                          {eventSignups.filter(s => s.status === 'pending').length}
+                        </div>
+                        <div className="text-sm text-gray-600 font-medium">Pending</div>
+                      </div>
+                      
+                      <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '16px',
+                        padding: '20px',
+                        border: '2px solid #60a5fa',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                      }}>
+                        <div className="text-3xl font-bold text-[#3b82f6] mb-1">
+                          {eventSignups.filter(s => s.status === 'contacted').length}
+                        </div>
+                        <div className="text-sm text-gray-600 font-medium">Contacted</div>
+                      </div>
+                      
+                      <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '16px',
+                        padding: '20px',
+                        border: '2px solid #34d399',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                      }}>
+                        <div className="text-3xl font-bold text-[#10b981] mb-1">
+                          {eventSignups.filter(s => s.status === 'confirmed').length}
+                        </div>
+                        <div className="text-sm text-gray-600 font-medium">Confirmed</div>
+                      </div>
+                    </div>
+
+                    {/* Signups Table */}
+                    {eventSignups.length === 0 ? (
+                      <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '16px',
+                        padding: '48px',
+                        textAlign: 'center',
+                        border: '2px solid #e5e7eb'
+                      }}>
+                        <Calendar size={48} className="text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600 text-lg">No signups yet for this event</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {eventSignups.map((signup) => (
+                          <div
+                            key={signup.id}
+                            className="bg-white rounded-2xl border border-gray-200 shadow-md"
+                          >
+                            <div className="p-4">
+                              <div className="flex items-start justify-between gap-4 mb-3">
+                                <div className="flex-1">
+                                  <h3 className="font-bold text-lg text-gray-900 mb-1">{signup.name}</h3>
+                                  <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+                                    <span>📧 {signup.email}</span>
+                                    <span>📱 {signup.phone}</span>
+                                  </div>
+                                </div>
+                                <select
+                                  value={signup.status || 'pending'}
+                                  onChange={(e) => handleUpdateSignupStatus(selectedEventForSignups.id, signup.id, e.target.value)}
+                                  style={{
+                                    padding: '8px 12px',
+                                    borderRadius: '8px',
+                                    border: '2px solid #e5e7eb',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    cursor: 'pointer',
+                                    backgroundColor: signup.status === 'confirmed' ? '#d1fae5' : 
+                                                   signup.status === 'contacted' ? '#dbeafe' :
+                                                   '#fef3c7'
+                                  }}
+                                >
+                                  <option value="pending">⏳ Pending</option>
+                                  <option value="contacted">📞 Contacted</option>
+                                  <option value="confirmed">✅ Confirmed</option>
+                                  <option value="declined">❌ Declined</option>
+                                </select>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-3">
+                                <div>
+                                  <span className="font-semibold text-gray-700">Preferred Contact:</span>{' '}
+                                  <span className="text-gray-600">{signup.preferredContact}</span>
+                                </div>
+                                <div>
+                                  <span className="font-semibold text-gray-700">Type:</span>{' '}
+                                  <span className="text-gray-600">{signup.participationType}</span>
+                                  {signup.groupName && <span className="text-gray-600"> - {signup.groupName}</span>}
+                                </div>
+                              </div>
+
+                              {signup.selectedDates && signup.selectedDates.length > 0 && (
+                                <div className="mb-3">
+                                  <span className="font-semibold text-gray-700 text-sm">Selected Dates:</span>
+                                  <div className="flex flex-wrap gap-2 mt-1">
+                                    {signup.selectedDates.map((date, idx) => (
+                                      <span 
+                                        key={idx}
+                                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
+                                      >
+                                        {date}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {signup.priorExperience && (
+                                <div className="mb-3">
+                                  <span className="font-semibold text-gray-700 text-sm">Prior Experience:</span>
+                                  <p className="text-gray-600 text-sm mt-1">{signup.priorExperience}</p>
+                                </div>
+                              )}
+
+                              {signup.additionalComments && (
+                                <div className="mb-3">
+                                  <span className="font-semibold text-gray-700 text-sm">Additional Comments:</span>
+                                  <p className="text-gray-600 text-sm mt-1">{signup.additionalComments}</p>
+                                </div>
+                              )}
+
+                              <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                                <span className="text-xs text-gray-500">
+                                  Submitted: {signup.timestamp ? new Date(signup.timestamp.seconds * 1000).toLocaleString() : 'N/A'}
+                                </span>
+                                <button
+                                  onClick={() => handleDeleteSignup(selectedEventForSignups.id, signup.id)}
+                                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-semibold"
+                                  style={{ border: 'none', cursor: 'pointer' }}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             ) : adminView === 'opportunities' ? (
               <>
