@@ -513,7 +513,7 @@
 
         try {
           const storageRef = storage.ref();
-          const fileRef = storageRef.child(`events/${Date.now()}_${file.name}`);
+          const fileRef = storageRef.child(`event-images/${Date.now()}_${file.name}`);
           const uploadTask = fileRef.put(file);
 
           uploadTask.on('state_changed',
