@@ -443,24 +443,6 @@
       console.error('Anonymous auth failed:', error);
     });
 
-    // Load opportunities when page loads and track page view
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        // Track page view (non-blocking - don't wait for it)
-        db.collection('analytics').add({
-          eventType: 'page_view',
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-          page: window.location.pathname,
-          page_title: document.title
-        }).catch(error => {
-          console.error('Page view tracking error:', error);
-        });
-        
-        // Load opportunities immediately
-        loadOpportunities();
-      }
-    });
-
     // Load volunteer opportunities
     async function loadOpportunities() {
       const container = document.getElementById('opportunities-container');
@@ -555,6 +537,13 @@
       }
     }
 
+    // Load opportunities when page loads
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        loadOpportunities();
+      }
+    });
+
     // Modal functions
     let currentOpportunityId = '';
 
@@ -600,27 +589,6 @@
 
       try {
         await db.collection('volunteers').add(formData);
-        
-        // Track analytics event
-        try {
-          await db.collection('analytics').add({
-            eventType: 'volunteer_application_submitted',
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            page: window.location.pathname,
-            opportunityId: currentOpportunityId,
-            subject: formData.subject
-          });
-          
-          // Track to Google Analytics
-          if (typeof gtag !== 'undefined') {
-            gtag('event', 'volunteer_application', {
-              event_category: 'engagement',
-              event_label: formData.subject
-            });
-          }
-        } catch (analyticsError) {
-          console.error('Analytics tracking error:', analyticsError);
-        }
         
         // Show success message
         document.getElementById('volunteerForm').style.display = 'none';
