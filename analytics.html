@@ -77,11 +77,7 @@
       console.error('Anonymous auth failed:', error);
     });
 
-    const ADMIN_PASSWORD = 'ldah2024';
-
     const AnalyticsDashboard = () => {
-      const [isAuthenticated, setIsAuthenticated] = useState(false);
-      const [password, setPassword] = useState('');
       const [dateRange, setDateRange] = useState('year'); // month, quarter, year, custom
       const [startDate, setStartDate] = useState('');
       const [endDate, setEndDate] = useState('');
@@ -92,16 +88,6 @@
       const [events, setEvents] = useState([]);
       const [volunteers, setVolunteers] = useState([]);
       const [eventSignups, setEventSignups] = useState([]);
-
-      const handleLogin = (e) => {
-        e.preventDefault();
-        if (password === ADMIN_PASSWORD) {
-          setIsAuthenticated(true);
-          loadAllData();
-        } else {
-          alert('Incorrect password');
-        }
-      };
 
       const loadAllData = async () => {
         setLoading(true);
@@ -374,32 +360,9 @@
         link.click();
       };
 
-      if (!isAuthenticated) {
-        return (
-          <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="stat-card max-w-md w-full">
-              <h1 className="text-2xl font-bold text-[#004E7C] mb-6 text-center">
-                Analytics Dashboard
-              </h1>
-              <form onSubmit={handleLogin}>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter admin password"
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg mb-4"
-                />
-                <button
-                  type="submit"
-                  className="w-full py-3 bg-[#004E7C] text-white rounded-lg font-bold hover:bg-[#003a5c] transition-colors"
-                >
-                  Login
-                </button>
-              </form>
-            </div>
-          </div>
-        );
-      }
+      useEffect(() => {
+        loadAllData();
+      }, []);
 
       if (loading) {
         return (
