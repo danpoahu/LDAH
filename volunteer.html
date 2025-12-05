@@ -443,19 +443,21 @@
       console.error('Anonymous auth failed:', error);
     });
 
-    // Track page view
+    // Load opportunities when page loads and track page view
     auth.onAuthStateChanged(async (user) => {
       if (user) {
-        try {
-          await db.collection('analytics').add({
-            eventType: 'page_view',
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            page: window.location.pathname,
-            page_title: document.title
-          });
-        } catch (error) {
+        // Track page view (non-blocking - don't wait for it)
+        db.collection('analytics').add({
+          eventType: 'page_view',
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          page: window.location.pathname,
+          page_title: document.title
+        }).catch(error => {
           console.error('Page view tracking error:', error);
-        }
+        });
+        
+        // Load opportunities immediately
+        loadOpportunities();
       }
     });
 
@@ -552,13 +554,6 @@
         `;
       }
     }
-
-    // Load opportunities when page loads
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        loadOpportunities();
-      }
-    });
 
     // Modal functions
     let currentOpportunityId = '';
