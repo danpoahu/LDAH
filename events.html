@@ -128,6 +128,22 @@
       console.error('Anonymous auth failed:', error);
     });
 
+    // Track page view
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        try {
+          await db.collection('analytics').add({
+            eventType: 'page_view',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            page: window.location.pathname,
+            page_title: document.title
+          });
+        } catch (error) {
+          console.error('Page view tracking error:', error);
+        }
+      }
+    });
+
     const EventsApp = () => {
       const [events, setEvents] = useState([]);
       const [loading, setLoading] = useState(true);
@@ -279,6 +295,30 @@
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             eventTitle: signupEvent.title
           });
+
+          // Track analytics event
+          try {
+            await db.collection('analytics').add({
+              eventType: 'event_signup',
+              timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+              page: window.location.pathname,
+              eventId: signupEvent.id,
+              eventTitle: signupEvent.title,
+              participationType: formData.participationType,
+              groupSize: formData.groupSize || 1
+            });
+            
+            // Track to Google Analytics
+            if (typeof gtag !== 'undefined') {
+              gtag('event', 'event_signup', {
+                event_category: 'engagement',
+                event_label: signupEvent.title,
+                value: formData.groupSize || 1
+              });
+            }
+          } catch (analyticsError) {
+            console.error('Analytics tracking error:', analyticsError);
+          }
 
           setSubmitSuccess(true);
           setTimeout(() => {
