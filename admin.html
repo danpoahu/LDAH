@@ -1570,20 +1570,16 @@
 
         // Build CSV content grouped by date
         const csvLines = [];
-        const headers = ['DATE/TIME', 'NAME', 'EMAIL', 'PHONE', 'PREFERRED CONTACT', 'PARTICIPATION TYPE', 'GROUP NAME', 'GROUP SIZE', 'ALL SELECTED DATES', 'ADDITIONAL COMMENTS', 'STATUS', 'SUBMITTED AT'];
+        
+        // Add title row
+        csvLines.push(`"${selectedEventForSignups?.title || 'Event'}_signups_${new Date().toISOString().split('T')[0]}"`);
+        csvLines.push(''); // Blank line
+        
+        // Column headers
+        const headers = ['DATE/TIME', 'NAME', 'EMAIL', 'PHONE', 'PREF CONTACT', 'PARTICIPATION TYPE', 'GROUP NAME', 'SIZE', 'ADDITIONAL COMMENTS', 'STATUS'];
+        csvLines.push(headers.join(','));
         
         sortedDates.forEach(date => {
-          // Add blank line before each date group (except first)
-          if (csvLines.length > 0) {
-            csvLines.push('');
-          }
-          
-          // Add date header row
-          csvLines.push(`"=== ${date} ==="`);
-          
-          // Add column headers (uppercase for emphasis)
-          csvLines.push(headers.map(h => `"${h}"`).join(','));
-          
           // Get unique signups for this date
           const uniqueSignups = Array.from(new Set(dateGroups[date].map(s => s.id)))
             .map(id => dateGroups[date].find(s => s.id === id));
@@ -1597,9 +1593,9 @@
           });
           
           // Add signup rows for this date
-          sortedSignups.forEach(signup => {
+          sortedSignups.forEach((signup, index) => {
             const row = [
-              date, // Current date/time group
+              index === 0 ? date : '', // Only show date on first row of group
               signup.name || '',
               signup.email || '',
               signup.phone || '',
@@ -1607,12 +1603,18 @@
               signup.participationType || '',
               signup.groupName || '',
               signup.groupSize || '',
-              (signup.selectedDates || []).join('; '), // All dates they selected
-              signup.additionalComments || '',
-              signup.status || 'pending',
-              signup.timestamp ? new Date(signup.timestamp.seconds * 1000).toLocaleString() : ''
+              signup.additionalComments || 'N/A',
+              signup.status || 'pending'
             ];
-            csvLines.push(row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','));
+            // Properly escape CSV fields
+            csvLines.push(row.map(cell => {
+              const str = String(cell);
+              // If contains comma, quote, or newline, wrap in quotes and escape quotes
+              if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+              }
+              return str;
+            }).join(','));
           });
         });
 
