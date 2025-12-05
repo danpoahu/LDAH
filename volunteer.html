@@ -299,7 +299,7 @@
             <strong>Phone:</strong> (808) 532-5364
           </p>
           <p class="text-gray-700 text-sm mb-2">
-            <strong>Email:</strong> ldah@ldahawaii.org
+            <strong>Email:</strong> <a href="mailto:ldah@ldahawaii.org" class="text-[#004E7C] underline">ldah@ldahawaii.org</a>
           </p>
         </div>
       </div>
@@ -590,27 +590,6 @@
       try {
         await db.collection('volunteers').add(formData);
         
-        // Track analytics event
-        try {
-          await db.collection('analytics').add({
-            eventType: 'volunteer_application_submitted',
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            page: window.location.pathname,
-            opportunityId: currentOpportunityId,
-            subject: formData.subject
-          });
-          
-          // Track to Google Analytics
-          if (typeof gtag !== 'undefined') {
-            gtag('event', 'volunteer_application', {
-              event_category: 'engagement',
-              event_label: formData.subject
-            });
-          }
-        } catch (analyticsError) {
-          console.error('Analytics tracking error:', analyticsError);
-        }
-        
         // Show success message
         document.getElementById('volunteerForm').style.display = 'none';
         document.getElementById('successMessage').style.display = 'block';
@@ -622,4 +601,12 @@
         }, 2000);
         
       } catch (error) {
-        console.error('Error submitting appli
+        console.error('Error submitting application:', error);
+        alert('Error submitting application. Please try again or contact us directly.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Application';
+      }
+    });
+  </script>
+</body>
+</html>
