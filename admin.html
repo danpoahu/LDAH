@@ -2484,9 +2484,17 @@
                         boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                       }}>
                         <div className="text-3xl font-bold text-[#004E7C] mb-1">
-                          {eventSignups.length}
+                          {(() => {
+                            // Calculate total volunteers: individuals = 1, groups = groupSize
+                            return eventSignups.reduce((total, signup) => {
+                              if (signup.participationType === 'Group' && signup.groupSize) {
+                                return total + parseInt(signup.groupSize);
+                              }
+                              return total + 1; // Individual or no type = 1
+                            }, 0);
+                          })()}
                         </div>
-                        <div className="text-sm text-gray-600 font-medium">Total Signups</div>
+                        <div className="text-sm text-gray-600 font-medium">Total Volunteers</div>
                       </div>
                       
                       <div style={{
@@ -2604,7 +2612,16 @@
                                   <Calendar size={24} className="text-[#004E7C]" />
                                   <h3 className="text-xl font-bold text-[#004E7C]">{date}</h3>
                                   <span className="px-3 py-1 bg-[#004E7C] text-white rounded-full text-sm font-bold">
-                                    {sortedSignups.length} {sortedSignups.length === 1 ? 'signup' : 'signups'}
+                                    {(() => {
+                                      // Calculate total volunteers: individuals = 1, groups = groupSize
+                                      const totalVolunteers = sortedSignups.reduce((total, signup) => {
+                                        if (signup.participationType === 'Group' && signup.groupSize) {
+                                          return total + parseInt(signup.groupSize);
+                                        }
+                                        return total + 1; // Individual or no type = 1
+                                      }, 0);
+                                      return `${totalVolunteers} ${totalVolunteers === 1 ? 'volunteer' : 'volunteers'}`;
+                                    })()}
                                   </span>
                                 </div>
 
