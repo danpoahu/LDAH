@@ -1747,6 +1747,55 @@
         }
       };
 
+      // Convert event participant to volunteer application
+      const handleConvertToVolunteer = async (signup, eventTitle) => {
+        try {
+          // Parse name into first and last
+          const nameParts = signup.name.trim().split(' ');
+          const firstName = nameParts[0];
+          const lastName = nameParts.slice(1).join(' ') || '';
+          
+          // Check if application already exists for this email
+          const existingApps = await db.collection('volunteers')
+            .where('email', '==', signup.email.toLowerCase())
+            .get();
+          
+          if (!existingApps.empty) {
+            const confirmCreate = confirm(`${signup.name} already has a volunteer application. Create another one anyway?`);
+            if (!confirmCreate) return;
+          }
+          
+          // Create the volunteer application
+          const volunteerApp = {
+            firstName: firstName,
+            lastName: lastName,
+            email: signup.email.toLowerCase(),
+            subject: 'Community Volunteers',
+            notes: `Transferred from events - ${eventTitle}${signup.selectedDates ? ' (participated ' + signup.selectedDates.join(', ') + ')' : ''}`,
+            status: 'in-progress',
+            submittedAt: new Date().toISOString(),
+            opportunityId: '', // No specific opportunity since they came from events
+            adminNotes: signup.adminNotes || ''
+          };
+          
+          await db.collection('volunteers').add(volunteerApp);
+          
+          alert(`✓ Successfully converted ${signup.name} to a volunteer application!`);
+          
+          // Refresh applications list
+          const appsSnapshot = await db.collection('volunteers').get();
+          const appsData = appsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setApplications(appsData);
+          
+        } catch (error) {
+          console.error('Error converting to volunteer:', error);
+          alert('Failed to convert to volunteer: ' + error.message);
+        }
+      };
+
       const unreadCount = applications.filter(app => app.status === 'new').length;
       
       // Count pending signups across all events
@@ -2800,16 +2849,28 @@
                                               <span className="text-xs text-gray-500">
                                                 Submitted: {signup.timestamp ? new Date(signup.timestamp.seconds * 1000).toLocaleString() : 'N/A'}
                                               </span>
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  handleDeleteSignup(selectedEventForSignups.id, signup.id);
-                                                }}
-                                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-semibold"
-                                                style={{ border: 'none', cursor: 'pointer' }}
-                                              >
-                                                Delete
-                                              </button>
+                                              <div className="flex gap-2">
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleConvertToVolunteer(signup, selectedEventForSignups.title);
+                                                  }}
+                                                  className="px-4 py-2 bg-[#004E7C] text-white rounded-lg hover:bg-[#003a5c] transition-colors text-sm font-semibold"
+                                                  style={{ border: 'none', cursor: 'pointer' }}
+                                                >
+                                                  Convert to Volunteer
+                                                </button>
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteSignup(selectedEventForSignups.id, signup.id);
+                                                  }}
+                                                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-semibold"
+                                                  style={{ border: 'none', cursor: 'pointer' }}
+                                                >
+                                                  Delete
+                                                </button>
+                                              </div>
                                             </div>
                                           </div>
                                         )}
