@@ -512,9 +512,51 @@
         setUploadProgress(0);
 
         try {
+          let fileToUpload = file;
+          let fileName = file.name;
+
+          // If it's a PDF, convert it to an image first
+          if (file.type === 'application/pdf') {
+            try {
+              // Load PDF.js
+              if (!window.pdfjsLib) {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                document.head.appendChild(script);
+                await new Promise((resolve) => { script.onload = resolve; });
+                window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+              }
+
+              // Convert PDF to image
+              const arrayBuffer = await file.arrayBuffer();
+              const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+              const page = await pdf.getPage(1);
+              
+              const viewport = page.getViewport({ scale: 2.0 });
+              const canvas = document.createElement('canvas');
+              canvas.width = viewport.width;
+              canvas.height = viewport.height;
+              
+              const context = canvas.getContext('2d');
+              await page.render({ canvasContext: context, viewport: viewport }).promise;
+              
+              // Convert canvas to blob
+              const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
+              fileToUpload = new File([blob], fileName.replace('.pdf', '.jpg'), { type: 'image/jpeg' });
+              fileName = fileName.replace('.pdf', '.jpg');
+              
+              console.log('✅ PDF converted to image');
+            } catch (error) {
+              console.error('Error converting PDF:', error);
+              alert('Error converting PDF to image. Please try again.');
+              setUploading(false);
+              return;
+            }
+          }
+
           const storageRef = storage.ref();
-          const fileRef = storageRef.child(`event-images/${Date.now()}_${file.name}`);
-          const uploadTask = fileRef.put(file);
+          const fileRef = storageRef.child(`event-images/${Date.now()}_${fileName}`);
+          const uploadTask = fileRef.put(fileToUpload);
 
           uploadTask.on('state_changed',
             (snapshot) => {
