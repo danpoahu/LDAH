@@ -78,6 +78,14 @@
     });
 
     const AnalyticsDashboard = () => {
+      // Check authentication
+      useEffect(() => {
+        const isAuth = sessionStorage.getItem('ldah_admin_auth') === 'true';
+        if (!isAuth) {
+          window.location.href = 'admin.html';
+        }
+      }, []);
+
       const [dateRange, setDateRange] = useState('year'); // month, quarter, year, custom
       const [startDate, setStartDate] = useState('');
       const [endDate, setEndDate] = useState('');
@@ -246,6 +254,8 @@
 
         // Monthly trends
         const monthlyData = {};
+        
+        // Track event signups and participants
         filteredSignups.forEach(signup => {
           const date = signup.timestamp?.seconds 
             ? new Date(signup.timestamp.seconds * 1000)
@@ -253,16 +263,43 @@
           const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
           
           if (!monthlyData[monthKey]) {
-            monthlyData[monthKey] = { signups: 0, volunteers: 0 };
+            monthlyData[monthKey] = { pageViews: 0, eventParticipants: 0, volunteerApps: 0 };
           }
           
-          monthlyData[monthKey].signups += 1;
+          // Count participants (with group sizes)
           if (signup.participationType === 'Group' && signup.groupSize) {
-            monthlyData[monthKey].volunteers += parseInt(signup.groupSize);
+            monthlyData[monthKey].eventParticipants += parseInt(signup.groupSize);
           } else {
-            monthlyData[monthKey].volunteers += 1;
+            monthlyData[monthKey].eventParticipants += 1;
           }
         });
+        
+        // Track page views
+        filteredAnalytics.filter(a => a.eventType === 'page_view').forEach(view => {
+          const date = view.timestamp?.seconds 
+            ? new Date(view.timestamp.seconds * 1000)
+            : new Date(view.timestamp);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          
+          if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = { pageViews: 0, eventParticipants: 0, volunteerApps: 0 };
+          }
+          monthlyData[monthKey].pageViews += 1;
+        });
+        
+        // Track volunteer applications
+        filteredVolunteers.forEach(vol => {
+          const date = vol.submittedAt?.seconds 
+            ? new Date(vol.submittedAt.seconds * 1000)
+            : new Date(vol.submittedAt);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          
+          if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = { pageViews: 0, eventParticipants: 0, volunteerApps: 0 };
+          }
+          monthlyData[monthKey].volunteerApps += 1;
+        });
+
 
         return {
           dateRange: { start, end },
@@ -290,15 +327,14 @@
         
         report += `=== OVERVIEW ===\n`;
         report += `Total Page Views: ${metrics.pageViews}\n`;
-        report += `Event Signups: ${metrics.totalEventSignups}\n`;
-        report += `Total Event Volunteers: ${metrics.totalEventVolunteers}\n`;
+        report += `Event Participants: ${metrics.totalEventVolunteers} (from ${metrics.totalEventSignups} signups)\n`;
         report += `Volunteer Applications: ${metrics.totalVolunteerApps}\n\n`;
         
         report += `=== EVENT BREAKDOWN ===\n`;
         Object.entries(metrics.eventBreakdown).forEach(([event, data]) => {
           report += `${event}:\n`;
           report += `  - Signups: ${data.signups}\n`;
-          report += `  - Volunteers: ${data.volunteers}\n`;
+          report += `  - Participants: ${data.volunteers}\n`;
         });
         
         report += `\n=== VOLUNTEER APPLICATIONS STATUS ===\n`;
@@ -308,7 +344,7 @@
         
         report += `\n=== MONTHLY TRENDS ===\n`;
         Object.entries(metrics.monthlyData).sort().forEach(([month, data]) => {
-          report += `${month}: ${data.signups} signups, ${data.volunteers} volunteers\n`;
+          report += `${month}: ${data.pageViews || 0} page views, ${data.eventParticipants || 0} event participants, ${data.volunteerApps || 0} volunteer apps\n`;
         });
 
         // Download as text file
@@ -330,12 +366,12 @@
         
         csv += `Metric,Value\n`;
         csv += `Page Views,${metrics.pageViews}\n`;
+        csv += `Event Participants,${metrics.totalEventVolunteers}\n`;
         csv += `Event Signups,${metrics.totalEventSignups}\n`;
-        csv += `Total Event Volunteers,${metrics.totalEventVolunteers}\n`;
         csv += `Volunteer Applications,${metrics.totalVolunteerApps}\n\n`;
         
         csv += `\nEvent Breakdown\n`;
-        csv += `Event Name,Signups,Volunteers\n`;
+        csv += `Event Name,Signups,Participants\n`;
         Object.entries(metrics.eventBreakdown).forEach(([event, data]) => {
           csv += `"${event}",${data.signups},${data.volunteers}\n`;
         });
@@ -347,9 +383,9 @@
         });
         
         csv += `\nMonthly Trends\n`;
-        csv += `Month,Signups,Volunteers\n`;
+        csv += `Month,Page Views,Event Participants,Volunteer Apps\n`;
         Object.entries(metrics.monthlyData).sort().forEach(([month, data]) => {
-          csv += `${month},${data.signups},${data.volunteers}\n`;
+          csv += `${month},${data.pageViews || 0},${data.eventParticipants || 0},${data.volunteerApps || 0}\n`;
         });
 
         const blob = new Blob([csv], { type: 'text/csv' });
@@ -465,7 +501,7 @@
             {metrics ? (
               <>
                 {/* Key Metrics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                   <div className="stat-card text-center">
                     <div className="text-4xl mb-2">👁️</div>
                     <div className="text-3xl font-bold text-[#004E7C]">
@@ -477,17 +513,12 @@
                   <div className="stat-card text-center">
                     <div className="text-4xl mb-2">📅</div>
                     <div className="text-3xl font-bold text-[#004E7C]">
-                      {metrics.totalEventSignups}
-                    </div>
-                    <div className="text-sm text-gray-600 font-semibold">Event Signups</div>
-                  </div>
-
-                  <div className="stat-card text-center">
-                    <div className="text-4xl mb-2">👥</div>
-                    <div className="text-3xl font-bold text-[#004E7C]">
                       {metrics.totalEventVolunteers}
                     </div>
-                    <div className="text-sm text-gray-600 font-semibold">Event Volunteers</div>
+                    <div className="text-sm text-gray-600 font-semibold">Event Participants</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      ({metrics.totalEventSignups} signups)
+                    </div>
                   </div>
 
                   <div className="stat-card text-center">
@@ -513,7 +544,7 @@
                               <span className="font-bold text-[#004E7C] ml-2">{data.signups}</span>
                             </div>
                             <div>
-                              <span className="text-gray-600">Volunteers:</span>
+                              <span className="text-gray-600">Participants:</span>
                               <span className="font-bold text-[#004E7C] ml-2">{data.volunteers}</span>
                             </div>
                           </div>
@@ -548,10 +579,13 @@
                           <span className="font-semibold text-gray-900">{month}</span>
                           <div className="flex gap-4 text-sm">
                             <span className="text-gray-600">
-                              Signups: <span className="font-bold text-[#004E7C]">{data.signups}</span>
+                              Page Views: <span className="font-bold text-[#004E7C]">{data.pageViews || 0}</span>
                             </span>
                             <span className="text-gray-600">
-                              Volunteers: <span className="font-bold text-[#004E7C]">{data.volunteers}</span>
+                              Event Participants: <span className="font-bold text-[#004E7C]">{data.eventParticipants || 0}</span>
+                            </span>
+                            <span className="text-gray-600">
+                              Volunteer Apps: <span className="font-bold text-[#004E7C]">{data.volunteerApps || 0}</span>
                             </span>
                           </div>
                         </div>
