@@ -1285,6 +1285,7 @@
       const [applications, setApplications] = useState([]);
       const [eventSignups, setEventSignups] = useState([]);
       const [selectedEventForSignups, setSelectedEventForSignups] = useState(null);
+      const [newProviderCount, setNewProviderCount] = useState(0);
       const [isAuthenticated, setIsAuthenticated] = useState(() => {
         return sessionStorage.getItem('ldah_admin_auth') === 'true';
       });
@@ -1354,6 +1355,19 @@
         };
 
         loadData();
+      }, []);
+
+      // Listen for new provider requests count
+      useEffect(() => {
+        const unsubscribe = db.collection('providers')
+          .where('status', '==', 'new')
+          .onSnapshot(snapshot => {
+            setNewProviderCount(snapshot.size);
+          }, error => {
+            console.error('Error listening to providers:', error);
+          });
+
+        return () => unsubscribe();
       }, []);
 
       // Category handlers
@@ -2184,10 +2198,26 @@
                     border: 'none',
                     cursor: 'pointer',
                     textDecoration: 'none',
-                    display: 'inline-block'
+                    display: 'inline-block',
+                    position: 'relative'
                   }}
                 >
                   🤝 Providers
+                  {newProviderCount > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-8px',
+                      right: '-8px',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      borderRadius: '12px',
+                      padding: '2px 8px',
+                      fontSize: '12px',
+                      fontWeight: 'bold'
+                    }}>
+                      {newProviderCount}
+                    </span>
+                  )}
                 </a>
               </div>
             </div>
