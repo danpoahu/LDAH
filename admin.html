@@ -1297,7 +1297,7 @@
       const [loading, setLoading] = useState(true);
       const [saveStatus, setSaveStatus] = useState('');
       const [adminView, setAdminView] = useState('categories');
-      const [showApplications, setShowApplications] = useState(false);
+      const [showApplicationsForOpportunity, setShowApplicationsForOpportunity] = useState(null);
       const [expandedAppId, setExpandedAppId] = useState(null);
       const [expandedSignupId, setExpandedSignupId] = useState(null);
       const [editingNotes, setEditingNotes] = useState({});
@@ -2139,7 +2139,7 @@
                 <button
                   onClick={() => {
                     setAdminView('opportunities');
-                    setShowApplications(false);
+                    setShowApplicationsForOpportunity(null);
                   }}
                   style={{
                     backgroundColor: adminView === 'opportunities' ? '#004E7C' : '#d1d5db',
@@ -3014,7 +3014,7 @@
                 <div className="mb-6">
                   <div className="flex justify-between items-center">
                     <h1 className="text-2xl font-bold text-[#004E7C]">Manage Volunteer Opportunities</h1>
-                    {!showApplications && (
+                    {!showApplicationsForOpportunity && (
                       <button
                         onClick={() => setEditingOpportunity({
                           title: '',
@@ -3046,14 +3046,53 @@
                   </div>
                 </div>
 
-                {showApplications ? (
+                {showApplicationsForOpportunity ? (
                   <div className="space-y-3">
-                    {applications.length === 0 ? (
-                      <div className="text-center py-12 bg-white rounded-2xl">
-                        <p className="text-gray-600">No applications yet</p>
-                      </div>
-                    ) : (
-                      applications.sort((a, b) => {
+                    {/* Header showing which opportunity's applications we're viewing */}
+                    {(() => {
+                      const currentOpportunity = opportunities.find(o => o.id === showApplicationsForOpportunity);
+                      return currentOpportunity ? (
+                        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-purple-800 text-lg">
+                              📋 Applications for: {currentOpportunity.title}
+                            </h3>
+                            <button
+                              onClick={() => setShowApplicationsForOpportunity(null)}
+                              style={{
+                                backgroundColor: '#6b7280',
+                                color: 'white',
+                                padding: '8px 16px',
+                                borderRadius: '8px',
+                                fontWeight: 'bold',
+                                fontSize: '14px',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <ChevronLeft size={18} />
+                              Back to Opportunities
+                            </button>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+                    {(() => {
+                      // Filter applications for the selected opportunity
+                      const filteredApplications = applications.filter(app => app.opportunityId === showApplicationsForOpportunity);
+                      
+                      if (filteredApplications.length === 0) {
+                        return (
+                          <div className="text-center py-12 bg-white rounded-2xl">
+                            <p className="text-gray-600">No applications yet for this opportunity</p>
+                          </div>
+                        );
+                      }
+                      
+                      return filteredApplications.sort((a, b) => {
                         // Define status priority order
                         const statusOrder = {
                           'new': 1,
@@ -3219,8 +3258,8 @@
                             )}
                           </div>
                         );
-                      })
-                    )}
+                      });
+                    })()}
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -3289,7 +3328,7 @@
                             
                             <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto justify-end">
                               <button
-                                onClick={() => setShowApplications(true)}
+                                onClick={() => setShowApplicationsForOpportunity(opportunity.id)}
                                 className="p-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors shadow-sm"
                                 style={{ border: 'none', cursor: 'pointer', position: 'relative' }}
                                 title="View Applications"
