@@ -75,7 +75,7 @@
       border: 2px solid #004E7C;
       border-radius: 50px;
       font-size: 14px;
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
       transition: box-shadow 0.2s;
     }
@@ -96,7 +96,7 @@
     .filter-pill {
       padding: 6px 12px;
       border: 2px solid #004E7C;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.2);
       border-radius: 50px;
       font-size: 11px;
       font-weight: 600;
@@ -116,7 +116,7 @@
 
     /* Resource Cards */
     .resource-card {
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 16px;
       margin-bottom: 10px;
       border: 2px solid #004E7C;
@@ -142,7 +142,7 @@
       height: 50px;
       border-radius: 10px;
       object-fit: contain;
-      background: #f0f4f8;
+      background: rgba(255, 255, 255, 0.3);
       padding: 4px;
       flex-shrink: 0;
     }
@@ -262,7 +262,7 @@
     }
 
     .services-section {
-      background: #f8fafc;
+      background: rgba(255, 255, 255, 0.2);
       padding: 10px;
       border-radius: 10px;
       margin-bottom: 12px;
@@ -405,34 +405,25 @@
 <body>
   <div class="min-h-screen p-2">
     <div class="max-w-2xl mx-auto">
-      <!-- Fixed Floating Hamburger Menu -->
-      <div id="floatingMenu" style="
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 1001;
-        padding-top: env(safe-area-inset-top, 0px);
-        padding-right: env(safe-area-inset-right, 0px);
-      ">
+      <!-- Header Section with Hamburger Menu -->
+      <div class="text-center mb-3 mt-2 relative">
+        <!-- Hamburger Menu Icon -->
         <button 
           onclick="toggleMenu()"
           style="
+            position: absolute;
+            top: 8px;
+            right: 8px;
             color: #004E7C;
             cursor: pointer;
             transition: opacity 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.85);
-            border: 2px solid #004E7C;
-            border-radius: 10px;
-            padding: 12px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
+            display: inline-block;
+            background: none;
+            border: none;
+            padding: 4px;
           "
+          onmouseover="this.style.opacity='0.7'"
+          onmouseout="this.style.opacity='1'"
         >
           <svg id="menuIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -448,13 +439,14 @@
         <!-- Dropdown Menu -->
         <div id="dropdownMenu" style="
           position: absolute;
-          top: 48px;
-          right: 0;
+          top: 40px;
+          right: 8px;
           background-color: rgba(255, 255, 255, 0.98);
           border-radius: 10px;
           border: 2px solid #004E7C;
           backdrop-filter: blur(10px);
           box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          z-index: 1000;
           min-width: 140px;
           font-size: 13px;
           display: none;
@@ -466,10 +458,7 @@
           <a href="resources.html" style="display: block; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">📚 Resources</a>
           <a href="contact.html" style="display: block; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-radius: 0 0 8px 8px;" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">📞 Contact Us</a>
         </div>
-      </div>
 
-      <!-- Header Section -->
-      <div class="text-center mb-3 mt-2">
         <div class="mb-2 flex justify-center">
           <a href="index.html" style="padding: 8px; display: inline-block; cursor: pointer;">
             <img 
