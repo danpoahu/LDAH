@@ -121,8 +121,8 @@
       <!-- Fixed Floating Hamburger Menu -->
       <div id="floatingMenu" style="
         position: fixed;
-        top: 12px;
-        right: 12px;
+        top: max(16px, calc(env(safe-area-inset-top) + 8px));
+        right: max(16px, calc(env(safe-area-inset-right) + 8px));
         z-index: 1001;
       ">
         <button 
@@ -132,11 +132,12 @@
             cursor: pointer;
             transition: opacity 0.2s;
             display: inline-block;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.7);
             border: 2px solid #004E7C;
             border-radius: 10px;
-            padding: 8px;
+            padding: 10px;
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
           "
           onmouseover="this.style.opacity='0.8'"
@@ -369,7 +370,6 @@
 
       try {
         const snapshot = await db.collection('volunteerOpportunities')
-          .orderBy('order')
           .get();
 
         if (snapshot.empty) {
@@ -397,6 +397,9 @@
             opportunities.push({ id: doc.id, ...data });
           }
         });
+
+        // Sort by order field client-side
+        opportunities.sort((a, b) => (a.order || 0) - (b.order || 0));
 
         if (opportunities.length === 0) {
           container.innerHTML = `
@@ -513,11 +516,4 @@
         document.getElementById('volunteerForm').style.display = 'none';
         document.getElementById('successMessage').style.display = 'block';
         
-        // Close modal after 2 seconds
-        setTimeout(() => {
-          closeModal();
-          document.getElementById('volunteerForm').style.display = 'block';
-        }, 2000);
-        
-      } catch (error) {
-        console.error('Error submitting appli
+        // Close moda

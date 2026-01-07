@@ -130,8 +130,8 @@
       <!-- Fixed Floating Hamburger Menu -->
       <div id="floatingMenu" style="
         position: fixed;
-        top: 12px;
-        right: 12px;
+        top: max(16px, calc(env(safe-area-inset-top) + 8px));
+        right: max(16px, calc(env(safe-area-inset-right) + 8px));
         z-index: 1001;
       ">
         <button 
@@ -141,11 +141,12 @@
             cursor: pointer;
             transition: opacity 0.2s;
             display: inline-block;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.7);
             border: 2px solid #004E7C;
             border-radius: 10px;
-            padding: 8px;
+            padding: 10px;
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
           "
           onmouseover="this.style.opacity='0.8'"
@@ -417,7 +418,7 @@
         
         <!-- Email Us Button - Smaller, Blue, Centered -->
         <div style="text-align: center;">
-          <a href="mailto:info@ldah.org" style="
+          <a href="mailto:info@ldahawaii.org" style="
             display: inline-block;
             background: linear-gradient(135deg, #004E7C 0%, #0066a1 100%);
             color: white;
@@ -517,9 +518,4 @@
     }
 
     // Start the carousel
-    document.addEventListener('DOMContentLoaded', function() {
-      carouselInterval = setInterval(nextSlide, 5000);
-    });
-  </script>
-</body>
-</html>
+    docume

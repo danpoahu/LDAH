@@ -509,8 +509,8 @@
         <div className="min-h-screen p-2" style={{ background: "url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
           <div className="max-w-2xl mx-auto">
             {/* Fixed Floating Hamburger Menu */}
-            <div style={{ position: 'fixed', top: '12px', right: '12px', zIndex: 1001 }}>
-              <button onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#004E7C', cursor: 'pointer', transition: 'opacity 0.2s', display: 'inline-block', background: 'rgba(255, 255, 255, 0.95)', border: '2px solid #004E7C', borderRadius: '10px', padding: '8px', backdropFilter: 'blur(10px)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} onMouseOver={(e) => e.currentTarget.style.opacity = '0.8'} onMouseOut={(e) => e.currentTarget.style.opacity = '1'}>
+            <div style={{ position: 'fixed', top: 'max(16px, calc(env(safe-area-inset-top) + 8px))', right: 'max(16px, calc(env(safe-area-inset-right) + 8px))', zIndex: 1001 }}>
+              <button onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#004E7C', cursor: 'pointer', transition: 'opacity 0.2s', display: 'inline-block', background: 'rgba(255, 255, 255, 0.7)', border: '2px solid #004E7C', borderRadius: '10px', padding: '10px', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} onMouseOver={(e) => e.currentTarget.style.opacity = '0.8'} onMouseOut={(e) => e.currentTarget.style.opacity = '1'}>
                 {menuOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
 
