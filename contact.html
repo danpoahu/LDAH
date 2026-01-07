@@ -199,7 +199,7 @@
       <!-- Ma'ili Office Card -->
       <div class="office-card">
         <div class="text-center mb-3">
-          <div class="text-4xl mb-2">🏫</div>
+          <div class="text-4xl mb-2">🫶</div>
           <h2 class="text-xl font-bold text-[#004E7C] mb-1">Ma'ili Office</h2>
           <p class="text-xs text-gray-600 italic">School Readiness Project</p>
         </div>
@@ -283,4 +283,13 @@
     document.addEventListener('click', function(event) {
       const menu = document.getElementById('dropdownMenu');
       const button = event.target.closest('button');
-     
+      
+      if (!button && menu.style.display === 'block') {
+        menu.style.display = 'none';
+        document.getElementById('menuIcon').style.display = 'block';
+        document.getElementById('closeIcon').style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
