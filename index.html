@@ -62,6 +62,66 @@
       min-height: 100vh;
       min-height: -webkit-fill-available;
     }
+
+    /* Animation for the carousel */
+    .carousel-container {
+      position: relative;
+      overflow: hidden;
+      height: 145px; /* Fixed height to prevent jumping */
+    }
+
+    .carousel-slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+
+    .carousel-slide.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .carousel-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(0, 78, 124, 0.3);
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    .carousel-dot.active {
+      background: #004E7C;
+      transform: scale(1.2);
+    }
+
+    .carousel-dot:hover {
+      background: rgba(0, 78, 124, 0.6);
+    }
+
+    .value-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .value-check {
+      color: #10b981;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -169,6 +229,20 @@
           >
             🤝 Volunteer
           </a>
+          <a href="resources.html" style="
+            display: block;
+            padding: 8px 14px;
+            color: #004E7C;
+            text-decoration: none;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(0, 78, 124, 0.1);
+            transition: background 0.2s;
+          "
+          onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'"
+          onmouseout="this.style.backgroundColor='transparent'"
+          >
+            📚 Resources
+          </a>
           <a href="contact.html" style="
             display: block;
             padding: 8px 14px;
@@ -259,8 +333,8 @@
           </div>
         </a>
 
-        <!-- Contact Us Button -->
-        <a href="contact.html" style="text-decoration: none;">
+        <!-- Resources Button (replaced Contact Us) -->
+        <a href="resources.html" style="text-decoration: none;">
           <div style="
             background-color: rgba(255, 255, 255, 0.1);
             border-radius: 20px;
@@ -271,13 +345,34 @@
             text-align: center;
             backdrop-filter: blur(10px);
           " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-            <div class="text-2xl mb-1">📞</div>
-            <h3 class="font-bold text-xs text-[#004E7C]">Contact Us</h3>
+            <div class="text-2xl mb-1">📚</div>
+            <h3 class="font-bold text-xs text-[#004E7C]">Resources</h3>
           </div>
         </a>
       </div>
 
-      <!-- Our Mission Card (moved below menu) -->
+      <!-- Wide Contact Us Button (above Our Mission) - Transparent with border -->
+      <a href="contact.html" style="text-decoration: none; display: block; margin-bottom: 12px;">
+        <div style="
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
+          padding: 14px 20px;
+          cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s;
+          border: 2px solid #004E7C;
+          text-align: center;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          backdrop-filter: blur(10px);
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+          <span style="font-size: 1.5rem;">📞</span>
+          <span style="font-weight: bold; font-size: 14px; color: #004E7C;">Contact Us</span>
+        </div>
+      </a>
+
+      <!-- Animated Mission / Vision / Values Card -->
       <div style="
         background-color: rgba(255, 255, 255, 0.1);
         border-radius: 20px;
@@ -286,68 +381,130 @@
         border: 2px solid #004E7C;
         backdrop-filter: blur(10px);
       ">
-        <h2 class="text-base font-bold text-[#004E7C] mb-2 text-center">Our Mission</h2>
-        <p class="text-gray-700" style="font-size: 11px; line-height: 1.4; text-align: center;">
-          To enhance educational, work and life opportunities for children and youth with or at risk of disabilities by empowering them and their families through screening, identification, information, training and mentoring, and by public outreach and advocacy.
-        </p>
+        <div class="carousel-container">
+          <!-- Slide 1: Our Mission -->
+          <div class="carousel-slide active" data-slide="0">
+            <h2 class="text-base font-bold text-[#004E7C] mb-2 text-center">🎯 Our Mission</h2>
+            <p class="text-gray-700" style="font-size: 11px; line-height: 1.4; text-align: center;">
+              To enhance educational, work and life opportunities for children and youth with or at risk of disabilities by empowering them and their families through screening, identification, information, training and mentoring, and by public outreach and advocacy.
+            </p>
+          </div>
+
+          <!-- Slide 2: Our Vision -->
+          <div class="carousel-slide" data-slide="1">
+            <h2 class="text-base font-bold text-[#004E7C] mb-2 text-center">🔭 Our Vision</h2>
+            <p class="text-gray-700" style="font-size: 11px; line-height: 1.4; text-align: center;">
+              Individuals have choice and access to educational, work and life opportunities to be successful regardless of their disabilities.
+            </p>
+          </div>
+
+          <!-- Slide 3: Core Values -->
+          <div class="carousel-slide" data-slide="2">
+            <h2 class="text-base font-bold text-[#004E7C] mb-2 text-center">💎 Core Values</h2>
+            <div style="font-size: 11px; line-height: 1.5;">
+              <div class="value-item">
+                <span class="value-check">✓</span>
+                <span class="text-gray-700">Advocating for the Rights of Children with Disabilities</span>
+              </div>
+              <div class="value-item">
+                <span class="value-check">✓</span>
+                <span class="text-gray-700">Putting Families First</span>
+              </div>
+              <div class="value-item">
+                <span class="value-check">✓</span>
+                <span class="text-gray-700">Creating Partnerships</span>
+              </div>
+              <div class="value-item">
+                <span class="value-check">✓</span>
+                <span class="text-gray-700">Improving Communication</span>
+              </div>
+              <div class="value-item">
+                <span class="value-check">✓</span>
+                <span class="text-gray-700">Implementing Best-Practices & Innovation</span>
+              </div>
+              <div class="value-item">
+                <span class="value-check">✓</span>
+                <span class="text-gray-700">Ensuring Accountability</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Carousel Dots -->
+        <div class="carousel-dots">
+          <div class="carousel-dot active" data-dot="0" onclick="goToSlide(0)"></div>
+          <div class="carousel-dot" data-dot="1" onclick="goToSlide(1)"></div>
+          <div class="carousel-dot" data-dot="2" onclick="goToSlide(2)"></div>
+        </div>
       </div>
 
-      <!-- Card 3: Contact Us -->
+      <!-- Contact Info Card -->
       <div id="contact" style="
         background-color: rgba(255, 255, 255, 0.1);
         border-radius: 20px;
         padding: 15px;
         margin-bottom: 12px;
         backdrop-filter: blur(10px);
+        border: 2px solid #004E7C;
       ">
-        <h2 class="text-base font-bold text-[#004E7C] mb-2 text-center">Contact Us</h2>
+        <h2 class="text-base font-bold text-[#004E7C] mb-3 text-center">Our Offices</h2>
         
-        <!-- Main Honolulu Office -->
-        <div class="mb-4 pb-4 border-b border-gray-300">
-          <h3 class="text-sm font-bold text-[#004E7C] mb-2 text-center">Honolulu Office</h3>
-          <div class="text-center" style="line-height: 1.3;">
-            <p class="text-gray-700" style="font-size: 11px; margin-bottom: 4px;">
-              <strong>Phone:</strong> (808) 532-5364
-            </p>
-            <p class="text-gray-700" style="font-size: 11px; margin-bottom: 4px;">
-              <strong>Toll Free:</strong> 1-800-533-9684
-            </p>
-            <p class="text-gray-700" style="font-size: 11px; margin-bottom: 8px;">
-              <strong>Email:</strong> <a href="mailto:ldah@ldahawaii.org" class="text-[#004E7C] underline">ldah@ldahawaii.org</a>
-            </p>
-            <p class="text-gray-700" style="font-size: 11px;">
-              <strong>Address:</strong><br>
-              Harry and Jeanette Weinberg<br>
-              Kukui Center<br>
-              245 North Kukui Street<br>
-              Suite 205<br>
-              Honolulu, HI 96817
-            </p>
+        <!-- Two Column Layout for Offices -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <!-- Honolulu Office -->
+          <div style="text-align: center;">
+            <h3 style="font-size: 13px; font-weight: bold; color: #004E7C; margin-bottom: 8px;">🏢 Honolulu</h3>
+            <a href="tel:+18085325364" style="
+              display: block;
+              background: linear-gradient(135deg, #004E7C 0%, #0066a1 100%);
+              color: white;
+              text-decoration: none;
+              padding: 10px 12px;
+              border-radius: 12px;
+              font-size: 12px;
+              font-weight: 600;
+              transition: transform 0.2s, box-shadow 0.2s;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              📞 (808) 532-5364
+            </a>
+            <p style="font-size: 10px; color: #666; margin-top: 6px;">Toll Free: 1-800-533-9684</p>
+          </div>
+          
+          <!-- Ma'ili Office -->
+          <div style="text-align: center;">
+            <h3 style="font-size: 13px; font-weight: bold; color: #004E7C; margin-bottom: 8px;">🏢 Ma'ili</h3>
+            <a href="tel:+18086965361" style="
+              display: block;
+              background: linear-gradient(135deg, #004E7C 0%, #0066a1 100%);
+              color: white;
+              text-decoration: none;
+              padding: 10px 12px;
+              border-radius: 12px;
+              font-size: 12px;
+              font-weight: 600;
+              transition: transform 0.2s, box-shadow 0.2s;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              📞 (808) 696-5361
+            </a>
+            <p style="font-size: 10px; color: #666; margin-top: 6px;">School Readiness Project</p>
           </div>
         </div>
-
-        <!-- Ma'ili Office -->
-        <div>
-          <h3 class="text-sm font-bold text-[#004E7C] mb-2 text-center">Ma'ili Office</h3>
-          <p class="text-xs text-gray-600 text-center mb-2 italic">School Readiness Project</p>
-          <div class="text-center" style="line-height: 1.3;">
-            <p class="text-gray-700" style="font-size: 11px; margin-bottom: 4px;">
-              <strong>Phone:</strong> (808) 696-5361
-            </p>
-            <p class="text-gray-700" style="font-size: 11px; margin-bottom: 8px;">
-              <strong>Fax:</strong> (808) 696-5371
-            </p>
-            <p class="text-gray-700" style="font-size: 11px; margin-bottom: 4px;">
-              <strong>Hours:</strong> Monday to Friday – 8am to 5pm
-            </p>
-            <p class="text-gray-700" style="font-size: 11px;">
-              <strong>Address:</strong><br>
-              Community Learning Center<br>
-              Kauhale Building<br>
-              87-790 Kulauku St., Suite A116<br>
-              Wai'anae, HI 96792
-            </p>
-          </div>
+        
+        <!-- Email Us Button - Smaller, Blue, Centered -->
+        <div style="text-align: center;">
+          <a href="mailto:info@ldah.org" style="
+            display: inline-block;
+            background: linear-gradient(135deg, #004E7C 0%, #0066a1 100%);
+            color: white;
+            text-decoration: none;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            ✉️ Email Us
+          </a>
         </div>
       </div>
     </div>
@@ -394,6 +551,49 @@
         document.getElementById('menuIcon').style.display = 'block';
         document.getElementById('closeIcon').style.display = 'none';
       }
+    });
+
+    // Carousel functionality
+    let currentSlide = 0;
+    const totalSlides = 3;
+    let carouselInterval;
+
+    function goToSlide(index) {
+      // Update slides
+      document.querySelectorAll('.carousel-slide').forEach((slide, i) => {
+        slide.classList.remove('active');
+        if (i === index) {
+          slide.classList.add('active');
+        }
+      });
+
+      // Update dots
+      document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+        dot.classList.remove('active');
+        if (i === index) {
+          dot.classList.add('active');
+        }
+      });
+
+      currentSlide = index;
+      
+      // Reset the auto-advance timer when manually changing slides
+      resetCarouselTimer();
+    }
+
+    function nextSlide() {
+      const next = (currentSlide + 1) % totalSlides;
+      goToSlide(next);
+    }
+
+    function resetCarouselTimer() {
+      clearInterval(carouselInterval);
+      carouselInterval = setInterval(nextSlide, 5000); // 5 seconds per slide
+    }
+
+    // Start the carousel
+    document.addEventListener('DOMContentLoaded', function() {
+      carouselInterval = setInterval(nextSlide, 5000);
     });
   </script>
 </body>

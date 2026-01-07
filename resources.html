@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LDAH">
+  <meta name="theme-color" content="#004E7C">
+  <meta name="description" content="LDAH Resources - Find helpful resources for families and children with disabilities throughout Hawaii and the Pacific Islands.">
+  <title>LDAH - Resources</title>
+  
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-32PRRS0W85"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-32PRRS0W85');
+  </script>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- iOS Icons -->
+  <link rel="apple-touch-icon" href="https://danpoahu.github.io/LDAH/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="https://danpoahu.github.io/LDAH/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="https://danpoahu.github.io/LDAH/icon-512.png">
+  
+  <!-- Standard favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="https://danpoahu.github.io/LDAH/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="https://danpoahu.github.io/LDAH/icon-512.png">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow-x: hidden;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: url('https://danpoahu.github.io/LDAH/background.png') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+    }
+
+    /* Search Box */
+    .search-box {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #004E7C;
+      border-radius: 50px;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      transition: box-shadow 0.2s;
+    }
+    
+    .search-box:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(0, 78, 124, 0.2);
+    }
+
+    /* Filter Pills */
+    .filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .filter-pill {
+      padding: 6px 12px;
+      border: 2px solid #004E7C;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #004E7C;
+    }
+
+    .filter-pill:hover {
+      background: rgba(0, 78, 124, 0.1);
+    }
+
+    .filter-pill.active {
+      background: #004E7C;
+      color: white;
+    }
+
+    /* Resource Cards */
+    .resource-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      margin-bottom: 10px;
+      border: 2px solid #004E7C;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+      transition: box-shadow 0.2s;
+    }
+
+    .resource-card:active {
+      box-shadow: 0 2px 8px rgba(0, 78, 124, 0.2);
+    }
+
+    .resource-header {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      cursor: pointer;
+      gap: 12px;
+    }
+
+    .resource-logo {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      object-fit: contain;
+      background: #f0f4f8;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+
+    .resource-logo-placeholder {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #004E7C, #0066a1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .resource-summary {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .resource-type-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #e0f2fe;
+      color: #0369a1;
+      border-radius: 50px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .resource-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #004E7C;
+      margin-bottom: 2px;
+      line-height: 1.2;
+    }
+
+    .resource-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .resource-meta span {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .expand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s, background 0.2s;
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+
+    .resource-card.expanded .expand-icon {
+      transform: rotate(180deg);
+      background: #004E7C;
+      color: white;
+    }
+
+    /* Resource Details */
+    .resource-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      border-top: 0 solid #e2e8f0;
+    }
+
+    .resource-card.expanded .resource-details {
+      max-height: 800px;
+      border-top-width: 1px;
+    }
+
+    .resource-details-inner {
+      padding: 12px;
+    }
+
+    .detail-section {
+      margin-bottom: 12px;
+    }
+
+    .detail-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .detail-section h4 {
+      font-size: 10px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .detail-section p {
+      color: #1a1a1a;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .detail-section a {
+      color: #004E7C;
+      text-decoration: none;
+    }
+
+    .services-section {
+      background: #f8fafc;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+
+    .contact-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .contact-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 14px;
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .contact-btn:active {
+      transform: scale(0.98);
+    }
+
+    .contact-btn.phone {
+      background: #10b981;
+      color: white;
+    }
+
+    .contact-btn.email {
+      background: #004E7C;
+      color: white;
+    }
+
+    .contact-btn.website {
+      background: #8b5cf6;
+      color: white;
+    }
+
+    /* Loading & No Results */
+    .no-results {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    .no-results .icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+
+    .no-results h3 {
+      color: #004E7C;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .no-results p {
+      font-size: 12px;
+    }
+
+    /* Modal */
+    .iframe-modal {
+      display: none;
+      position: fixed;
+      z-index: 3000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.85);
+    }
+
+    .iframe-modal.active {
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .iframe-content {
+      background: white;
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      height: 90vh;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .iframe-header {
+      background: linear-gradient(135deg, #004E7C, #0066a1);
+      color: white;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .iframe-header h3 {
+      margin: 0;
+      font-size: 16px;
+      flex: 1;
+      padding-right: 12px;
+    }
+
+    .close-iframe {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .iframe-frame {
+      width: 100%;
+      flex: 1;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen p-2">
+    <div class="max-w-2xl mx-auto">
+      <!-- Header Section -->
+      <div class="text-center mb-3 mt-2 relative">
+        <!-- Back Button -->
+        <a href="index.html" style="
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          color: #004E7C;
+          text-decoration: none;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 13px;
+          font-weight: 600;
+        ">
+          ← Home
+        </a>
+
+        <!-- Hamburger Menu Icon -->
+        <button 
+          onclick="toggleMenu()"
+          style="
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            color: #004E7C;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: inline-block;
+            background: none;
+            border: none;
+            padding: 4px;
+          "
+        >
+          <svg id="menuIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+          <svg id="closeIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div id="dropdownMenu" style="
+          position: absolute;
+          top: 40px;
+          right: 8px;
+          background-color: rgba(255, 255, 255, 0.98);
+          border-radius: 10px;
+          border: 2px solid #004E7C;
+          backdrop-filter: blur(10px);
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          z-index: 1000;
+          min-width: 140px;
+          font-size: 13px;
+          display: none;
+        ">
+          <a href="index.html" style="display: block; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);">🏠 Home</a>
+          <a href="events.html" style="display: block; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);">📅 Events</a>
+          <a href="faq.html" style="display: block; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);">❓ Quick Help</a>
+          <a href="volunteer.html" style="display: block; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);">🤝 Volunteer</a>
+          <a href="resources.html" style="display: block; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);">📚 Resources</a>
+          <a href="contact.html" style="display: block; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-radius: 0 0 8px 8px;">📞 Contact Us</a>
+        </div>
+
+        <div class="mb-2 flex justify-center">
+          <div style="padding: 8px; display: inline-block;">
+            <img 
+              src="https://danpoahu.github.io/LDAH/logo_transparent.png" 
+              alt="LDAH Logo"
+              style="width: 80px; height: 80px; display: block;"
+            />
+          </div>
+        </div>
+        
+        <h1 class="text-xl font-bold text-[#004E7C] mb-1">📚 Resources</h1>
+        <p class="text-gray-600 text-xs mb-3">
+          Find helpful resources for families and children with disabilities
+        </p>
+      </div>
+
+      <!-- Search Box -->
+      <div class="mb-3">
+        <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search resources...">
+      </div>
+
+      <!-- Island Filter Pills -->
+      <div class="mb-2">
+        <p class="text-xs font-semibold text-[#004E7C] mb-2">Filter by Island</p>
+        <div class="filter-pills" id="islandFilters">
+          <button class="filter-pill active" data-filter="all">All</button>
+          <button class="filter-pill" data-filter="Oahu">Oahu</button>
+          <button class="filter-pill" data-filter="Maui">Maui</button>
+          <button class="filter-pill" data-filter="Hawaii">Big Island</button>
+          <button class="filter-pill" data-filter="Kauai">Kauai</button>
+          <button class="filter-pill" data-filter="Statewide">Statewide</button>
+        </div>
+      </div>
+
+      <!-- Type Filter Pills -->
+      <div class="mb-3">
+        <p class="text-xs font-semibold text-[#004E7C] mb-2">Filter by Type</p>
+        <div class="filter-pills" id="typeFilters">
+          <button class="filter-pill active" data-filter="all">All</button>
+          <button class="filter-pill" data-filter="Transition Resources">Transition</button>
+          <button class="filter-pill" data-filter="Specialized Resources">Specialized</button>
+          <button class="filter-pill" data-filter="Education">Education</button>
+          <button class="filter-pill" data-filter="Healthcare">Healthcare</button>
+          <button class="filter-pill" data-filter="Support Services">Support</button>
+        </div>
+      </div>
+
+      <!-- Results Count -->
+      <p class="text-xs text-gray-600 mb-2">
+        Showing <strong id="resultsCount" class="text-[#004E7C]">0</strong> resources
+      </p>
+
+      <!-- Resources List -->
+      <div id="resourcesList">
+        <!-- Cards will be generated by JavaScript -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal for external links -->
+  <div id="iframeModal" class="iframe-modal" onclick="closeIframeModal(event)">
+    <div class="iframe-content" onclick="event.stopPropagation()">
+      <div class="iframe-header">
+        <h3 id="iframeTitle">Loading...</h3>
+        <button class="close-iframe" onclick="closeIframeModal()">&times;</button>
+      </div>
+      <iframe id="iframeFrame" class="iframe-frame" src="" allowfullscreen loading="lazy"></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Resources data
+    let resourcesData = [];
+    let isLoading = true;
+
+    // State variables
+    let currentIslandFilter = 'all';
+    let currentTypeFilter = 'all';
+    let searchQuery = '';
+
+    // Fallback data
+    const fallbackData = [
+      {
+        id: 1,
+        name: "Makaha Learning Center",
+        type: "Transition Resources",
+        person: "Danielle Irwin",
+        address: "84-1170 Farrington Hwy Bldg C2",
+        city: "Waianae",
+        state: "HI",
+        zip: "96792",
+        phone: "(808) 913-2399",
+        email: "info@makahalearning.org",
+        website: "www.makahalearning.org",
+        services: "Classes the Makaha Learning Center currently offers: Core Construction class - Get started in the industry by learning construction basics. Solar PV 101 class - Solar installation and preparation coursework.",
+        island: "Oahu",
+        logo: ""
+      }
+    ];
+
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAU3CQ07bCVKlJ1qGak-150kaJEyPKldLk",
+      authDomain: "ldah-932d5.firebaseapp.com",
+      projectId: "ldah-932d5",
+      storageBucket: "ldah-932d5.firebasestorage.app",
+      messagingSenderId: "662130454003",
+      appId: "1:662130454003:web:437576d5a5811ecd8df686"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const analytics = firebase.analytics();
+
+    analytics.logEvent('page_view', {
+      page_title: 'Resources',
+      page_location: window.location.href,
+      page_path: '/resources.html'
+    });
+
+    // Load resources from Firebase
+    async function loadResources() {
+      const listContainer = document.getElementById('resourcesList');
+      listContainer.innerHTML = '<div class="no-results"><div class="icon">⏳</div><h3>Loading resources...</h3></div>';
+
+      try {
+        let snapshot;
+        try {
+          snapshot = await db.collection('resources').orderBy('order').get();
+        } catch (indexError) {
+          console.log('Index not available, using unordered query');
+          snapshot = await db.collection('resources').get();
+        }
+
+        if (snapshot.empty) {
+          console.log('No resources in Firebase, using fallback data');
+          resourcesData = fallbackData;
+        } else {
+          resourcesData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            name: doc.data().name || '',
+            type: doc.data().type || doc.data().types?.[0] || 'Specialized Resources',
+            person: doc.data().person || '',
+            address: doc.data().address || '',
+            city: doc.data().city || '',
+            state: doc.data().state || 'HI',
+            zip: doc.data().zip || '',
+            phone: doc.data().phone || '',
+            email: doc.data().email || '',
+            website: doc.data().website || '',
+            services: doc.data().services || '',
+            island: doc.data().island || '',
+            logo: doc.data().logo || ''
+          }));
+          resourcesData.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        isLoading = false;
+        filterAndRender();
+        console.log(`✅ Loaded ${resourcesData.length} resources`);
+
+      } catch (error) {
+        console.error('Error loading resources:', error);
+        resourcesData = fallbackData;
+        isLoading = false;
+        filterAndRender();
+      }
+    }
+
+    // Render resource card
+    function renderResourceCard(resource) {
+      const logoHtml = resource.logo 
+        ? `<img src="${resource.logo}" alt="${resource.name}" class="resource-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+           <div class="resource-logo-placeholder" style="display:none;">🏢</div>`
+        : `<div class="resource-logo-placeholder">🏢</div>`;
+      
+      const websiteUrl = resource.website && resource.website.startsWith('http') ? resource.website : `https://${resource.website}`;
+      const displayIsland = resource.island || 'Statewide';
+      
+      return `
+        <div class="resource-card" data-id="${resource.id}" data-island="${resource.island}" data-type="${resource.type}">
+          <div class="resource-header" onclick="toggleCard('${resource.id}')">
+            ${logoHtml}
+            <div class="resource-summary">
+              <div class="resource-type-badge">${resource.type}</div>
+              <h3 class="resource-name">${resource.name}</h3>
+              <div class="resource-meta">
+                <span>📍 ${displayIsland}</span>
+                ${resource.phone ? `<span>📞 ${resource.phone}</span>` : ''}
+              </div>
+            </div>
+            <div class="expand-icon">▼</div>
+          </div>
+          <div class="resource-details">
+            <div class="resource-details-inner">
+              ${resource.person ? `<div class="detail-section">
+                <h4>Contact Person</h4>
+                <p>${resource.person}</p>
+              </div>` : ''}
+              ${resource.address || resource.city ? `<div class="detail-section">
+                <h4>Address</h4>
+                <p>${resource.address ? resource.address + '<br>' : ''}${resource.city}${resource.state ? ', ' + resource.state : ''} ${resource.zip}</p>
+              </div>` : ''}
+              ${resource.services ? `<div class="services-section">
+                <h4>Services Offered</h4>
+                <p>${resource.services}</p>
+              </div>` : ''}
+              <div class="contact-buttons">
+                ${resource.phone ? `<a href="tel:${resource.phone.replace(/[^0-9+]/g, '')}" class="contact-btn phone">📞 Call</a>` : ''}
+                ${resource.email ? `<a href="mailto:${resource.email}" class="contact-btn email">✉️ Email</a>` : ''}
+                ${resource.website ? `<button onclick="event.stopPropagation(); openIframeModal('${resource.name.replace(/'/g, "\\'")}', '${websiteUrl}')" class="contact-btn website">🌐 Website</button>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Toggle card expansion
+    function toggleCard(id) {
+      const card = document.querySelector(`.resource-card[data-id="${id}"]`);
+      if (card) card.classList.toggle('expanded');
+    }
+
+    // Filter and render resources
+    function filterAndRender() {
+      if (isLoading) return;
+
+      const filteredResources = resourcesData.filter(resource => {
+        const resourceIsland = (resource.island || '').toLowerCase();
+        const matchesIsland = currentIslandFilter === 'all' || 
+          resourceIsland === currentIslandFilter.toLowerCase() ||
+          (currentIslandFilter === 'Statewide' && !resource.island);
+        
+        const resourceType = (resource.type || '').toLowerCase();
+        const matchesType = currentTypeFilter === 'all' || 
+          resourceType.includes(currentTypeFilter.toLowerCase());
+        
+        const searchLower = searchQuery.toLowerCase();
+        const matchesSearch = searchQuery === '' || 
+          (resource.name || '').toLowerCase().includes(searchLower) ||
+          (resource.services || '').toLowerCase().includes(searchLower) ||
+          (resource.city || '').toLowerCase().includes(searchLower) ||
+          (resource.person || '').toLowerCase().includes(searchLower);
+        
+        return matchesIsland && matchesType && matchesSearch;
+      });
+
+      const listContainer = document.getElementById('resourcesList');
+      
+      if (filteredResources.length === 0) {
+        listContainer.innerHTML = `
+          <div class="no-results">
+            <div class="icon">🔍</div>
+            <h3>No resources found</h3>
+            <p>Try adjusting your filters or search terms</p>
+          </div>
+        `;
+      } else {
+        listContainer.innerHTML = filteredResources.map(renderResourceCard).join('');
+      }
+
+      document.getElementById('resultsCount').textContent = filteredResources.length;
+    }
+
+    // Set up filter buttons
+    function setupFilters() {
+      // Island filters
+      document.querySelectorAll('#islandFilters .filter-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#islandFilters .filter-pill').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentIslandFilter = btn.dataset.filter;
+          filterAndRender();
+        });
+      });
+
+      // Type filters
+      document.querySelectorAll('#typeFilters .filter-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#typeFilters .filter-pill').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentTypeFilter = btn.dataset.filter;
+          filterAndRender();
+        });
+      });
+
+      // Search box
+      document.getElementById('searchBox').addEventListener('input', (e) => {
+        searchQuery = e.target.value.toLowerCase();
+        filterAndRender();
+      });
+    }
+
+    // Modal functions
+    function openIframeModal(title, url) {
+      const modal = document.getElementById('iframeModal');
+      const titleEl = document.getElementById('iframeTitle');
+      const frame = document.getElementById('iframeFrame');
+      
+      titleEl.textContent = title;
+      
+      // Reset to iframe if needed
+      if (frame.tagName !== 'IFRAME') {
+        frame.outerHTML = '<iframe id="iframeFrame" class="iframe-frame" src="" allowfullscreen loading="lazy"></iframe>';
+      }
+      document.getElementById('iframeFrame').src = url;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeIframeModal(event) {
+      if (event && event.target !== event.currentTarget && !event.target.classList.contains('close-iframe')) {
+        return;
+      }
+      const modal = document.getElementById('iframeModal');
+      const frameEl = document.getElementById('iframeFrame');
+      
+      modal.classList.remove('active');
+      
+      if (frameEl) {
+        frameEl.outerHTML = '<iframe id="iframeFrame" class="iframe-frame" src="" allowfullscreen loading="lazy"></iframe>';
+      }
+      
+      document.body.style.overflow = 'auto';
+    }
+
+    // Hamburger Menu Toggle
+    function toggleMenu() {
+      const menu = document.getElementById('dropdownMenu');
+      const menuIcon = document.getElementById('menuIcon');
+      const closeIcon = document.getElementById('closeIcon');
+      
+      if (menu.style.display === 'none' || menu.style.display === '') {
+        menu.style.display = 'block';
+        menuIcon.style.display = 'none';
+        closeIcon.style.display = 'block';
+      } else {
+        menu.style.display = 'none';
+        menuIcon.style.display = 'block';
+        closeIcon.style.display = 'none';
+      }
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function(event) {
+      const menu = document.getElementById('dropdownMenu');
+      const button = event.target.closest('button');
+      
+      if (!button && menu.style.display === 'block') {
+        menu.style.display = 'none';
+        document.getElementById('menuIcon').style.display = 'block';
+        document.getElementById('closeIcon').style.display = 'none';
+      }
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      setupFilters();
+      loadResources();
+    });
+  </script>
+</body>
+</html>
