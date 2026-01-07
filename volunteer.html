@@ -121,9 +121,11 @@
       <!-- Fixed Floating Hamburger Menu -->
       <div id="floatingMenu" style="
         position: fixed;
-        top: max(16px, calc(env(safe-area-inset-top) + 8px));
-        right: max(16px, calc(env(safe-area-inset-right) + 8px));
+        top: 20px;
+        right: 20px;
         z-index: 1001;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-right: env(safe-area-inset-right, 0px);
       ">
         <button 
           onclick="toggleMenu()"
@@ -131,17 +133,19 @@
             color: #004E7C;
             cursor: pointer;
             transition: opacity 0.2s;
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.7);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.85);
             border: 2px solid #004E7C;
             border-radius: 10px;
-            padding: 10px;
+            padding: 12px;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
           "
-          onmouseover="this.style.opacity='0.8'"
-          onmouseout="this.style.opacity='1'"
         >
           <svg id="menuIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -363,15 +367,13 @@
       console.error('Anonymous auth failed:', error);
     });
 
-    // Load volunteer opportunities
-    async function loadOpportunities() {
+    // Load volunteer opportunities using onSnapshot (real-time listener)
+    function loadOpportunities() {
       const container = document.getElementById('opportunities-container');
-      const now = new Date();
-
-      try {
-        const snapshot = await db.collection('volunteerOpportunities')
-          .get();
-
+      
+      db.collection('volunteerOpportunities').onSnapshot(snapshot => {
+        const now = new Date();
+        
         if (snapshot.empty) {
           container.innerHTML = `
             <div class="text-center py-8">
@@ -413,19 +415,19 @@
         }
 
         container.innerHTML = opportunities.map(opp => `
-          <div class="opportunity-card" style="display: flex; gap: 16px; align-items: start;" onclick="openModal('${opp.title.replace(/'/g, "\\'")}', '${opp.id}')">
+          <div class="opportunity-card" onclick="openModal('${opp.title.replace(/'/g, "\\'")}', '${opp.id}')">
             ${opp.imageUrl ? `
               <img 
                 src="${opp.imageUrl}" 
                 alt="${opp.title}"
-                style="width: 120px; height: 120px; object-fit: cover; border-radius: 12px; flex-shrink: 0;"
+                style="float: left; width: 100px; height: 100px; object-fit: cover; border-radius: 12px; margin: 0 12px 8px 0;"
               />
             ` : ''}
-            <div style="flex: 1;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                <h3 class="font-bold text-base text-[#004E7C]">${opp.title}</h3>
+            <div>
+              <div style="margin-bottom: 6px;">
+                <h3 class="font-bold text-base text-[#004E7C]" style="display: inline;">${opp.title}</h3>
                 ${opp.alwaysPost ? 
-                  '<span class="text-xs text-green-600 font-semibold">Ongoing Opportunity</span>' : 
+                  '<span class="text-xs text-green-600 font-semibold" style="margin-left: 8px;">Ongoing</span>' : 
                   ''}
               </div>
               <p class="text-gray-700 text-sm leading-relaxed" style="margin-bottom: 8px;">${opp.description}</p>
@@ -442,29 +444,39 @@
                   ${opp.endDate ? `<span>End: ${new Date(opp.endDate).toLocaleDateString()}</span>` : ''}
                 </div>
               ` : ''}
-              <p class="text-xs text-[#004E7C] font-semibold" style="margin-top: 12px;">Click to apply →</p>
+              <p class="text-xs text-[#004E7C] font-semibold" style="margin-top: 12px; clear: both;">Click to apply →</p>
             </div>
+            <div style="clear: both;"></div>
           </div>
         `).join('');
 
-      } catch (error) {
+      }, error => {
         console.error('Error loading opportunities:', error);
         container.innerHTML = `
           <div class="text-center py-8">
             <div class="text-4xl mb-2">⚠️</div>
             <p class="text-gray-600 text-sm">Unable to load opportunities.</p>
             <p class="text-gray-600 text-sm mt-2">Please contact us directly for information.</p>
+            <p class="text-gray-500 text-xs mt-2">Error: ${error.message}</p>
           </div>
         `;
-      }
+      });
     }
 
-    // Load opportunities when page loads
+    // Load opportunities when auth is ready
     auth.onAuthStateChanged(user => {
       if (user) {
         loadOpportunities();
       }
     });
+    
+    // Also try loading after a short delay as fallback
+    setTimeout(() => {
+      const container = document.getElementById('opportunities-container');
+      if (container.innerHTML.includes('Loading')) {
+        loadOpportunities();
+      }
+    }, 2000);
 
     // Modal functions
     let currentOpportunityId = '';
