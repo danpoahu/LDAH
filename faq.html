@@ -595,9 +595,9 @@
               )}
             </div>
 
-            {/* Fixed Bottom Button */}
+            {/* Fixed Bottom Button - positioned above nav */}
             {selected.size > 0 && (
-              <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: 'white', padding: '16px', borderTop: '2px solid #e5e7eb', boxShadow: '0 -4px 6px rgba(0,0,0,0.1)' }}>
+              <div style={{ position: 'fixed', bottom: '70px', left: 0, right: 0, backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: '12px 16px', borderTop: '1px solid rgba(0, 78, 124, 0.2)', boxShadow: '0 -4px 6px rgba(0,0,0,0.1)', zIndex: 1001 }}>
                 <div className="max-w-2xl mx-auto">
                   <p className="text-center text-gray-700 mb-2 text-sm"><strong>{selected.size}</strong> {selected.size === 1 ? 'question' : 'questions'} selected</p>
                   <button onClick={() => setShowGuide(true)} className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg">Create My Action Guide →</button>
@@ -606,11 +606,11 @@
             )}
 
             {/* Bottom padding to prevent content being hidden by fixed button */}
-            {selected.size > 0 && <div style={{ height: '120px' }} />}
+            {selected.size > 0 && <div style={{ height: '180px' }} />}
             {selected.size === 0 && <div style={{ height: '80px' }} />}
 
             {/* Bottom Navigation Bar */}
-            <nav className="bottom-nav no-print" style={{ zIndex: selected.size > 0 ? 999 : 1000 }}>
+            <nav className="bottom-nav no-print">
               <a href="index.html" className="nav-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
