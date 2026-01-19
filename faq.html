@@ -409,8 +409,25 @@
                 </div>
               </div>
 
-              {/* Print button moved outside content-box for better visibility */}
-              <div className="mt-6 no-print" style={{ marginBottom: '100px' }}>
+              {/* Spacer for fixed button */}
+              <div style={{ height: '140px' }}></div>
+            </div>
+
+            {/* Fixed Print button above nav */}
+            <div className="no-print" style={{ 
+              position: 'fixed', 
+              bottom: '70px', 
+              left: 0, 
+              right: 0, 
+              padding: '12px 16px',
+              paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+              background: 'rgba(255, 255, 255, 0.15)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.3)',
+              zIndex: 999
+            }}>
+              <div className="max-w-2xl mx-auto">
                 <button onClick={handlePrint} disabled={isPrinting} className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                   {isPrinting ? (
                     <>
