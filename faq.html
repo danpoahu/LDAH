@@ -407,22 +407,23 @@
                     </div>
                   ))}
                 </div>
+              </div>
 
-                <div className="mt-6 pt-6 border-t border-gray-200 no-print">
-                  <button onClick={handlePrint} disabled={isPrinting} className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                    {isPrinting ? (
-                      <>
-                        <div style={{ width: '20px', height: '20px', border: '3px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
-                        Preparing...
-                      </>
-                    ) : (
-                      <>
-                        <Share size={20} />
-                        Print or Share Guide
-                      </>
-                    )}
-                  </button>
-                </div>
+              {/* Print button moved outside content-box for better visibility */}
+              <div className="mt-6 no-print" style={{ marginBottom: '100px' }}>
+                <button onClick={handlePrint} disabled={isPrinting} className="w-full bg-[#004E7C] text-white rounded-xl py-4 font-bold text-lg hover:bg-[#003a5c] transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isPrinting ? (
+                    <>
+                      <div style={{ width: '20px', height: '20px', border: '3px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
+                      Preparing...
+                    </>
+                  ) : (
+                    <>
+                      <Share size={20} />
+                      Print or Share Guide
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 
