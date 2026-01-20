@@ -546,8 +546,8 @@
         </div>
       </div>
 
-      <!-- Type Filter Pills -->
-      <div class="mb-3">
+      <!-- Type Filter Pills (hidden until island is selected) -->
+      <div class="mb-3" id="typeFilterSection" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
         <p class="text-xs font-semibold text-[#004E7C] mb-2">Filter by Type</p>
         <div class="filter-pills" id="typeFilters">
           <button class="filter-pill active" data-filter="all">All</button>
@@ -787,6 +787,25 @@
           document.querySelectorAll('#islandFilters .filter-pill').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           currentIslandFilter = btn.dataset.filter;
+          
+          // Show/hide type filter based on island selection
+          const typeSection = document.getElementById('typeFilterSection');
+          if (currentIslandFilter !== 'all') {
+            typeSection.style.display = 'block';
+            // Trigger reflow for transition
+            typeSection.offsetHeight;
+            typeSection.style.opacity = '1';
+          } else {
+            typeSection.style.opacity = '0';
+            setTimeout(() => {
+              typeSection.style.display = 'none';
+            }, 300);
+            // Reset type filter to 'all' when hiding
+            currentTypeFilter = 'all';
+            document.querySelectorAll('#typeFilters .filter-pill').forEach(b => b.classList.remove('active'));
+            document.querySelector('#typeFilters .filter-pill[data-filter="all"]').classList.add('active');
+          }
+          
           filterAndRender();
         });
       });
