@@ -8,270 +8,519 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LDAH">
   <meta name="theme-color" content="#004E7C">
-  <title>Install LDAH App</title>
-  
+  <title>LDAH App</title>
+
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="/LDAH/icon-192.png">
-  
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #004E7C;
+      --blue-mid: #006399;
+      --blue-light: #e8f4fc;
+      --accent: #FF9B21;
+      --text: #1a2e3b;
+      --muted: #607585;
+      --white: #ffffff;
+      --radius: 20px;
+    }
+
     body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      background: linear-gradient(135deg, #004E7C 0%, #0066a1 100%);
+      font-family: 'DM Sans', sans-serif;
+      background: var(--blue);
       min-height: 100vh;
-    }
-    .instruction-card {
-      background: white;
-      border-radius: 20px;
-      padding: 24px;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .step-number {
-      display: inline-flex;
+      display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
-      background: #004E7C;
-      color: white;
-      border-radius: 50%;
-      font-weight: bold;
-      font-size: 18px;
-      margin-right: 12px;
+      overflow: hidden;
+      position: relative;
     }
+
+    /* Animated background blobs */
+    .bg-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.25;
+      pointer-events: none;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .bg-blob-1 {
+      width: 500px; height: 500px;
+      background: #0088cc;
+      top: -150px; right: -100px;
+      animation-delay: 0s;
+    }
+    .bg-blob-2 {
+      width: 400px; height: 400px;
+      background: #FF9B21;
+      bottom: -100px; left: -80px;
+      animation-delay: -4s;
+    }
+    @keyframes drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.08); }
+    }
+
+    /* Landing page (shown when already installed) */
+    #landing {
+      display: none;
+      text-align: center;
+      color: white;
+      padding: 40px 24px;
+      animation: fadeUp 0.6s ease forwards;
+    }
+    #landing .logo {
+      width: 100px; height: 100px;
+      margin: 0 auto 24px;
+      display: block;
+    }
+    #landing h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.2rem;
+      margin-bottom: 12px;
+    }
+    #landing p { font-size: 1.1rem; opacity: 0.85; margin-bottom: 32px; }
+    #landing .go-btn {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 16px 40px;
+      border-radius: 50px;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(255,155,33,0.45);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    #landing .go-btn:active { transform: scale(0.97); }
+
+    /* ── MODAL OVERLAY ── */
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 30, 50, 0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+    #modal-overlay.open {
+      display: flex;
+      animation: overlayIn 0.3s ease forwards;
+    }
+    @keyframes overlayIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .modal-sheet {
+      background: var(--white);
+      border-radius: 28px 28px 0 0;
+      width: 100%;
+      max-width: 540px;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 0 0 env(safe-area-inset-bottom, 20px);
+      animation: sheetUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      -webkit-overflow-scrolling: touch;
+    }
+    @keyframes sheetUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    /* Drag handle */
+    .sheet-handle {
+      display: flex;
+      justify-content: center;
+      padding: 14px 0 0;
+      cursor: grab;
+    }
+    .sheet-handle::after {
+      content: '';
+      display: block;
+      width: 40px; height: 4px;
+      background: #d0dde6;
+      border-radius: 2px;
+    }
+
+    /* Modal header */
+    .modal-header {
+      padding: 18px 28px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid #eef2f5;
+    }
+    .modal-header img {
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,78,124,0.2);
+    }
+    .modal-header-text h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.35rem;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .modal-header-text p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Device toggle pill */
     .device-toggle {
       display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
+      margin: 18px 24px 0;
+      background: #eef2f5;
+      border-radius: 50px;
+      padding: 4px;
+      gap: 4px;
     }
     .device-btn {
       flex: 1;
-      padding: 12px;
-      border: 2px solid white;
-      background: rgba(255,255,255,0.2);
-      color: white;
-      border-radius: 12px;
-      font-weight: bold;
+      padding: 10px 12px;
+      border: none;
+      background: transparent;
+      border-radius: 50px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--muted);
       cursor: pointer;
       transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
     .device-btn.active {
-      background: white;
-      color: #004E7C;
+      background: var(--blue);
+      color: white;
+      box-shadow: 0 2px 8px rgba(0,78,124,0.3);
     }
+
+    /* Native install banner (Android Chrome) */
+    #native-install-banner {
+      display: none;
+      margin: 16px 24px 0;
+      background: linear-gradient(135deg, #004E7C, #006fa8);
+      border-radius: 16px;
+      padding: 16px 20px;
+      align-items: center;
+      gap: 14px;
+    }
+    #native-install-banner.show { display: flex; }
+    #native-install-banner p {
+      flex: 1;
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    #native-install-banner button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 10px 20px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(255,155,33,0.4);
+    }
+
+    /* Instructions */
     .instruction-set {
       display: none;
+      padding: 18px 24px 4px;
     }
-    .instruction-set.active {
-      display: block;
+    .instruction-set.active { display: block; }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid #f0f4f7;
     }
-    .animated-arrow {
-      animation: bounce 2s infinite;
+    .step:last-child { border-bottom: none; }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 30px; height: 30px;
+      background: var(--blue-light);
+      color: var(--blue);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-top: 2px;
     }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+
+    .step-content h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .step-content p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .step-content .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #eef2f5;
+      border: 1px solid #dce6ed;
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 6px;
+    }
+
+    /* Success done step */
+    .step-done {
+      margin: 8px 0 16px;
+      background: #f0faf4;
+      border: 1.5px solid #6fcf97;
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .step-done .check { font-size: 1.6rem; }
+    .step-done p { font-size: 0.875rem; font-weight: 600; color: #1a7340; }
+
+    /* Bottom continue link */
+    .modal-footer {
+      padding: 16px 24px 24px;
+      border-top: 1px solid #eef2f5;
+      text-align: center;
+    }
+    .modal-footer a {
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-decoration: none;
+    }
+    .modal-footer a:hover { color: var(--blue); }
+
+    /* Shared animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <div class="min-h-screen p-4">
-    <div class="max-w-xl mx-auto">
-      
+
+  <!-- Background decorations -->
+  <div class="bg-blob bg-blob-1"></div>
+  <div class="bg-blob bg-blob-2"></div>
+
+  <!-- Shown only if already installed as PWA -->
+  <div id="landing">
+    <img class="logo" src="https://danpoahu.github.io/LDAH/logo_transparent.png" alt="LDAH Logo">
+    <h1>You're all set!</h1>
+    <p>The LDAH app is installed on your device.</p>
+    <a href="index.html" class="go-btn">Open LDAH Website →</a>
+  </div>
+
+  <!-- Install modal sheet (shown if NOT installed) -->
+  <div id="modal-overlay" role="dialog" aria-modal="true" aria-label="Install LDAH App">
+    <div class="modal-sheet">
+
+      <div class="sheet-handle"></div>
+
       <!-- Header -->
-      <div class="text-center mb-6 mt-6">
-        <div class="mb-4 flex justify-center">
-          <img 
-            src="https://danpoahu.github.io/LDAH/logo_transparent.png" 
-            alt="LDAH Logo"
-            style="width: 120px; height: 120px;"
-          />
+      <div class="modal-header">
+        <img src="https://danpoahu.github.io/LDAH/logo_transparent.png" alt="LDAH">
+        <div class="modal-header-text">
+          <h2>Install the LDAH App</h2>
+          <p>Free · Works offline · No App Store needed</p>
         </div>
-        <h1 class="text-3xl font-bold text-white mb-2">
-          Install LDAH App
-        </h1>
-        <p class="text-white text-lg opacity-90">
-          Get quick access on your phone!
-        </p>
       </div>
 
-      <!-- Device Toggle -->
+      <!-- Android native install prompt banner -->
+      <div id="native-install-banner">
+        <p>Install directly with one tap — no steps needed!</p>
+        <button id="native-install-btn">Install Now</button>
+      </div>
+
+      <!-- Device toggle -->
       <div class="device-toggle">
-        <button class="device-btn active" onclick="showInstructions('iphone')" id="iphone-btn">
-          📱 iPhone
+        <button class="device-btn active" onclick="showDevice('iphone')" id="btn-iphone">
+          <svg width="14" height="18" viewBox="0 0 14 18" fill="none"><rect x="1" y="1" width="12" height="16" rx="2.5" stroke="currentColor" stroke-width="1.5"/><line x1="5.5" y1="1" x2="5.5" y2="3" stroke="currentColor" stroke-width="1.5"/><line x1="8.5" y1="1" x2="8.5" y2="3" stroke="currentColor" stroke-width="1.5"/></svg>
+          iPhone
         </button>
-        <button class="device-btn" onclick="showInstructions('android')" id="android-btn">
-          📱 Android
+        <button class="device-btn" onclick="showDevice('android')" id="btn-android">
+          <svg width="16" height="18" viewBox="0 0 16 18" fill="none"><path d="M1 13V7a7 7 0 0 1 14 0v6a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1Z" stroke="currentColor" stroke-width="1.5"/><line x1="5" y1="14" x2="5" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="14" x2="11" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="5.5" cy="8" r="1" fill="currentColor"/><circle cx="10.5" cy="8" r="1" fill="currentColor"/></svg>
+          Android
         </button>
       </div>
 
-      <!-- iPhone Instructions -->
-      <div id="iphone-instructions" class="instruction-set active">
-        <div class="instruction-card">
-          <div class="flex items-start mb-4">
-            <span class="step-number">1</span>
-            <div>
-              <h3 class="font-bold text-lg mb-2">Open in Safari</h3>
-              <p class="text-gray-700">Make sure you're using the <strong>Safari</strong> browser (the compass icon). Other browsers won't work.</p>
-            </div>
+      <!-- iPhone Steps -->
+      <div class="instruction-set active" id="steps-iphone">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h3>Open this page in Safari</h3>
+            <p>Tap the Safari icon (compass) — other browsers won't have the install option.</p>
           </div>
         </div>
-
-        <div class="instruction-card">
-          <div class="flex items-start mb-4">
-            <span class="step-number">2</span>
-            <div>
-              <h3 class="font-bold text-lg mb-2">Tap the Share Button</h3>
-              <p class="text-gray-700 mb-3">Look at the bottom of your screen. Tap the button that looks like a square with an arrow pointing up:</p>
-              <div class="text-center py-4 bg-gray-100 rounded-lg">
-                <div style="font-size: 48px;">⬆️</div>
-                <p class="text-sm text-gray-600 mt-2">Share button</p>
-              </div>
-            </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h3>Tap the Share button</h3>
+            <p>At the bottom of Safari, tap the share button:</p>
+            <span class="tag">
+              <svg width="14" height="16" viewBox="0 0 14 16" fill="none"><path d="M7 1v9M3.5 4.5 7 1l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 11v3a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              Share
+            </span>
           </div>
         </div>
-
-        <div class="instruction-card">
-          <div class="flex items-start mb-4">
-            <span class="step-number">3</span>
-            <div>
-              <h3 class="font-bold text-lg mb-2">Find "Add to Home Screen"</h3>
-              <p class="text-gray-700 mb-3">Scroll down in the menu and look for this option:</p>
-              <div class="text-center py-3 bg-gray-100 rounded-lg">
-                <p class="font-bold text-gray-700">➕ Add to Home Screen</p>
-              </div>
-              <p class="text-sm text-gray-600 mt-2">Tap it!</p>
-            </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h3>Scroll down &amp; tap "Add to Home Screen"</h3>
+            <p>Scroll the share menu until you see:</p>
+            <span class="tag">➕ Add to Home Screen</span>
           </div>
         </div>
-
-        <div class="instruction-card">
-          <div class="flex items-start mb-4">
-            <span class="step-number">4</span>
-            <div>
-              <h3 class="font-bold text-lg mb-2">Tap "Add"</h3>
-              <p class="text-gray-700 mb-3">You'll see the app name and icon. Tap the blue "Add" button in the top right.</p>
-              <div class="text-center py-4 bg-green-50 rounded-lg border-2 border-green-500">
-                <div style="font-size: 48px;">✅</div>
-                <p class="font-bold text-green-700 mt-2">Done! Check your home screen!</p>
-              </div>
-            </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h3>Tap "Add" to confirm</h3>
+            <p>Tap the blue <strong>Add</strong> button in the top-right corner.</p>
           </div>
+        </div>
+        <div class="step-done">
+          <span class="check">🎉</span>
+          <p>Done! Open the LDAH app from your home screen.</p>
         </div>
       </div>
 
-      <!-- Android Instructions -->
-      <div id="android-instructions" class="instruction-set">
-        <div class="instruction-card">
-          <div class="flex items-start mb-4">
-            <span class="step-number">1</span>
-            <div>
-              <h3 class="font-bold text-lg mb-2">Open in Chrome</h3>
-              <p class="text-gray-700">Make sure you're using the <strong>Chrome</strong> browser (the colorful circle icon).</p>
-            </div>
+      <!-- Android Steps -->
+      <div class="instruction-set" id="steps-android">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h3>Open this page in Chrome</h3>
+            <p>Make sure you're using <strong>Chrome</strong> (the colorful circle icon).</p>
           </div>
         </div>
-
-        <div class="instruction-card">
-          <div class="flex items-start mb-4">
-            <span class="step-number">2</span>
-            <div>
-              <h3 class="font-bold text-lg mb-2">Tap the Menu</h3>
-              <p class="text-gray-700 mb-3">Look at the top right corner. Tap the three dots:</p>
-              <div class="text-center py-4 bg-gray-100 rounded-lg">
-                <div style="font-size: 48px;">⋮</div>
-                <p class="text-sm text-gray-600 mt-2">Three dots menu</p>
-              </div>
-            </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h3>Tap the three-dot menu</h3>
+            <p>In the top-right corner of Chrome:</p>
+            <span class="tag">⋮ Menu</span>
           </div>
         </div>
-
-        <div class="instruction-card">
-          <div class="flex items-start mb-4">
-            <span class="step-number">3</span>
-            <div>
-              <h3 class="font-bold text-lg mb-2">Choose "Add to Home screen"</h3>
-              <p class="text-gray-700 mb-3">Look for one of these options:</p>
-              <div class="space-y-2">
-                <div class="text-center py-2 bg-gray-100 rounded-lg">
-                  <p class="font-bold text-gray-700">📱 Add to Home screen</p>
-                </div>
-                <p class="text-center text-sm text-gray-600">or</p>
-                <div class="text-center py-2 bg-gray-100 rounded-lg">
-                  <p class="font-bold text-gray-700">📲 Install app</p>
-                </div>
-              </div>
-              <p class="text-sm text-gray-600 mt-2">Tap it!</p>
-            </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h3>Tap "Add to Home screen"</h3>
+            <p>Look for either option:</p>
+            <span class="tag">📱 Add to Home screen</span><br>
+            <span class="tag" style="margin-top:4px">📲 Install app</span>
           </div>
         </div>
-
-        <div class="instruction-card">
-          <div class="flex items-start mb-4">
-            <span class="step-number">4</span>
-            <div>
-              <h3 class="font-bold text-lg mb-2">Tap "Add" or "Install"</h3>
-              <p class="text-gray-700 mb-3">Confirm by tapping the button.</p>
-              <div class="text-center py-4 bg-green-50 rounded-lg border-2 border-green-500">
-                <div style="font-size: 48px;">✅</div>
-                <p class="font-bold text-green-700 mt-2">Done! Check your home screen!</p>
-              </div>
-            </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h3>Tap "Add" or "Install" to confirm</h3>
+            <p>The app icon will appear on your home screen.</p>
           </div>
+        </div>
+        <div class="step-done">
+          <span class="check">🎉</span>
+          <p>Done! Open the LDAH app from your home screen.</p>
         </div>
       </div>
 
-      <!-- Quick Access Button -->
-      <div class="text-center mt-8 mb-4">
-        <a 
-          href="index.html"
-          class="inline-block px-8 py-4 bg-white text-[#004E7C] rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
-        >
-          Continue to LDAH Website →
-        </a>
-      </div>
-
-      <!-- Help Text -->
-      <div class="text-center text-white text-sm opacity-75 mt-6">
-        <p>Need help? Call us at (808) 532-5364</p>
-        <p class="mt-2">Or visit any of our offices</p>
+      <!-- Footer -->
+      <div class="modal-footer">
+        <a href="index.html">Skip — Continue to website instead →</a>
       </div>
 
     </div>
   </div>
 
   <script>
-    function showInstructions(device) {
-      // Hide all instruction sets
-      document.querySelectorAll('.instruction-set').forEach(el => {
-        el.classList.remove('active');
-      });
-      
-      // Remove active class from all buttons
-      document.querySelectorAll('.device-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      
-      // Show selected instructions
-      document.getElementById(device + '-instructions').classList.add('active');
-      document.getElementById(device + '-btn').classList.add('active');
+    // ── Detect if already running as installed PWA ──
+    const isStandalone =
+      window.navigator.standalone === true ||                         // iOS Safari
+      window.matchMedia('(display-mode: standalone)').matches ||     // Android / modern
+      window.matchMedia('(display-mode: fullscreen)').matches;
+
+    if (isStandalone) {
+      // Already installed — send straight to site
+      window.location.replace('index.html');
+    } else {
+      // Not installed — show modal
+      document.getElementById('modal-overlay').classList.add('open');
+
+      // Auto-detect device for default tab
+      const ua = navigator.userAgent;
+      if (/Android/.test(ua)) {
+        showDevice('android');
+      } else {
+        showDevice('iphone'); // default to iPhone
+      }
     }
 
-    // Auto-detect device
-    window.addEventListener('load', () => {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isAndroid = /Android/.test(navigator.userAgent);
-      
-      if (isIOS) {
-        showInstructions('iphone');
-      } else if (isAndroid) {
-        showInstructions('android');
-      }
+    // ── Android native install prompt ──
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('native-install-banner').classList.add('show');
     });
+
+    document.getElementById('native-install-btn').addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        document.getElementById('modal-overlay').classList.remove('open');
+        document.getElementById('landing').style.display = 'block';
+      }
+      deferredPrompt = null;
+    });
+
+    // Also listen for successful install
+    window.addEventListener('appinstalled', () => {
+      document.getElementById('modal-overlay').classList.remove('open');
+      document.getElementById('landing').style.display = 'block';
+    });
+
+    // ── Device tab toggle ──
+    function showDevice(device) {
+      document.querySelectorAll('.instruction-set').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.device-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('steps-' + device).classList.add('active');
+      document.getElementById('btn-' + device).classList.add('active');
+    }
   </script>
 </body>
 </html>
