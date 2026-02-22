@@ -116,57 +116,52 @@
       </svg>
     );
 
-    // ── Recurring-event helpers ──────────────────────────────────────────────
-    const _fmt12 = (h, m) => {
-      const period = h >= 12 ? 'PM' : 'AM';
-      const h12 = h % 12 || 12;
-      return `${h12}:${m.toString().padStart(2,'0')} ${period}`;
+    // ── Recurring-event helpers (field names match CMS: frequency, numeric dayOfWeek, weekOfMonth)
+    const fmt12 = (time24) => {
+      if (!time24) return '';
+      const [h, m] = time24.split(':').map(Number);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const hour = h % 12 || 12;
+      return `${hour}:${String(m).padStart(2,'0')} ${ampm}`;
     };
 
     const getOccurrencesInNext30Days = (schedules) => {
-      const dayMap = {Sunday:0,Monday:1,Tuesday:2,Wednesday:3,Thursday:4,Friday:5,Saturday:6};
-      const now = new Date();
-      const cutoff = new Date(now.getTime() + 30*24*60*60*1000);
+      const today = new Date(); today.setHours(0,0,0,0);
+      const end = new Date(today); end.setDate(end.getDate() + 30);
       const results = [];
       (schedules || []).forEach(sch => {
-        if (sch.type === 'weekly' && sch.dayOfWeek) {
-          const target = dayMap[sch.dayOfWeek];
-          let d = new Date(now); d.setHours(0,0,0,0);
-          let diff = (target - d.getDay() + 7) % 7 || 7;
+        if (sch.frequency === 'weekly') {
+          let d = new Date(today);
+          const diff = (sch.dayOfWeek - d.getDay() + 7) % 7;
           d.setDate(d.getDate() + diff);
-          while (d <= cutoff) {
-            const [sh,sm] = (sch.startTime||'00:00').split(':').map(Number);
-            const [eh,em] = (sch.endTime  ||'00:00').split(':').map(Number);
-            results.push({ date: new Date(d),
-              label: d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
-                     +' '+_fmt12(sh,sm)+' – '+_fmt12(eh,em),
-              location: sch.location||'', venue: sch.venue||'' });
-            d = new Date(d); d.setDate(d.getDate()+7);
+          while (d <= end) {
+            results.push({ date: new Date(d), schedule: sch });
+            d.setDate(d.getDate() + 7);
           }
-        }
-        if (sch.type === 'monthly-nth' && sch.nth && sch.dayOfWeek) {
-          for (let mo=0; mo<3; mo++) {
-            const base = new Date(now.getFullYear(), now.getMonth()+mo, 1);
-            const target = dayMap[sch.dayOfWeek]; const nth = parseInt(sch.nth); let count=0;
-            let d2 = new Date(base);
-            while (d2.getMonth()===base.getMonth()) {
-              if (d2.getDay()===target && ++count===nth) {
-                if (d2>now && d2<=cutoff) {
-                  const [sh,sm]=(sch.startTime||'00:00').split(':').map(Number);
-                  const [eh,em]=(sch.endTime  ||'00:00').split(':').map(Number);
-                  results.push({ date: new Date(d2),
-                    label: d2.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
-                           +' '+_fmt12(sh,sm)+' – '+_fmt12(eh,em),
-                    location: sch.location||'', venue: sch.venue||'' });
-                }
-                break;
-              }
-              d2.setDate(d2.getDate()+1);
-            }
+        } else { // monthly
+          for (let mo = 0; mo <= 2; mo++) {
+            const ref = new Date(today.getFullYear(), today.getMonth() + mo, 1);
+            const firstDow = ref.getDay();
+            const dayOffset = (sch.dayOfWeek - firstDow + 7) % 7;
+            const nth = new Date(ref.getFullYear(), ref.getMonth(),
+                                 1 + dayOffset + (sch.weekOfMonth - 1) * 7);
+            if (nth.getMonth() === ref.getMonth() && nth >= today && nth <= end)
+              results.push({ date: nth, schedule: sch });
           }
         }
       });
-      return results.sort((a,b)=>a.date-b.date);
+      results.sort((a, b) => a.date - b.date);
+      return results;
+    };
+
+    const formatOccurrence = (occ) => {
+      const d = occ.date;
+      const label = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+      const venue = occ.schedule.venue ? ` \u2013 ${occ.schedule.venue}` : '';
+      const timeRange = `${fmt12(occ.schedule.startTime)} \u2013 ${fmt12(occ.schedule.endTime)}`;
+      const key = `${d.toISOString().slice(0,10)}|${occ.schedule.location}${venue}|${timeRange}`;
+      const display = `${label} \u00b7 ${occ.schedule.location}${venue} \u00b7 ${timeRange}`;
+      return { key, display };
     };
     // ────────────────────────────────────────────────────────────────────────
 
@@ -294,10 +289,10 @@
       const recurringVirtualEvents = recurringPrograms
         .map(prog => {
           const occ = getOccurrencesInNext30Days(prog.schedules || []);
-          console.log('🔁 Program:', prog.title, '| schedules:', prog.schedules?.length, '| occurrences found:', occ.length);
           if (!occ.length) return null;
+          const { display } = formatOccurrence(occ[0]);
           return { ...prog, _isRecurring: true, _nextDate: occ[0].date,
-                   _nextLabel: occ[0].label, _occurrences: occ };
+                   _nextLabel: display, _occurrences: occ };
         })
         .filter(Boolean)
         .sort((a, b) => a._nextDate - b._nextDate);
@@ -1618,21 +1613,23 @@
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Select Session(s) to Attend *
                       </label>
-                      {recurringSignupEvent._occurrences && recurringSignupEvent._occurrences.map((occ, i) => (
-                        <label key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={recurringFormData.selectedSessions.includes(occ.label)}
-                            onChange={() => handleSessionToggle(occ.label)}
-                            disabled={recurringSubmitting}
-                            style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0 }}
-                          />
-                          <span style={{ fontSize: '14px', color: '#374151' }}>
-                            {occ.label}{occ.location ? ` — ${occ.location}` : ''}
-                            {occ.venue ? ` (${occ.venue})` : ''}
-                          </span>
-                        </label>
-                      ))}
+                      {recurringSignupEvent._occurrences && recurringSignupEvent._occurrences.map((occ, i) => {
+                        const { key, display } = formatOccurrence(occ);
+                        return (
+                          <label key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={recurringFormData.selectedSessions.includes(key)}
+                              onChange={() => handleSessionToggle(key)}
+                              disabled={recurringSubmitting}
+                              style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0 }}
+                            />
+                            <span style={{ fontSize: '14px', color: '#374151' }}>
+                              {display}
+                            </span>
+                          </label>
+                        );
+                      })}
                       {recurringFormData.selectedSessions.length === 0 && (
                         <p style={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
                           Please select at least one session
