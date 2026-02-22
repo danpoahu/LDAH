@@ -250,10 +250,13 @@
           try {
             const [eventsSnap, recurringSnap] = await Promise.all([
               db.collection('events').get(),
-              db.collection('recurringEvents').where('active', '==', true).get()
+              db.collection('recurringEvents').get()   // fetch all, filter active client-side
             ]);
+            const allRecurring = recurringSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log('📊 Events:', eventsSnap.size, '| Recurring docs:', recurringSnap.size, allRecurring);
             setEvents(eventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-            setRecurringPrograms(recurringSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            // filter active client-side so a missing/false field doesn't silently hide programs
+            setRecurringPrograms(allRecurring.filter(p => p.active !== false));
           } catch (error) {
             console.error('Error loading events:', error);
           } finally {
@@ -291,6 +294,7 @@
       const recurringVirtualEvents = recurringPrograms
         .map(prog => {
           const occ = getOccurrencesInNext30Days(prog.schedules || []);
+          console.log('🔁 Program:', prog.title, '| schedules:', prog.schedules?.length, '| occurrences found:', occ.length);
           if (!occ.length) return null;
           return { ...prog, _isRecurring: true, _nextDate: occ[0].date,
                    _nextLabel: occ[0].label, _occurrences: occ };
