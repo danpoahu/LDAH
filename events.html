@@ -116,6 +116,60 @@
       </svg>
     );
 
+    // ── Recurring-event helpers ──────────────────────────────────────────────
+    const _fmt12 = (h, m) => {
+      const period = h >= 12 ? 'PM' : 'AM';
+      const h12 = h % 12 || 12;
+      return `${h12}:${m.toString().padStart(2,'0')} ${period}`;
+    };
+
+    const getOccurrencesInNext30Days = (schedules) => {
+      const dayMap = {Sunday:0,Monday:1,Tuesday:2,Wednesday:3,Thursday:4,Friday:5,Saturday:6};
+      const now = new Date();
+      const cutoff = new Date(now.getTime() + 30*24*60*60*1000);
+      const results = [];
+      (schedules || []).forEach(sch => {
+        if (sch.type === 'weekly' && sch.dayOfWeek) {
+          const target = dayMap[sch.dayOfWeek];
+          let d = new Date(now); d.setHours(0,0,0,0);
+          let diff = (target - d.getDay() + 7) % 7 || 7;
+          d.setDate(d.getDate() + diff);
+          while (d <= cutoff) {
+            const [sh,sm] = (sch.startTime||'00:00').split(':').map(Number);
+            const [eh,em] = (sch.endTime  ||'00:00').split(':').map(Number);
+            results.push({ date: new Date(d),
+              label: d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
+                     +' '+_fmt12(sh,sm)+' – '+_fmt12(eh,em),
+              location: sch.location||'', venue: sch.venue||'' });
+            d = new Date(d); d.setDate(d.getDate()+7);
+          }
+        }
+        if (sch.type === 'monthly-nth' && sch.nth && sch.dayOfWeek) {
+          for (let mo=0; mo<3; mo++) {
+            const base = new Date(now.getFullYear(), now.getMonth()+mo, 1);
+            const target = dayMap[sch.dayOfWeek]; const nth = parseInt(sch.nth); let count=0;
+            let d2 = new Date(base);
+            while (d2.getMonth()===base.getMonth()) {
+              if (d2.getDay()===target && ++count===nth) {
+                if (d2>now && d2<=cutoff) {
+                  const [sh,sm]=(sch.startTime||'00:00').split(':').map(Number);
+                  const [eh,em]=(sch.endTime  ||'00:00').split(':').map(Number);
+                  results.push({ date: new Date(d2),
+                    label: d2.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
+                           +' '+_fmt12(sh,sm)+' – '+_fmt12(eh,em),
+                    location: sch.location||'', venue: sch.venue||'' });
+                }
+                break;
+              }
+              d2.setDate(d2.getDate()+1);
+            }
+          }
+        }
+      });
+      return results.sort((a,b)=>a.date-b.date);
+    };
+    // ────────────────────────────────────────────────────────────────────────
+
     // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyAU3CQ07bCVKlJ1qGak-150kaJEyPKldLk",
@@ -177,21 +231,36 @@
       const [submitting, setSubmitting] = useState(false);
       const [submitSuccess, setSubmitSuccess] = useState(false);
 
-      useEffect(() => {
-        const unsubscribe = db.collection('events')
-          .onSnapshot(snapshot => {
-            const eventList = snapshot.docs.map(doc => ({ 
-              id: doc.id, 
-              ...doc.data() 
-            }));
-            setEvents(eventList);
-            setLoading(false);
-          }, error => {
-            console.error('Error loading events:', error);
-            setLoading(false);
-          });
+      // Recurring-event state
+      const [recurringPrograms, setRecurringPrograms] = useState([]);
+      const [showRecurringModal, setShowRecurringModal] = useState(false);
+      const [recurringSignupEvent, setRecurringSignupEvent] = useState(null);
+      const [recurringFormData, setRecurringFormData] = useState({
+        name: '', email: '', phone: '', preferredContact: '',
+        studentName: '', dob: '', studentId: '', grade: '',
+        currentSchool: '', iepReviewDate: '', reevDate: '', careCoordinator: '',
+        participationType: 'Individual', groupName: '', groupSize: '',
+        selectedSessions: [], additionalComments: ''
+      });
+      const [recurringSubmitting, setRecurringSubmitting] = useState(false);
+      const [recurringSubmitSuccess, setRecurringSubmitSuccess] = useState(false);
 
-        return () => unsubscribe();
+      useEffect(() => {
+        const load = async () => {
+          try {
+            const [eventsSnap, recurringSnap] = await Promise.all([
+              db.collection('events').get(),
+              db.collection('recurringEvents').where('active', '==', true).get()
+            ]);
+            setEvents(eventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            setRecurringPrograms(recurringSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+          } catch (error) {
+            console.error('Error loading events:', error);
+          } finally {
+            setLoading(false);
+          }
+        };
+        load();
       }, []);
 
       const formatDate = (dateString) => {
@@ -218,11 +287,23 @@
         return now >= moveToPastDate && now < removeDate;
       };
 
-      const currentEvents = events.filter(isEventCurrent).sort((a, b) => 
-        new Date(a.startDate) - new Date(b.startDate)
-      );
+      // Build virtual recurring cards — only those with upcoming occurrences in next 30 days
+      const recurringVirtualEvents = recurringPrograms
+        .map(prog => {
+          const occ = getOccurrencesInNext30Days(prog.schedules || []);
+          if (!occ.length) return null;
+          return { ...prog, _isRecurring: true, _nextDate: occ[0].date,
+                   _nextLabel: occ[0].label, _occurrences: occ };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a._nextDate - b._nextDate);
 
-      const pastEvents = events.filter(isEventPast).sort((a, b) => 
+      const regularCurrent = events.filter(isEventCurrent)
+        .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+      const currentEvents = [...recurringVirtualEvents, ...regularCurrent];
+
+      const pastEvents = events.filter(isEventPast).sort((a, b) =>
         new Date(b.moveToPastDate) - new Date(a.moveToPastDate)
       );
 
@@ -292,6 +373,58 @@
             : [...prev.selectedDates, date]
         }));
       };
+
+      // ── Recurring signup handlers ──────────────────────────────────────────
+      const handleRecurringSignupClick = (prog) => {
+        setRecurringSignupEvent(prog);
+        setShowRecurringModal(true);
+        setRecurringFormData({
+          name: '', email: '', phone: '', preferredContact: '',
+          studentName: '', dob: '', studentId: '', grade: '',
+          currentSchool: '', iepReviewDate: '', reevDate: '', careCoordinator: '',
+          participationType: 'Individual', groupName: '', groupSize: '',
+          selectedSessions: [], additionalComments: ''
+        });
+        setRecurringSubmitSuccess(false);
+      };
+
+      const handleRecurringFormChange = (field, value) => {
+        setRecurringFormData(prev => ({ ...prev, [field]: value }));
+      };
+
+      const handleSessionToggle = (label) => {
+        setRecurringFormData(prev => ({
+          ...prev,
+          selectedSessions: prev.selectedSessions.includes(label)
+            ? prev.selectedSessions.filter(s => s !== label)
+            : [...prev.selectedSessions, label]
+        }));
+      };
+
+      const handleRecurringSubmit = async (e) => {
+        e.preventDefault();
+        setRecurringSubmitting(true);
+        try {
+          await db.collection('recurringEvents').doc(recurringSignupEvent.id)
+            .collection('signups').add({
+              ...recurringFormData,
+              status: 'pending',
+              timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+              programTitle: recurringSignupEvent.title
+            });
+          setRecurringSubmitSuccess(true);
+          setTimeout(() => {
+            setShowRecurringModal(false);
+            setRecurringSubmitSuccess(false);
+          }, 2000);
+        } catch (error) {
+          console.error('Error submitting recurring signup:', error);
+          alert('There was an error submitting your signup. Please try again.');
+        } finally {
+          setRecurringSubmitting(false);
+        }
+      };
+      // ──────────────────────────────────────────────────────────────────────
 
       const handleSubmitSignup = async (e) => {
         e.preventDefault();
@@ -554,16 +687,17 @@
                         alignItems: 'center'
                       }}>
                         {activeEvents[currentIndex].imageUrl && (
-                          <div 
+                          <div
                             onClick={() => setSelectedEvent(activeEvents[currentIndex])}
                             style={{
                               cursor: 'pointer',
-                              marginBottom: '20px',
+                              marginBottom: '8px',
                               display: 'flex',
-                              justifyContent: 'center'
+                              flexDirection: 'column',
+                              alignItems: 'center'
                             }}
                           >
-                            <img 
+                            <img
                               src={activeEvents[currentIndex].imageUrl}
                               alt={activeEvents[currentIndex].title}
                               style={{
@@ -573,11 +707,29 @@
                                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                 transition: 'transform 0.2s',
                                 filter: isPastEvents ? 'grayscale(30%)' : 'none',
-                                display: 'block'
+                                display: 'block',
+                                marginBottom: '10px'
                               }}
                               onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
                               onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             />
+                            {/* Ongoing badge + next date for recurring events */}
+                            {activeEvents[currentIndex]._isRecurring && (
+                              <div style={{ textAlign: 'center' }}>
+                                <span style={{
+                                  backgroundColor: '#0D7A7A', color: 'white',
+                                  padding: '4px 12px', borderRadius: '12px',
+                                  fontSize: '12px', fontWeight: 'bold',
+                                  display: 'inline-block', marginBottom: '4px'
+                                }}>Ongoing</span>
+                                <p style={{
+                                  color: '#0D7A7A', fontWeight: 'bold',
+                                  fontSize: '13px', margin: '0'
+                                }}>
+                                  Next: {activeEvents[currentIndex]._nextLabel}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -636,7 +788,9 @@
                                 height: '12px',
                                 borderRadius: '50%',
                                 border: 'none',
-                                backgroundColor: index === currentIndex ? '#004E7C' : '#D1D5DB',
+                                backgroundColor: index === currentIndex
+                                  ? (activeEvents[index]?._isRecurring ? '#0D7A7A' : '#004E7C')
+                                  : '#D1D5DB',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
                                 padding: 0
@@ -766,7 +920,38 @@
                   {/* Sign Up Button */}
                   {!isPastEvents && (
                     <>
-                      {selectedEvent.signupDates && selectedEvent.signupDates.length > 0 ? (
+                      {selectedEvent._isRecurring ? (
+                        /* Recurring program — teal sign-up button */
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedEvent(null);
+                            handleRecurringSignupClick(selectedEvent);
+                          }}
+                          style={{
+                            backgroundColor: '#0D7A7A',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '12px',
+                            padding: '16px 48px',
+                            fontSize: '18px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = '#0a5f5f';
+                            e.currentTarget.style.transform = 'scale(1.05)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = '#0D7A7A';
+                            e.currentTarget.style.transform = 'scale(1)';
+                          }}
+                        >
+                          📝 Sign Up for Ongoing Program
+                        </button>
+                      ) : selectedEvent.signupDates && selectedEvent.signupDates.length > 0 ? (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -1069,32 +1254,34 @@
                       />
                     </div>
 
-                    {/* Participation Type */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                        Are you volunteering as an individual or with a group? *
-                      </label>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {['Individual', 'Group'].map(type => (
-                          <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
-                            <input
-                              type="radio"
-                              name="participationType"
-                              value={type}
-                              checked={formData.participationType === type}
-                              onChange={(e) => handleFormChange('participationType', e.target.value)}
-                              disabled={submitting}
-                              required
-                              style={{ width: '18px', height: '18px', cursor: submitting ? 'not-allowed' : 'pointer' }}
-                            />
-                            <span style={{ fontSize: '14px', color: '#374151' }}>{type}</span>
-                          </label>
-                        ))}
+                    {/* Participation Type — hidden when showGroupField is explicitly false */}
+                    {signupEvent.showGroupField !== false && (
+                      <div style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                          Are you volunteering as an individual or with a group? *
+                        </label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {['Individual', 'Group'].map(type => (
+                            <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
+                              <input
+                                type="radio"
+                                name="participationType"
+                                value={type}
+                                checked={formData.participationType === type}
+                                onChange={(e) => handleFormChange('participationType', e.target.value)}
+                                disabled={submitting}
+                                required
+                                style={{ width: '18px', height: '18px', cursor: submitting ? 'not-allowed' : 'pointer' }}
+                              />
+                              <span style={{ fontSize: '14px', color: '#374151' }}>{type}</span>
+                            </label>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Group Name & Size (conditional) */}
-                    {formData.participationType === 'Group' && (
+                    {signupEvent.showGroupField !== false && formData.participationType === 'Group' && (
                       <div style={{ marginBottom: '20px', paddingLeft: '26px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                           What is the name of your group, and number of volunteers? *
@@ -1181,6 +1368,374 @@
               </div>
             </div>
           )}
+
+          {/* ── Recurring Program Signup Modal ──────────────────────────────── */}
+          {showRecurringModal && recurringSignupEvent && (
+            <div
+              onClick={() => !recurringSubmitting && setShowRecurringModal(false)}
+              style={{
+                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 2000,
+                display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+                padding: '20px', overflowY: 'auto'
+              }}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  backgroundColor: 'white', borderRadius: '24px', padding: '32px',
+                  maxWidth: '600px', width: '100%',
+                  position: 'relative', border: '3px solid #0D7A7A',
+                  marginTop: '20px', marginBottom: '20px'
+                }}
+              >
+                {/* Close button */}
+                <button
+                  onClick={() => !recurringSubmitting && setShowRecurringModal(false)}
+                  disabled={recurringSubmitting}
+                  style={{
+                    position: 'absolute', top: '16px', right: '16px',
+                    backgroundColor: 'transparent', border: 'none', color: '#0D7A7A',
+                    cursor: recurringSubmitting ? 'not-allowed' : 'pointer',
+                    opacity: recurringSubmitting ? 0.5 : 1, padding: '8px'
+                  }}
+                >
+                  <X size={24} />
+                </button>
+
+                {recurringSubmitSuccess ? (
+                  <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                    <div style={{ fontSize: '64px', marginBottom: '20px' }}>✅</div>
+                    <h2 style={{ color: '#0D7A7A', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
+                      Thank You!
+                    </h2>
+                    <p style={{ color: '#666', fontSize: '16px' }}>
+                      Your signup has been received. We'll be in touch soon!
+                    </p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleRecurringSubmit}>
+                    <h2 style={{ color: '#0D7A7A', fontSize: '22px', fontWeight: 'bold', marginBottom: '6px', paddingRight: '40px' }}>
+                      Sign Up: {recurringSignupEvent.title}
+                    </h2>
+                    <p style={{ color: '#666', fontSize: '14px', marginBottom: '24px' }}>
+                      * Indicates required question
+                    </p>
+
+                    {/* ── Contact Info ── */}
+                    {/* Full Name */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        Your Full Name (Parent/Guardian) *
+                      </label>
+                      <input
+                        type="text" required
+                        value={recurringFormData.name}
+                        onChange={(e) => handleRecurringFormChange('name', e.target.value)}
+                        disabled={recurringSubmitting}
+                        placeholder="Your answer"
+                        style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                      />
+                    </div>
+
+                    {/* Email */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        Email Address *
+                      </label>
+                      <input
+                        type="email" required
+                        value={recurringFormData.email}
+                        onChange={(e) => handleRecurringFormChange('email', e.target.value)}
+                        disabled={recurringSubmitting}
+                        placeholder="Your answer"
+                        style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                      />
+                    </div>
+
+                    {/* Phone */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        Phone Number *
+                      </label>
+                      <input
+                        type="tel" required
+                        value={recurringFormData.phone}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g,'').slice(0,10);
+                          const fmt = digits.length<=3 ? digits
+                            : digits.length<=6 ? `(${digits.slice(0,3)}) ${digits.slice(3)}`
+                            : `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+                          handleRecurringFormChange('phone', fmt);
+                        }}
+                        disabled={recurringSubmitting}
+                        placeholder="(808) 555-1234"
+                        style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                      />
+                    </div>
+
+                    {/* Preferred Contact */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        Preferred Method of Contact *
+                      </label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {['Email', 'Phone call', 'Text'].map(method => (
+                          <label key={method} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                            <input
+                              type="radio" name="recurringPreferredContact" value={method} required
+                              checked={recurringFormData.preferredContact === method}
+                              onChange={(e) => handleRecurringFormChange('preferredContact', e.target.value)}
+                              disabled={recurringSubmitting}
+                              style={{ width: '18px', height: '18px' }}
+                            />
+                            <span style={{ fontSize: '14px', color: '#374151' }}>{method}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* ── Student Information Box ── */}
+                    <div style={{
+                      backgroundColor: '#f0fafa', border: '2px solid #0D7A7A',
+                      borderRadius: '12px', padding: '16px', marginBottom: '20px'
+                    }}>
+                      <h3 style={{ color: '#0D7A7A', fontWeight: 'bold', marginBottom: '16px', fontSize: '15px', margin: '0 0 16px 0' }}>
+                        Student Information
+                      </h3>
+
+                      {/* Student Name */}
+                      <div style={{ marginBottom: '14px' }}>
+                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                          Student's Name *
+                        </label>
+                        <input type="text" required
+                          value={recurringFormData.studentName}
+                          onChange={(e) => handleRecurringFormChange('studentName', e.target.value)}
+                          disabled={recurringSubmitting} placeholder="First and last name"
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                        />
+                      </div>
+
+                      {/* Date of Birth */}
+                      <div style={{ marginBottom: '14px' }}>
+                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                          Date of Birth *
+                        </label>
+                        <input type="date" required
+                          value={recurringFormData.dob}
+                          onChange={(e) => handleRecurringFormChange('dob', e.target.value)}
+                          disabled={recurringSubmitting}
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                        />
+                      </div>
+
+                      {/* Student ID */}
+                      <div style={{ marginBottom: '14px' }}>
+                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                          Student ID# *
+                        </label>
+                        <input type="text" required
+                          value={recurringFormData.studentId}
+                          onChange={(e) => handleRecurringFormChange('studentId', e.target.value)}
+                          disabled={recurringSubmitting} placeholder="Student ID number"
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                        />
+                      </div>
+
+                      {/* Grade */}
+                      <div style={{ marginBottom: '14px' }}>
+                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                          Grade *
+                        </label>
+                        <input type="text" required
+                          value={recurringFormData.grade}
+                          onChange={(e) => handleRecurringFormChange('grade', e.target.value)}
+                          disabled={recurringSubmitting} placeholder="e.g. 3rd, 8th, 12th"
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                        />
+                      </div>
+
+                      {/* Current School */}
+                      <div style={{ marginBottom: '14px' }}>
+                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                          Current School *
+                        </label>
+                        <input type="text" required
+                          value={recurringFormData.currentSchool}
+                          onChange={(e) => handleRecurringFormChange('currentSchool', e.target.value)}
+                          disabled={recurringSubmitting} placeholder="School name"
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                        />
+                      </div>
+
+                      {/* IEP Annual Review Date */}
+                      <div style={{ marginBottom: '14px' }}>
+                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                          IEP Annual Review Date *
+                        </label>
+                        <input type="date" required
+                          value={recurringFormData.iepReviewDate}
+                          onChange={(e) => handleRecurringFormChange('iepReviewDate', e.target.value)}
+                          disabled={recurringSubmitting}
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                        />
+                      </div>
+
+                      {/* Reevaluation Date */}
+                      <div style={{ marginBottom: '14px' }}>
+                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                          Reevaluation Date *
+                        </label>
+                        <input type="date" required
+                          value={recurringFormData.reevDate}
+                          onChange={(e) => handleRecurringFormChange('reevDate', e.target.value)}
+                          disabled={recurringSubmitting}
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                        />
+                      </div>
+
+                      {/* Care Coordinator */}
+                      <div>
+                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                          Care Coordinator *
+                        </label>
+                        <input type="text" required
+                          value={recurringFormData.careCoordinator}
+                          onChange={(e) => handleRecurringFormChange('careCoordinator', e.target.value)}
+                          disabled={recurringSubmitting} placeholder="Care coordinator name"
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* ── Session Selection ── */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        Select Session(s) to Attend *
+                      </label>
+                      {recurringSignupEvent._occurrences && recurringSignupEvent._occurrences.map((occ, i) => (
+                        <label key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={recurringFormData.selectedSessions.includes(occ.label)}
+                            onChange={() => handleSessionToggle(occ.label)}
+                            disabled={recurringSubmitting}
+                            style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0 }}
+                          />
+                          <span style={{ fontSize: '14px', color: '#374151' }}>
+                            {occ.label}{occ.location ? ` — ${occ.location}` : ''}
+                            {occ.venue ? ` (${occ.venue})` : ''}
+                          </span>
+                        </label>
+                      ))}
+                      {recurringFormData.selectedSessions.length === 0 && (
+                        <p style={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
+                          Please select at least one session
+                        </p>
+                      )}
+                    </div>
+
+                    {/* ── Participation Type (showGroupField guard) ── */}
+                    {recurringSignupEvent.showGroupField !== false && (
+                      <>
+                        <div style={{ marginBottom: '20px' }}>
+                          <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                            Are you signing up as an individual or with a group? *
+                          </label>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {['Individual', 'Group'].map(type => (
+                              <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                                <input
+                                  type="radio" name="recurringParticipationType" value={type} required
+                                  checked={recurringFormData.participationType === type}
+                                  onChange={(e) => handleRecurringFormChange('participationType', e.target.value)}
+                                  disabled={recurringSubmitting}
+                                  style={{ width: '18px', height: '18px' }}
+                                />
+                                <span style={{ fontSize: '14px', color: '#374151' }}>{type}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        {recurringFormData.participationType === 'Group' && (
+                          <div style={{ marginBottom: '20px', paddingLeft: '26px' }}>
+                            <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                              Group name and number of members? *
+                            </label>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                              <input type="text" required
+                                value={recurringFormData.groupName}
+                                onChange={(e) => handleRecurringFormChange('groupName', e.target.value)}
+                                disabled={recurringSubmitting} placeholder="Group name"
+                                style={{ flex: 2, padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                              />
+                              <input type="number" required min="1"
+                                value={recurringFormData.groupSize}
+                                onChange={(e) => handleRecurringFormChange('groupSize', e.target.value)}
+                                disabled={recurringSubmitting} placeholder="# members"
+                                style={{ flex: 1, padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* ── Additional Comments ── */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        Any additional comments or accommodations we should know about?
+                      </label>
+                      <textarea
+                        value={recurringFormData.additionalComments}
+                        onChange={(e) => handleRecurringFormChange('additionalComments', e.target.value)}
+                        disabled={recurringSubmitting}
+                        placeholder="Your answer"
+                        rows="3"
+                        style={{
+                          width: '100%', padding: '12px', border: '1px solid #D1D5DB',
+                          borderRadius: '8px', fontSize: '14px', resize: 'vertical',
+                          fontFamily: 'inherit', opacity: recurringSubmitting ? 0.6 : 1
+                        }}
+                      />
+                    </div>
+
+                    {/* ── Submit Buttons ── */}
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowRecurringModal(false)}
+                        disabled={recurringSubmitting}
+                        style={{
+                          padding: '12px 24px', backgroundColor: 'white', color: '#0D7A7A',
+                          border: '2px solid #0D7A7A', borderRadius: '8px', fontSize: '14px',
+                          fontWeight: 'bold', cursor: recurringSubmitting ? 'not-allowed' : 'pointer',
+                          opacity: recurringSubmitting ? 0.5 : 1, transition: 'all 0.2s'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={recurringSubmitting || recurringFormData.selectedSessions.length === 0}
+                        style={{
+                          padding: '12px 24px',
+                          backgroundColor: (recurringSubmitting || recurringFormData.selectedSessions.length === 0) ? '#9CA3AF' : '#0D7A7A',
+                          color: 'white', border: 'none', borderRadius: '8px',
+                          fontSize: '14px', fontWeight: 'bold', transition: 'all 0.2s',
+                          cursor: (recurringSubmitting || recurringFormData.selectedSessions.length === 0) ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {recurringSubmitting ? 'Submitting...' : 'Submit'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
+          {/* ───────────────────────────────────────────────────────────────── */}
 
           {/* Bottom Navigation Bar */}
           <nav className="bottom-nav" role="navigation" aria-label="Main navigation">
