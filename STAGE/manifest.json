@@ -1,0 +1,25 @@
+{
+  "name": "LDAH - Learning Disabilities Association of Hawaiʻi",
+  "short_name": "LDAH",
+  "description": "Hawaiʻi & Pacific Island Parent Training & Information Center",
+  "start_url": "/LDAH/index.html",
+  "scope": "/LDAH/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#004E7C",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/LDAH/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/LDAH/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
