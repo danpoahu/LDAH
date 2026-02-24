@@ -1740,12 +1740,11 @@
 
           {/* Bottom Navigation Bar */}
           <nav className="bottom-nav" role="navigation" aria-label="Main navigation">
-            <a href="index.html" className="nav-item" aria-label="Home">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            <a href="javascript:void(0)" className="nav-item a11y-nav-btn" aria-label="Accessibility Options" onClick={() => window.toggleA11yPanel && window.toggleA11yPanel()}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H13V16H11V22H9V9H3V7H21V9Z"/>
               </svg>
-              <span>Home</span>
+              <span>Access</span>
             </a>
             <a href="events.html" className="nav-item active" aria-current="page" aria-label="Events">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1785,5 +1784,6 @@
 
     ReactDOM.render(<EventsApp />, document.getElementById('root'));
   </script>
+  <script src="accessibility.js"></script>
 </body>
 </html>
