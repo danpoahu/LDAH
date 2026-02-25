@@ -232,6 +232,7 @@
       const [recurringSignupEvent, setRecurringSignupEvent] = useState(null);
       const [recurringFormData, setRecurringFormData] = useState({
         name: '', email: '', phone: '', preferredContact: '',
+        registrantType: '',
         studentName: '', dob: '', studentId: '', grade: '',
         currentSchool: '', iepReviewDate: '', reevDate: '', careCoordinator: '',
         participationType: 'Individual', groupName: '', groupSize: '',
@@ -239,6 +240,8 @@
       });
       const [recurringSubmitting, setRecurringSubmitting] = useState(false);
       const [recurringSubmitSuccess, setRecurringSubmitSuccess] = useState(false);
+      const [sessionConfirmedCounts, setSessionConfirmedCounts] = useState({});
+      const RECURRING_SESSION_CAPACITY = 3;
 
       useEffect(() => {
         const load = async () => {
@@ -374,17 +377,36 @@
       };
 
       // ── Recurring signup handlers ──────────────────────────────────────────
-      const handleRecurringSignupClick = (prog) => {
+      const handleRecurringSignupClick = async (prog) => {
         setRecurringSignupEvent(prog);
         setShowRecurringModal(true);
         setRecurringFormData({
           name: '', email: '', phone: '', preferredContact: '',
+          registrantType: '',
           studentName: '', dob: '', studentId: '', grade: '',
           currentSchool: '', iepReviewDate: '', reevDate: '', careCoordinator: '',
           participationType: 'Individual', groupName: '', groupSize: '',
           selectedSessions: [], additionalComments: ''
         });
         setRecurringSubmitSuccess(false);
+
+        // Fetch signups to determine which sessions are full
+        try {
+          const counts = {};
+          const signupsSnap = await db.collection('recurringEvents').doc(prog.id).collection('signups').get();
+          signupsSnap.docs.forEach(doc => {
+            const s = doc.data();
+            if (s.status === 'confirmed') {
+              (s.selectedSessions || []).forEach(sessionKey => {
+                counts[sessionKey] = (counts[sessionKey] || 0) + 1;
+              });
+            }
+          });
+          setSessionConfirmedCounts(counts);
+        } catch (err) {
+          console.error('Error fetching signups for capacity:', err);
+          setSessionConfirmedCounts({});
+        }
       };
 
       const handleRecurringFormChange = (field, value) => {
@@ -1507,6 +1529,33 @@
                         Student Information
                       </h3>
 
+                      {/* Registrant Type */}
+                      <div style={{ marginBottom: '16px' }}>
+                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '8px', fontSize: '13px' }}>
+                          I am a... *
+                        </label>
+                        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                            <input type="radio" name="registrantType" value="Parent/Guardian" required
+                              checked={recurringFormData.registrantType === 'Parent/Guardian'}
+                              onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
+                              disabled={recurringSubmitting}
+                              style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                            />
+                            <span style={{ fontSize: '14px', color: '#374151' }}>Parent / Guardian</span>
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                            <input type="radio" name="registrantType" value="Professional" required
+                              checked={recurringFormData.registrantType === 'Professional'}
+                              onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
+                              disabled={recurringSubmitting}
+                              style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                            />
+                            <span style={{ fontSize: '14px', color: '#374151' }}>Professional</span>
+                          </label>
+                        </div>
+                      </div>
+
                       {/* Student Name */}
                       <div style={{ marginBottom: '14px' }}>
                         <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
@@ -1619,17 +1668,28 @@
                       </label>
                       {recurringSignupEvent._occurrences && recurringSignupEvent._occurrences.map((occ, i) => {
                         const { key, display } = formatOccurrence(occ);
+                        const isFull = (sessionConfirmedCounts[key] || 0) >= RECURRING_SESSION_CAPACITY;
                         return (
-                          <label key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <label key={i} style={{
+                            display: 'flex', alignItems: 'flex-start', gap: '8px',
+                            padding: '10px 12px', marginBottom: '8px', borderRadius: '8px',
+                            background: isFull ? '#fee2e2' : '#f0f9ff',
+                            border: `1px solid ${isFull ? '#fecaca' : '#e0f2fe'}`,
+                            cursor: isFull || recurringSubmitting ? 'not-allowed' : 'pointer',
+                            opacity: isFull ? 0.6 : 1
+                          }}>
                             <input
                               type="checkbox"
                               checked={recurringFormData.selectedSessions.includes(key)}
                               onChange={() => handleSessionToggle(key)}
-                              disabled={recurringSubmitting}
-                              style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0 }}
+                              disabled={recurringSubmitting || isFull}
+                              style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0, cursor: isFull ? 'not-allowed' : 'pointer' }}
                             />
-                            <span style={{ fontSize: '14px', color: '#374151' }}>
+                            <span style={{ fontSize: '14px', color: isFull ? '#991b1b' : '#374151', lineHeight: '1.5' }}>
                               {display}
+                              {isFull && (
+                                <span style={{ background: '#DC2626', color: 'white', padding: '1px 8px', borderRadius: '50px', fontSize: '11px', fontWeight: 700, marginLeft: '6px' }}>FULL</span>
+                              )}
                             </span>
                           </label>
                         );
