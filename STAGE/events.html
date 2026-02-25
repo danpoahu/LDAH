@@ -1463,6 +1463,33 @@
                       />
                     </div>
 
+                    {/* Registrant Type */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        I am a... *
+                      </label>
+                      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <input type="radio" name="registrantType" value="Parent/Guardian" required
+                            checked={recurringFormData.registrantType === 'Parent/Guardian'}
+                            onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
+                            disabled={recurringSubmitting}
+                            style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                          />
+                          <span style={{ fontSize: '14px', color: '#374151' }}>Parent / Guardian</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <input type="radio" name="registrantType" value="Professional" required
+                            checked={recurringFormData.registrantType === 'Professional'}
+                            onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
+                            disabled={recurringSubmitting}
+                            style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                          />
+                          <span style={{ fontSize: '14px', color: '#374151' }}>Professional</span>
+                        </label>
+                      </div>
+                    </div>
+
                     {/* Email */}
                     <div style={{ marginBottom: '20px' }}>
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
@@ -1528,33 +1555,6 @@
                       <h3 style={{ color: '#0D7A7A', fontWeight: 'bold', marginBottom: '16px', fontSize: '15px', margin: '0 0 16px 0' }}>
                         Student Information
                       </h3>
-
-                      {/* Registrant Type */}
-                      <div style={{ marginBottom: '16px' }}>
-                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '8px', fontSize: '13px' }}>
-                          I am a... *
-                        </label>
-                        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
-                            <input type="radio" name="registrantType" value="Parent/Guardian" required
-                              checked={recurringFormData.registrantType === 'Parent/Guardian'}
-                              onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
-                              disabled={recurringSubmitting}
-                              style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
-                            />
-                            <span style={{ fontSize: '14px', color: '#374151' }}>Parent / Guardian</span>
-                          </label>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
-                            <input type="radio" name="registrantType" value="Professional" required
-                              checked={recurringFormData.registrantType === 'Professional'}
-                              onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
-                              disabled={recurringSubmitting}
-                              style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
-                            />
-                            <span style={{ fontSize: '14px', color: '#374151' }}>Professional</span>
-                          </label>
-                        </div>
-                      </div>
 
                       {/* Student Name */}
                       <div style={{ marginBottom: '14px' }}>
