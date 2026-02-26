@@ -33,13 +33,19 @@
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <main id="main-content">
   <div class="min-h-screen p-2 main-content">
     <div class="max-w-2xl mx-auto">
       <!-- Logo Section with Hamburger Menu -->
       <div class="text-center mb-2 mt-2 relative">
         <!-- Hamburger Menu Icon -->
-        <button 
+        <button
           onclick="toggleMenu()"
+          id="menuBtn"
+          aria-controls="dropdownMenu"
+          aria-expanded="false"
+          aria-label="Open navigation menu"
           style="
             position: absolute;
             top: 8px;
@@ -270,15 +276,20 @@
       const menu = document.getElementById('dropdownMenu');
       const menuIcon = document.getElementById('menuIcon');
       const closeIcon = document.getElementById('closeIcon');
-      
+      const btn = document.getElementById('menuBtn');
+
       if (menu.style.display === 'none' || menu.style.display === '') {
         menu.style.display = 'block';
         menuIcon.style.display = 'none';
         closeIcon.style.display = 'block';
+        btn.setAttribute('aria-expanded', 'true');
+        btn.setAttribute('aria-label', 'Close navigation menu');
       } else {
         menu.style.display = 'none';
         menuIcon.style.display = 'block';
         closeIcon.style.display = 'none';
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', 'Open navigation menu');
       }
     }
 
@@ -294,6 +305,8 @@
       }
     });
   </script>
+
+  </main>
 
   <!-- Bottom Navigation Bar -->
   <nav class="bottom-nav" role="navigation" aria-label="Main navigation">

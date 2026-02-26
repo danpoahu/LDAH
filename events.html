@@ -52,11 +52,14 @@
   <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <main id="main-content">
   <div id="root">
     <div class="loading-spinner">
       <div class="spinner"></div>
     </div>
   </div>
+  </main>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
@@ -526,8 +529,12 @@
             {/* Header with Logo and Menu */}
             <div className="text-center mb-4 mt-2" style={{ position: 'relative' }}>
               {/* Hamburger Menu Icon */}
-              <button 
+              <button
                 onClick={() => setMenuOpen(!menuOpen)}
+                id="menuBtn"
+                aria-controls="dropdownMenu"
+                aria-expanded={menuOpen}
+                aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
                 style={{
                   position: 'absolute',
                   top: '8px',
@@ -546,7 +553,7 @@
 
               {/* Dropdown Menu */}
               {menuOpen && (
-                <div style={{
+                <div id="dropdownMenu" role="menu" aria-label="Site navigation" style={{
                   position: 'absolute',
                   top: '40px',
                   right: '8px',
@@ -605,7 +612,7 @@
                     <img 
                       src="logo_transparent.png" 
                       alt="LDAH Logo"
-                      style={{ width: '120px', height: '120px', display: 'block' }}
+                      style={{ width: '180px', height: '180px', display: 'block' }}
                     />
                   </div>
                 </a>
