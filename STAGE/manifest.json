@@ -1,4 +1,5 @@
 {
+  "id": "/LDAH/",
   "name": "LDAH - Learning Disabilities Association of Hawaiʻi",
   "short_name": "LDAH",
   "description": "Hawaiʻi & Pacific Island Parent Training & Information Center",
@@ -8,6 +9,7 @@
   "background_color": "#ffffff",
   "theme_color": "#004E7C",
   "orientation": "portrait",
+  "categories": ["education", "lifestyle"],
   "icons": [
     {
       "src": "/LDAH/icon-192.png",
@@ -20,6 +22,55 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/LDAH/screenshot-home.png",
+      "sizes": "1242x2688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Home - Quick access to events, resources, and support"
+    },
+    {
+      "src": "/LDAH/screenshot-resources.png",
+      "sizes": "1242x2688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Resources - Find support services by island"
+    },
+    {
+      "src": "/LDAH/screenshot-contact.png",
+      "sizes": "1242x2688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Contact - Reach our Honolulu office"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Events",
+      "short_name": "Events",
+      "url": "/LDAH/events.html",
+      "icons": [{ "src": "/LDAH/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Quick Help",
+      "short_name": "FAQ",
+      "url": "/LDAH/faq.html",
+      "icons": [{ "src": "/LDAH/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Resources",
+      "short_name": "Resources",
+      "url": "/LDAH/resources.html",
+      "icons": [{ "src": "/LDAH/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Contact Us",
+      "short_name": "Contact",
+      "url": "/LDAH/contact.html",
+      "icons": [{ "src": "/LDAH/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
