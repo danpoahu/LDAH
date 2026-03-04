@@ -564,7 +564,7 @@
                   <p className="text-gray-600 mb-4">No categories yet. Check back soon!</p>
                 </div>
               ) : (
-                categories.sort((a, b) => a.order - b.order).map((category) => {
+                categories.sort((a, b) => a.order - b.order).filter((category) => faqs.some((f) => f.categoryId === category.id)).map((category) => {
                   const categoryFaqs = faqs.filter((f) => f.categoryId === category.id).sort((a, b) => a.order - b.order);
                   const isExpanded = expandedCategories.has(category.id);
                   const selectedInCategory = categoryFaqs.filter((f) => selected.has(f.id)).length;
