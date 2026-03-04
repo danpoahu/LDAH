@@ -218,7 +218,7 @@
       useEffect(() => {
         const unsubscribeCategories = db.collection('categories').onSnapshot(
           (snapshot) => {
-            const cats = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            const cats = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })).filter(c => !c.archived);
             setCategories(cats);
             setLoading(false);
           },
@@ -230,7 +230,7 @@
 
         const unsubscribeFaqs = db.collection('faqs').onSnapshot(
           (snapshot) => {
-            const faqList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            const faqList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })).filter(f => !f.archived);
             setFaqs(faqList);
           },
           (error) => {
