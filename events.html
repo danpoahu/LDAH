@@ -431,6 +431,14 @@
 
       const handleRecurringSubmit = async (e) => {
         e.preventDefault();
+
+        // Validate phone is 10 digits
+        const phoneDigits = recurringFormData.phone.replace(/\D/g, '');
+        if (phoneDigits.length !== 10) {
+          alert('Please enter a valid 10-digit phone number.');
+          return;
+        }
+
         setRecurringSubmitting(true);
         try {
           await db.collection('recurringEvents').doc(recurringSignupEvent.id)
@@ -456,6 +464,14 @@
 
       const handleSubmitSignup = async (e) => {
         e.preventDefault();
+
+        // Validate phone is 10 digits
+        const phoneDigits = formData.phone.replace(/\D/g, '');
+        if (phoneDigits.length !== 10) {
+          alert('Please enter a valid 10-digit phone number.');
+          return;
+        }
+
         setSubmitting(true);
 
         try {
