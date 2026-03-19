@@ -1,0 +1,190 @@
+/* Logo Story — App Version (single beam, navy theme) */
+
+.logo-story-overlay {
+    position: fixed;
+    top: 0; right: 0; bottom: 0; left: 0;
+    background: rgba(0, 0, 0, 0.72);
+    z-index: 9998;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+}
+
+.logo-story-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Single searchlight beam */
+.logo-story-overlay::before {
+    content: '';
+    position: fixed;
+    bottom: -20%;
+    left: 50%;
+    width: 180px;
+    height: 150vh;
+    background: radial-gradient(ellipse at bottom, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 30%, transparent 60%);
+    transform-origin: bottom center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.8s ease 0.3s;
+    animation: spotlightSweep 7s ease-in-out infinite;
+}
+
+.logo-story-overlay.active::before {
+    opacity: 1;
+}
+
+@keyframes spotlightSweep {
+    0% { transform: translateX(-50%) rotate(-20deg); }
+    50% { transform: translateX(-50%) rotate(20deg); }
+    100% { transform: translateX(-50%) rotate(-20deg); }
+}
+
+/* Keep the logo bright during cinematic */
+.logo-story-spotlight img {
+    position: relative;
+    z-index: 9999;
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.4));
+    transition: filter 0.6s ease;
+}
+
+/* The tooltip card */
+.logo-story-card {
+    position: fixed;
+    z-index: 10000;
+    background: linear-gradient(145deg, #f0f7fc 0%, #dceefb 100%);
+    border: 2px solid rgba(0, 78, 124, 0.3);
+    border-radius: 16px;
+    padding: 1.75rem 2rem;
+    max-width: 380px;
+    width: 90vw;
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.15),
+        0 0 40px rgba(0, 78, 124, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    pointer-events: none;
+}
+
+.logo-story-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+}
+
+/* Arrow pointing to logo */
+.logo-story-card::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    margin-left: -10px;
+    width: 20px;
+    height: 20px;
+    background: #f0f7fc;
+    border-top: 2px solid rgba(0, 78, 124, 0.3);
+    border-left: 2px solid rgba(0, 78, 124, 0.3);
+    transform: rotate(45deg);
+}
+
+.logo-story-title {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #004E7C;
+    margin-bottom: 0.75rem;
+}
+
+.logo-story-text {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #1E293B;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 1.5s ease, transform 1.5s ease;
+}
+
+.logo-story-text.reveal {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.logo-story-text + .logo-story-text {
+    margin-top: 0.75rem;
+}
+
+/* Shimmer — white/silver sweep for navy theme */
+.logo-story-text.shimmer {
+    color: #1E293B;
+    background: linear-gradient(
+        90deg,
+        #1E293B 0%,
+        #1E293B 40%,
+        #004E7C 48%,
+        #0891B2 53%,
+        #004E7C 58%,
+        #1E293B 70%,
+        #1E293B 100%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmerSweep 5s ease-in-out 1;
+}
+
+@supports not (background-clip: text) {
+    .logo-story-text.shimmer {
+        background: none;
+        -webkit-text-fill-color: initial;
+        color: #1E293B;
+    }
+}
+
+@keyframes shimmerSweep {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+/* Hint text */
+.logo-story-hint {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 1rem;
+    opacity: 0;
+    transition: opacity 0.5s ease 2s;
+    text-align: right;
+    font-style: italic;
+}
+
+.logo-story-card.visible .logo-story-hint {
+    opacity: 1;
+}
+
+/* Hover-only mode */
+.logo-story-card.hover-mode {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.logo-story-card.hover-mode .logo-story-text {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.logo-story-card.hover-mode .logo-story-hint {
+    display: none;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .logo-story-card {
+        max-width: 92vw;
+        padding: 1.25rem 1.5rem;
+    }
+}
