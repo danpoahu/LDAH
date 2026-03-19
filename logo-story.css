@@ -53,6 +53,7 @@
 .logo-story-card {
     position: fixed;
     z-index: 10000;
+    overflow: hidden;
     background: linear-gradient(145deg, #f0f7fc 0%, #dceefb 100%);
     border: 2px solid rgba(0, 78, 124, 0.3);
     border-radius: 16px;
@@ -75,6 +76,20 @@
     pointer-events: all;
 }
 
+/* Quilt watermark image inside card */
+.logo-story-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 85%;
+    max-height: 90%;
+    object-fit: contain;
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: 0;
+}
+
 /* Arrow pointing to logo */
 .logo-story-card::before {
     content: '';
@@ -88,6 +103,13 @@
     border-top: 2px solid rgba(0, 78, 124, 0.3);
     border-left: 2px solid rgba(0, 78, 124, 0.3);
     transform: rotate(45deg);
+}
+
+.logo-story-title,
+.logo-story-text,
+.logo-story-hint {
+    position: relative;
+    z-index: 1;
 }
 
 .logo-story-title {
