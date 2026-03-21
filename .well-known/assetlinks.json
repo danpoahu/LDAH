@@ -1,8 +1,13 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "org.ldahawaii.app",
-        "sha256_cert_fingerprints": ["23:72:AB:F2:27:E7:C8:28:D2:AC:28:67:55:D9:BA:66:23:73:5F:CA:50:79:29:0C:4E:2F:C9:CD:7E:93:D0:7E"]
-      }
-    }]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "org.ldahawaii.app",
+      "sha256_cert_fingerprints": [
+        "A6:B5:A2:AF:88:95:2F:E5:FD:A5:39:FD:CE:80:F5:BD:9D:52:B3:59:A1:74:B2:6D:70:C6:61:7B:94:E4:6F:3D",
+        "23:72:AB:F2:27:E7:C8:28:D2:AC:28:67:55:D9:BA:66:23:73:5F:CA:50:79:29:0C:4E:2F:C9:CD:7E:93:D0:7E"
+      ]
+    }
+  }
+]
