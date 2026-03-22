@@ -649,6 +649,15 @@
             {selected.size > 0 && <div style={{ height: '180px' }} />}
             {selected.size === 0 && <div style={{ height: '80px' }} />}
 
+            {/* Support Our Mission */}
+            <div style={{maxWidth: '480px', margin: '2rem auto', padding: '1.5rem', background: 'white', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', textAlign: 'center'}}>
+              <h2 style={{fontSize: '1.1rem', fontWeight: '700', color: '#004E7C', marginBottom: '0.75rem'}}>Support Our Mission</h2>
+              <p style={{color: '#374151', fontSize: '0.88rem', marginBottom: '1rem', lineHeight: '1.6'}}>Your generous donation helps us empower families through information, training, and advocacy.</p>
+              <a href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" style={{display: 'inline-block', background: 'linear-gradient(135deg, #FF9B21 0%, #f59e0b 100%)', color: 'white', textDecoration: 'none', padding: '12px 28px', borderRadius: '50px', fontSize: '14px', fontWeight: '700', transition: 'transform 0.2s, box-shadow 0.2s'}} onMouseOver={(e) => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(255,155,33,0.4)'; }} onMouseOut={(e) => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none'; }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline-block',verticalAlign:'middle',marginRight:'6px'}} aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>Donate Now
+              </a>
+            </div>
+
             {/* Bottom Navigation Bar */}
             <nav className="bottom-nav no-print" role="navigation" aria-label="Main navigation">
               <a href="javascript:void(0)" className="nav-item a11y-nav-btn" aria-label="Accessibility Options" onClick={() => window.toggleA11yPanel && window.toggleA11yPanel()}>
