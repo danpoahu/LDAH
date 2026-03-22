@@ -186,6 +186,12 @@ body {
 }
 .nav-item.active { color: #004E7C; }
 .nav-item svg { width: 24px; height: 24px; margin-bottom: 2px; }
+.nav-item-qhelp { color: #7C3AED; }
+.nav-item-qhelp:hover { color: #6D28D9; background: rgba(124, 58, 237, 0.08); }
+.nav-item-qhelp.active { color: #6D28D9; }
+@media (max-width: 400px) {
+  .nav-item-qhelp { display: none; }
+}
 .main-content { padding-bottom: 80px; }
 
 /* Index page carousel */
