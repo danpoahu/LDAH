@@ -452,6 +452,13 @@
               timestamp: firebase.firestore.FieldValue.serverTimestamp(),
               programTitle: recurringSignupEvent.title
             });
+
+          // Update denormalized counts on parent doc
+          await db.collection('recurringEvents').doc(recurringSignupEvent.id).update({
+            signupCount: firebase.firestore.FieldValue.increment(1),
+            pendingCount: firebase.firestore.FieldValue.increment(1)
+          });
+
           setRecurringSubmitSuccess(true);
           setTimeout(() => {
             setShowRecurringModal(false);
@@ -484,6 +491,12 @@
             status: 'pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             eventTitle: signupEvent.title
+          });
+
+          // Update denormalized counts on parent doc
+          await db.collection('events').doc(signupEvent.id).update({
+            signupCount: firebase.firestore.FieldValue.increment(1),
+            pendingCount: firebase.firestore.FieldValue.increment(1)
           });
 
           // Track analytics event
