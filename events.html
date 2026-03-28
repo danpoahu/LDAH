@@ -129,9 +129,10 @@
       return `${hour}:${String(m).padStart(2,'0')} ${ampm}`;
     };
 
-    const getOccurrencesInNext30Days = (schedules) => {
+    const getOccurrencesInNext30Days = (schedules, cancelledDates = []) => {
       const today = new Date(); today.setHours(0,0,0,0);
       const end = new Date(today); end.setDate(end.getDate() + 30);
+      const cancelledSet = new Set((cancelledDates || []).map(cd => cd.date || cd));
       const results = [];
       (schedules || []).forEach(sch => {
         if (sch.frequency === 'weekly') {
@@ -139,7 +140,9 @@
           const diff = (sch.dayOfWeek - d.getDay() + 7) % 7;
           d.setDate(d.getDate() + diff);
           while (d <= end) {
-            results.push({ date: new Date(d), schedule: sch });
+            if (!cancelledSet.has(d.toISOString().slice(0, 10))) {
+              results.push({ date: new Date(d), schedule: sch });
+            }
             d.setDate(d.getDate() + 7);
           }
         } else { // monthly
@@ -149,7 +152,7 @@
             const dayOffset = (sch.dayOfWeek - firstDow + 7) % 7;
             const nth = new Date(ref.getFullYear(), ref.getMonth(),
                                  1 + dayOffset + (sch.weekOfMonth - 1) * 7);
-            if (nth.getMonth() === ref.getMonth() && nth >= today && nth <= end)
+            if (nth.getMonth() === ref.getMonth() && nth >= today && nth <= end && !cancelledSet.has(nth.toISOString().slice(0, 10)))
               results.push({ date: nth, schedule: sch });
           }
         }
@@ -299,7 +302,7 @@
             return { ...prog, _isRecurring: true, _isFlyerOnly: true,
                      _nextDate: new Date(), _nextLabel: 'Informational' };
           }
-          const occ = getOccurrencesInNext30Days(prog.schedules || []);
+          const occ = getOccurrencesInNext30Days(prog.schedules || [], prog.cancelledDates || []);
           if (!occ.length) return null;
           const { display } = formatOccurrence(occ[0]);
           return { ...prog, _isRecurring: true, _nextDate: occ[0].date,
@@ -1754,7 +1757,7 @@
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Select Session(s) to Attend *
                       </label>
-                      {recurringSignupEvent._occurrences && recurringSignupEvent._occurrences.map((occ, i) => {
+                      {recurringSignupEvent._occurrences && recurringSignupEvent._occurrences.length > 0 ? recurringSignupEvent._occurrences.map((occ, i) => {
                         const { key, display } = formatOccurrence(occ);
                         const isFull = (sessionConfirmedCounts[key] || 0) >= RECURRING_SESSION_CAPACITY;
                         return (
@@ -1781,7 +1784,11 @@
                             </span>
                           </label>
                         );
-                      })}
+                      }) : (
+                        <p style={{ color: '#6b7280', fontSize: '14px', fontStyle: 'italic', textAlign: 'center', padding: '16px 0' }}>
+                          No sessions currently available for this program.
+                        </p>
+                      )}
                       {recurringFormData.selectedSessions.length === 0 && (
                         <p style={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
                           Please select at least one session
