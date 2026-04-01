@@ -8,7 +8,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LDAH">
   <meta name="theme-color" content="#004E7C">
-  <meta name="description" content="We provide a wide range of services designed to empower families and support children with disabilities throughout their educational journey.">
   <title>LDAH - Volunteer Opportunities</title>
   
   <!-- Google Analytics -->
@@ -45,23 +44,10 @@
         <button
           onclick="toggleMenu()"
           id="menuBtn"
+          class="menu-btn"
           aria-controls="dropdownMenu"
           aria-expanded="false"
           aria-label="Open navigation menu"
-          style="
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            color: #004E7C;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            display: inline-block;
-            background: none;
-            border: none;
-            padding: 4px;
-          "
-          onmouseover="this.style.opacity='0.7'"
-          onmouseout="this.style.opacity='1'"
         >
           <svg id="menuIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -75,20 +61,7 @@
         </button>
 
         <!-- Dropdown Menu -->
-        <div id="dropdownMenu" style="
-          position: absolute;
-          top: 40px;
-          right: 8px;
-          background-color: rgba(255, 255, 255, 0.98);
-          border-radius: 10px;
-          border: 2px solid #004E7C;
-          backdrop-filter: blur(10px);
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-          z-index: 1000;
-          min-width: 140px;
-          font-size: 13px;
-          display: none;
-        ">
+        <div id="dropdownMenu" class="dropdown-menu" role="menu" aria-label="Site navigation">
           <a href="index.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#004E7C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
             Home
@@ -124,7 +97,7 @@
             <img 
               src="logo_transparent.png" 
               alt="LDAH Logo"
-              style="width: 180px; height: 180px; display: block;"
+              class="app-logo"
             />
           </a>
         </div>

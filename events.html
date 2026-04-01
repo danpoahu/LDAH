@@ -8,7 +8,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LDAH">
   <meta name="theme-color" content="#004E7C">
-  <meta name="description" content="We provide a wide range of services designed to empower families and support children with disabilities throughout their educational journey.">
   <title>LDAH - Events</title>
   
   <!-- Google Analytics -->
@@ -129,10 +128,9 @@
       return `${hour}:${String(m).padStart(2,'0')} ${ampm}`;
     };
 
-    const getOccurrencesInNext30Days = (schedules, cancelledDates = []) => {
+    const getOccurrencesInNext30Days = (schedules) => {
       const today = new Date(); today.setHours(0,0,0,0);
       const end = new Date(today); end.setDate(end.getDate() + 30);
-      const cancelledSet = new Set((cancelledDates || []).map(cd => cd.date || cd));
       const results = [];
       (schedules || []).forEach(sch => {
         if (sch.frequency === 'weekly') {
@@ -140,9 +138,7 @@
           const diff = (sch.dayOfWeek - d.getDay() + 7) % 7;
           d.setDate(d.getDate() + diff);
           while (d <= end) {
-            if (!cancelledSet.has(d.toISOString().slice(0, 10))) {
-              results.push({ date: new Date(d), schedule: sch });
-            }
+            results.push({ date: new Date(d), schedule: sch });
             d.setDate(d.getDate() + 7);
           }
         } else { // monthly
@@ -152,7 +148,7 @@
             const dayOffset = (sch.dayOfWeek - firstDow + 7) % 7;
             const nth = new Date(ref.getFullYear(), ref.getMonth(),
                                  1 + dayOffset + (sch.weekOfMonth - 1) * 7);
-            if (nth.getMonth() === ref.getMonth() && nth >= today && nth <= end && !cancelledSet.has(nth.toISOString().slice(0, 10)))
+            if (nth.getMonth() === ref.getMonth() && nth >= today && nth <= end)
               results.push({ date: nth, schedule: sch });
           }
         }
@@ -302,7 +298,7 @@
             return { ...prog, _isRecurring: true, _isFlyerOnly: true,
                      _nextDate: new Date(), _nextLabel: 'Informational' };
           }
-          const occ = getOccurrencesInNext30Days(prog.schedules || [], prog.cancelledDates || []);
+          const occ = getOccurrencesInNext30Days(prog.schedules || []);
           if (!occ.length) return null;
           const { display } = formatOccurrence(occ[0]);
           return { ...prog, _isRecurring: true, _nextDate: occ[0].date,
@@ -569,40 +565,17 @@
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 id="menuBtn"
+                className="menu-btn"
                 aria-controls="dropdownMenu"
                 aria-expanded={menuOpen}
                 aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-                style={{
-                  position: 'absolute',
-                  top: '8px',
-                  right: '8px',
-                  color: '#004E7C',
-                  cursor: 'pointer',
-                  transition: 'opacity 0.2s',
-                  display: 'inline-block',
-                  background: 'none',
-                  border: 'none',
-                  padding: '4px'
-                }}
               >
                 {menuOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
 
               {/* Dropdown Menu */}
               {menuOpen && (
-                <div id="dropdownMenu" role="menu" aria-label="Site navigation" style={{
-                  position: 'absolute',
-                  top: '40px',
-                  right: '8px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                  borderRadius: '10px',
-                  border: '2px solid #004E7C',
-                  backdropFilter: 'blur(10px)',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                  zIndex: 1000,
-                  minWidth: '140px',
-                  fontSize: '13px'
-                }}>
+                <div id="dropdownMenu" className="dropdown-menu" role="menu" aria-label="Site navigation" style={{ display: 'block' }}>
                   <a href="index.html" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#004E7C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                     Home
@@ -649,7 +622,7 @@
                     <img 
                       src="logo_transparent.png" 
                       alt="LDAH Logo"
-                      style={{ width: '180px', height: '180px', display: 'block' }}
+                      class="app-logo"
                     />
                   </div>
                 </a>
@@ -1770,7 +1743,7 @@
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Select Session(s) to Attend *
                       </label>
-                      {recurringSignupEvent._occurrences && recurringSignupEvent._occurrences.length > 0 ? recurringSignupEvent._occurrences.map((occ, i) => {
+                      {recurringSignupEvent._occurrences && recurringSignupEvent._occurrences.map((occ, i) => {
                         const { key, display } = formatOccurrence(occ);
                         const isFull = (sessionConfirmedCounts[key] || 0) >= RECURRING_SESSION_CAPACITY;
                         return (
@@ -1797,11 +1770,7 @@
                             </span>
                           </label>
                         );
-                      }) : (
-                        <p style={{ color: '#6b7280', fontSize: '14px', fontStyle: 'italic', textAlign: 'center', padding: '16px 0' }}>
-                          No sessions currently available for this program.
-                        </p>
-                      )}
+                      })}
                       {recurringFormData.selectedSessions.length === 0 && (
                         <p style={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
                           Please select at least one session
