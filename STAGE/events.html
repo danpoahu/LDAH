@@ -228,6 +228,7 @@
       });
       const [submitting, setSubmitting] = useState(false);
       const [submitSuccess, setSubmitSuccess] = useState(false);
+      const [lastSignupId, setLastSignupId] = useState(null);
 
       // Recurring-event state
       const [recurringPrograms, setRecurringPrograms] = useState([]);
@@ -243,6 +244,7 @@
       });
       const [recurringSubmitting, setRecurringSubmitting] = useState(false);
       const [recurringSubmitSuccess, setRecurringSubmitSuccess] = useState(false);
+      const [lastRecurringSignupId, setLastRecurringSignupId] = useState(null);
       const [sessionConfirmedCounts, setSessionConfirmedCounts] = useState({});
       const RECURRING_SESSION_CAPACITY = 3;
 
@@ -441,7 +443,7 @@
 
         setRecurringSubmitting(true);
         try {
-          await db.collection('recurringEvents').doc(recurringSignupEvent.id)
+          const recurringDocRef = await db.collection('recurringEvents').doc(recurringSignupEvent.id)
             .collection('signups').add({
               ...recurringFormData,
               status: 'pending',
@@ -455,11 +457,8 @@
             pendingCount: firebase.firestore.FieldValue.increment(1)
           });
 
+          setLastRecurringSignupId(recurringDocRef.id);
           setRecurringSubmitSuccess(true);
-          setTimeout(() => {
-            setShowRecurringModal(false);
-            setRecurringSubmitSuccess(false);
-          }, 2000);
         } catch (error) {
           console.error('Error submitting recurring signup:', error);
           alert('There was an error submitting your signup. Please try again.');
@@ -482,7 +481,7 @@
         setSubmitting(true);
 
         try {
-          await db.collection('events').doc(signupEvent.id).collection('signups').add({
+          const eventDocRef = await db.collection('events').doc(signupEvent.id).collection('signups').add({
             ...formData,
             status: 'pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
@@ -519,11 +518,8 @@
             console.error('Analytics tracking error:', analyticsError);
           }
 
+          setLastSignupId(eventDocRef.id);
           setSubmitSuccess(true);
-          setTimeout(() => {
-            setShowSignupModal(false);
-            setSubmitSuccess(false);
-          }, 2000);
         } catch (error) {
           console.error('Error submitting signup:', error);
           alert('There was an error submitting your signup. Please try again.');
@@ -1158,13 +1154,37 @@
 
                 {submitSuccess ? (
                   <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                    <div style={{ fontSize: '64px', marginBottom: '20px' }}>✅</div>
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ marginBottom: '20px' }}>
+                      <circle cx="32" cy="32" r="30" stroke="#22C55E" strokeWidth="4" fill="#F0FDF4" />
+                      <polyline points="20,34 28,42 44,24" fill="none" stroke="#22C55E" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                     <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
-                      Thank You!
+                      Mahalo! You're signed up.
                     </h2>
-                    <p style={{ color: '#666', fontSize: '16px' }}>
-                      Your signup has been received. We'll contact you soon!
+                    <p style={{ color: '#555', fontSize: '16px', lineHeight: '1.5', marginBottom: '8px' }}>
+                      One more step -- please complete your registration so we can reserve your spot.
                     </p>
+                    <p style={{ color: '#555', fontSize: '14px', lineHeight: '1.5', marginBottom: '24px' }}>
+                      Please remember to register each person who will be attending.
+                    </p>
+                    <a
+                      href={`https://ldahawaii.org/register.html?token=${lastSignupId}&eventId=${signupEvent.id}&type=event`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-block',
+                        backgroundColor: '#004E7C',
+                        color: 'white',
+                        padding: '14px 32px',
+                        borderRadius: '12px',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        textDecoration: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Complete Registration
+                    </a>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmitSignup}>
@@ -1507,13 +1527,34 @@
 
                 {recurringSubmitSuccess ? (
                   <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                    <div style={{ fontSize: '64px', marginBottom: '20px' }}>✅</div>
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ marginBottom: '20px' }}>
+                      <circle cx="32" cy="32" r="30" stroke="#22C55E" strokeWidth="4" fill="#F0FDF4" />
+                      <polyline points="20,34 28,42 44,24" fill="none" stroke="#22C55E" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                     <h2 style={{ color: '#0D7A7A', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
-                      Thank You!
+                      Mahalo! You're signed up.
                     </h2>
-                    <p style={{ color: '#666', fontSize: '16px' }}>
-                      Your signup has been received. We'll be in touch soon!
+                    <p style={{ color: '#555', fontSize: '16px', lineHeight: '1.5', marginBottom: '24px' }}>
+                      Complete your registration to confirm your spot.
                     </p>
+                    <a
+                      href={`https://ldahawaii.org/register.html?token=${lastRecurringSignupId}&eventId=${recurringSignupEvent.id}&type=recurring`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-block',
+                        backgroundColor: '#0D7A7A',
+                        color: 'white',
+                        padding: '14px 32px',
+                        borderRadius: '12px',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        textDecoration: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Complete Registration
+                    </a>
                   </div>
                 ) : (
                   <form onSubmit={handleRecurringSubmit}>
