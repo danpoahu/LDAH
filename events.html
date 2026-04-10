@@ -349,16 +349,26 @@
 
       const handleRegSubmit = async (e) => {
         e.preventDefault();
-        // Validate disability checkboxes
-        if (regFormData.disabilityCategories.length === 0) {
+        // Validate disability checkboxes (Parent/Guardian only)
+        if (regFormData.role === 'Parent/Guardian' && regFormData.disabilityCategories.length === 0) {
           setRegDisabilityError(true);
           return;
         }
         setRegSubmitting(true);
         try {
           const collectionName = regType === 'recurring' ? 'recurringEvents' : 'events';
+          const registration = { ...regFormData };
+          // Sanitize child/military fields for non-parent registrants
+          if (registration.role !== 'Parent/Guardian') {
+            registration.militaryStatus = '';
+            registration.militaryBranch = '';
+            registration.childAgeRange = '';
+            registration.childGender = '';
+            registration.ethnicity = '';
+            registration.disabilityCategories = [];
+          }
           await db.collection(collectionName).doc(regEventId).collection('signups').doc(regToken).update({
-            registration: { ...regFormData },
+            registration: registration,
             status: 'confirmed',
             registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp()
           });
@@ -2175,6 +2185,8 @@
                     <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
                       You have already completed registration. Mahalo!
                     </h2>
+                    {regFormData.role === 'Parent/Guardian' && (
+                    <React.Fragment>
                     <p style={{ color: '#555', fontSize: '14px', marginTop: '16px' }}>
                       Do you have another child to register for this event?
                     </p>
@@ -2188,6 +2200,8 @@
                     >
                       + Register Another Child
                     </button>
+                    </React.Fragment>
+                    )}
                   </div>
                 )}
 
@@ -2201,6 +2215,8 @@
                       Mahalo! Your registration is complete.
                     </h2>
                     <p style={{ color: '#666', fontSize: '14px' }}>You may now close this window.</p>
+                    {regFormData.role === 'Parent/Guardian' && (
+                    <React.Fragment>
                     <p style={{ color: '#555', fontSize: '14px', marginTop: '16px' }}>
                       Do you have another child to register for this event?
                     </p>
@@ -2216,6 +2232,8 @@
                       + Register Another Child
                     </button>
                     <br />
+                    </React.Fragment>
+                    )}
                     <button
                       onClick={() => setShowRegistrationModal(false)}
                       style={{
@@ -2296,6 +2314,7 @@
                         </select>
                       </div>
 
+                      {regFormData.role === 'Parent/Guardian' && (
                       <div style={{ marginBottom: '14px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Military Status</label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -2325,9 +2344,11 @@
                           </div>
                         )}
                       </div>
+                      )}
                     </div>
 
-                    {/* ── Child Information ── */}
+                    {/* ── Child Information (Parent/Guardian only) ── */}
+                    {regFormData.role === 'Parent/Guardian' && (
                     <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
                       <h3 style={{ color: '#004E7C', fontSize: '16px', fontWeight: 'bold', marginBottom: '14px', marginTop: 0 }}>Child Information</h3>
 
@@ -2386,6 +2407,7 @@
                         )}
                       </div>
                     </div>
+                    )}
 
                     {/* ── Training History ── */}
                     <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
