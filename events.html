@@ -461,15 +461,15 @@
 
       const isEventCurrent = (event) => {
         const now = new Date();
-        const startDate = new Date(event.startDate);
-        const moveToPastDate = new Date(event.moveToPastDate);
+        const startDate = new Date(event.startDate + 'T00:00:00');
+        const moveToPastDate = new Date(event.moveToPastDate + 'T00:00:00');
         return now >= startDate && now < moveToPastDate;
       };
 
       const isEventPast = (event) => {
         const now = new Date();
-        const moveToPastDate = new Date(event.moveToPastDate);
-        const removeDate = new Date(event.removeDate);
+        const moveToPastDate = new Date(event.moveToPastDate + 'T00:00:00');
+        const removeDate = new Date(event.removeDate + 'T00:00:00');
         return now >= moveToPastDate && now < removeDate;
       };
 
