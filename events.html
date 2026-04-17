@@ -205,6 +205,44 @@
       }
     });
 
+    // Mirror of LDAH_W2 parseSignupDateString — converts a free-form signup
+    // date label (e.g. "October 11, 2025" or "October 11th") into YYYY-MM-DD,
+    // so we can detect expired dates on the signup modal.
+    function parseSignupDateString(dateStr) {
+      if (!dateStr) return null;
+      const months = {
+        january:0,february:1,march:2,april:3,may:4,june:5,
+        july:6,august:7,september:8,october:9,november:10,december:11
+      };
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const monthDayMatch = dateStr.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2})(?:st|nd|rd|th)?\b/i);
+      if (monthDayMatch) {
+        const monthNum = months[monthDayMatch[1].toLowerCase()];
+        const day = parseInt(monthDayMatch[2], 10);
+        if (monthNum !== undefined && day >= 1 && day <= 31) {
+          const yearMatch = dateStr.match(/\b(20\d{2})\b/);
+          let year = yearMatch ? parseInt(yearMatch[1],10) : (monthNum < currentMonth ? currentYear + 1 : currentYear);
+          return `${year}-${String(monthNum+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        }
+      }
+      try {
+        const clean = dateStr.replace(/^[A-Za-z']+[.,]\s*/i,'').replace(/\d{1,2}(?:am|pm)\s*-\s*\d{1,2}(?:am|pm)/i,'').replace(/\*\*.*?\*\*/g,'').trim();
+        const parsed = new Date(clean);
+        if (!isNaN(parsed.getTime())) {
+          return `${parsed.getFullYear()}-${String(parsed.getMonth()+1).padStart(2,'0')}-${String(parsed.getDate()).padStart(2,'0')}`;
+        }
+      } catch(_) {}
+      return null;
+    }
+
+    function isSignupDateExpired(dateStr) {
+      const iso = parseSignupDateString(dateStr);
+      if (!iso) return false;
+      return new Date(iso + 'T23:59:59') < new Date();
+    }
+
     const EventsApp = () => {
       const [events, setEvents] = useState([]);
       const [loading, setLoading] = useState(true);
@@ -271,7 +309,7 @@
         childAgeRange: '', childGender: '', ethnicity: '',
         disabilityCategories: [],
         priorTraining: '', priorTrainingDate: '',
-        howHeard: '', accommodations: ''
+        howHeard: '', howHeardOther: '', accommodations: ''
       });
       const [regDisabilityError, setRegDisabilityError] = useState(false);
 
@@ -306,6 +344,7 @@
           priorTraining: pf.priorTraining || '',
           priorTrainingDate: pf.priorTrainingDate || '',
           howHeard: pf.howHeard || '',
+          howHeardOther: pf.howHeardOther || '',
           accommodations: pf.accommodations || ''
         });
 
@@ -513,6 +552,12 @@
       };
 
       const handleSignupClick = (event) => {
+        // Auto-select when there's exactly one non-expired signup date so
+        // we don't force the user to tick a single box.
+        const allDates = event.signupDates || [];
+        const availableDates = allDates.filter(d => !isSignupDateExpired(d));
+        const preselected = availableDates.length === 1 ? [availableDates[0]] : [];
+
         setSignupEvent(event);
         setShowSignupModal(true);
         setFormData({
@@ -523,7 +568,7 @@
           participationType: '',
           groupName: '',
           groupSize: '',
-          selectedDates: [],
+          selectedDates: preselected,
           customAnswers: {},
           additionalComments: ''
         });
@@ -1484,33 +1529,53 @@
                       </div>
                     </div>
 
-                    {/* Select Dates */}
-                    {signupEvent.signupDates && signupEvent.signupDates.length > 0 && (
-                      <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                          Select the Dates you are Available to Volunteer *
-                        </label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {signupEvent.signupDates.map((date, index) => (
-                            <label key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
-                              <input
-                                type="checkbox"
-                                checked={formData.selectedDates.includes(date)}
-                                onChange={() => handleDateToggle(date)}
-                                disabled={submitting}
-                                style={{ width: '18px', height: '18px', cursor: submitting ? 'not-allowed' : 'pointer' }}
-                              />
-                              <span style={{ fontSize: '14px', color: '#374151' }}>{date}</span>
-                            </label>
-                          ))}
+                    {/* Select Dates — when only 1 non-expired date exists we auto-select
+                        it in handleSignupClick and just display the date as a read-only
+                        line so the user still sees what they signed up for. */}
+                    {(() => {
+                      const allDates = (signupEvent.signupDates) || [];
+                      const nonExpired = allDates.filter(d => !isSignupDateExpired(d));
+                      if (nonExpired.length === 1) {
+                        return (
+                          <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Event Date</label>
+                            <div style={{ padding: '10px 12px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #e0f2fe', color: '#0369a1', fontWeight: '600', fontSize: '14px' }}>
+                              {nonExpired[0]}
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (nonExpired.length === 0) return null;
+                      return (
+                        <div style={{ marginBottom: '20px' }}>
+                          <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                            Select the dates you're available to attend *
+                          </label>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {allDates.map((date, index) => {
+                              const expired = isSignupDateExpired(date);
+                              return (
+                                <label key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: (submitting || expired) ? 'not-allowed' : 'pointer', opacity: expired ? 0.6 : 1 }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.selectedDates.includes(date)}
+                                    onChange={() => handleDateToggle(date)}
+                                    disabled={submitting || expired}
+                                    style={{ width: '18px', height: '18px', cursor: (submitting || expired) ? 'not-allowed' : 'pointer' }}
+                                  />
+                                  <span style={{ fontSize: '14px', color: '#374151', textDecoration: expired ? 'line-through' : 'none' }}>{date}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          {formData.selectedDates.length === 0 && (
+                            <p style={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
+                              Please select at least one date
+                            </p>
+                          )}
                         </div>
-                        {formData.selectedDates.length === 0 && (
-                          <p style={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
-                            Please select at least one date
-                          </p>
-                        )}
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* Custom Questions */}
                     {signupEvent.customQuestions && signupEvent.customQuestions.length > 0 && (
@@ -2440,13 +2505,26 @@
 
                       <div style={{ marginBottom: '14px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>How did you hear about this training? <span style={{ color: '#DC2626' }}>*</span></label>
-                        <select required value={regFormData.howHeard} onChange={(e) => handleRegFormChange('howHeard', e.target.value)} disabled={regSubmitting}
+                        <select required value={regFormData.howHeard} onChange={(e) => {
+                          const v = e.target.value;
+                          handleRegFormChange('howHeard', v);
+                          if (v !== 'Other') handleRegFormChange('howHeardOther', '');
+                        }} disabled={regSubmitting}
                           style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', background: 'white', opacity: regSubmitting ? 0.6 : 1 }}>
                           <option value="">-- Select --</option>
                           {['Agency', 'Newspaper', 'School', 'Radio', 'Website', 'Facebook', 'Other'].map(h => (
                             <option key={h} value={h}>{h}</option>
                           ))}
                         </select>
+                        {regFormData.howHeard === 'Other' && (
+                          <div style={{ marginTop: '10px' }}>
+                            <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '13px' }}>Please specify <span style={{ color: '#DC2626' }}>*</span></label>
+                            <input type="text" required value={regFormData.howHeardOther} maxLength="200"
+                              onChange={(e) => handleRegFormChange('howHeardOther', e.target.value)} disabled={regSubmitting}
+                              placeholder="Tell us how you heard about us"
+                              style={{ width: '100%', padding: '10px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: regSubmitting ? 0.6 : 1 }} />
+                          </div>
+                        )}
                       </div>
                     </div>
 
