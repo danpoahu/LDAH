@@ -271,7 +271,7 @@
         childAgeRange: '', childGender: '', ethnicity: '',
         disabilityCategories: [],
         priorTraining: '', priorTrainingDate: '',
-        howHeard: '', accommodations: ''
+        howHeard: '', howHeardOther: '', accommodations: ''
       });
       const [regDisabilityError, setRegDisabilityError] = useState(false);
 
@@ -306,6 +306,7 @@
           priorTraining: pf.priorTraining || '',
           priorTrainingDate: pf.priorTrainingDate || '',
           howHeard: pf.howHeard || '',
+          howHeardOther: pf.howHeardOther || '',
           accommodations: pf.accommodations || ''
         });
 
@@ -1488,7 +1489,7 @@
                     {signupEvent.signupDates && signupEvent.signupDates.length > 0 && (
                       <div style={{ marginBottom: '20px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                          Select the Dates you are Available to Volunteer *
+                          Select the dates you're available to attend *
                         </label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           {signupEvent.signupDates.map((date, index) => (
@@ -2440,13 +2441,26 @@
 
                       <div style={{ marginBottom: '14px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>How did you hear about this training? <span style={{ color: '#DC2626' }}>*</span></label>
-                        <select required value={regFormData.howHeard} onChange={(e) => handleRegFormChange('howHeard', e.target.value)} disabled={regSubmitting}
+                        <select required value={regFormData.howHeard} onChange={(e) => {
+                          const v = e.target.value;
+                          handleRegFormChange('howHeard', v);
+                          if (v !== 'Other') handleRegFormChange('howHeardOther', '');
+                        }} disabled={regSubmitting}
                           style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', background: 'white', opacity: regSubmitting ? 0.6 : 1 }}>
                           <option value="">-- Select --</option>
                           {['Agency', 'Newspaper', 'School', 'Radio', 'Website', 'Facebook', 'Other'].map(h => (
                             <option key={h} value={h}>{h}</option>
                           ))}
                         </select>
+                        {regFormData.howHeard === 'Other' && (
+                          <div style={{ marginTop: '10px' }}>
+                            <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '13px' }}>Please specify <span style={{ color: '#DC2626' }}>*</span></label>
+                            <input type="text" required value={regFormData.howHeardOther} maxLength="200"
+                              onChange={(e) => handleRegFormChange('howHeardOther', e.target.value)} disabled={regSubmitting}
+                              placeholder="Tell us how you heard about us"
+                              style={{ width: '100%', padding: '10px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: regSubmitting ? 0.6 : 1 }} />
+                          </div>
+                        )}
                       </div>
                     </div>
 
