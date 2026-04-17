@@ -1529,12 +1529,23 @@
                       </div>
                     </div>
 
-                    {/* Select Dates — hidden when there's only 1 (or 0) non-expired date,
-                        since we auto-select the single case in handleSignupClick. */}
+                    {/* Select Dates — when only 1 non-expired date exists we auto-select
+                        it in handleSignupClick and just display the date as a read-only
+                        line so the user still sees what they signed up for. */}
                     {(() => {
                       const allDates = (signupEvent.signupDates) || [];
                       const nonExpired = allDates.filter(d => !isSignupDateExpired(d));
-                      if (nonExpired.length <= 1) return null;
+                      if (nonExpired.length === 1) {
+                        return (
+                          <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Event Date</label>
+                            <div style={{ padding: '10px 12px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #e0f2fe', color: '#0369a1', fontWeight: '600', fontSize: '14px' }}>
+                              {nonExpired[0]}
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (nonExpired.length === 0) return null;
                       return (
                         <div style={{ marginBottom: '20px' }}>
                           <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
