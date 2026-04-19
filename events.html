@@ -312,6 +312,12 @@
         howHeard: '', howHeardOther: '', accommodations: ''
       });
       const [regDisabilityError, setRegDisabilityError] = useState(false);
+      // Sibling-signup prompt state
+      const [regSiblings, setRegSiblings] = useState([]); // [{collection, eventId, signupId, eventTitle, sessionDate}]
+      const [regSiblingChecked, setRegSiblingChecked] = useState({});
+      const [regSiblingApplying, setRegSiblingApplying] = useState(false);
+      const [regSiblingApplied, setRegSiblingApplied] = useState(0); // >0 means applied to N
+      const [regSiblingDismissed, setRegSiblingDismissed] = useState(false);
 
       // ── Registration modal helpers ──────────────────────────────────────
       const openRegistration = async (token, eventId, type, prefill) => {
@@ -324,6 +330,10 @@
         setRegError(null);
         setRegDisabilityError(false);
         setRegSubmitting(false);
+        setRegSiblings([]);
+        setRegSiblingChecked({});
+        setRegSiblingApplied(0);
+        setRegSiblingDismissed(false);
         setShowRegistrationModal(true);
         setRegLoading(true);
 
@@ -413,11 +423,54 @@
           });
           setRegLastRegistration({ ...regFormData });
           setRegSuccess(true);
+          // Kick off sibling-signup lookup (non-blocking)
+          (async () => {
+            try {
+              const resp = await fetch('https://us-central1-ldah-932d5.cloudfunctions.net/findSiblingPendingSignups', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ collection: collectionName, eventId: regEventId, signupId: regToken })
+              });
+              if (!resp.ok) return;
+              const data = await resp.json();
+              const siblings = (data && data.siblings) || [];
+              if (!siblings.length) return;
+              const initChecked = {};
+              siblings.forEach((_, i) => { initChecked[i] = true; });
+              setRegSiblings(siblings);
+              setRegSiblingChecked(initChecked);
+            } catch (e) { console.warn('Sibling signup check skipped:', e.message); }
+          })();
         } catch (err) {
           console.error('Error submitting registration:', err);
           setRegError('There was an error submitting your registration. Please try again later.');
         } finally {
           setRegSubmitting(false);
+        }
+      };
+
+      const handleApplySiblings = async () => {
+        const reg = regLastRegistration;
+        if (!reg || !regSiblings.length) return;
+        const indices = Object.keys(regSiblingChecked).filter(k => regSiblingChecked[k]).map(Number);
+        if (!indices.length) { setRegSiblingDismissed(true); return; }
+        setRegSiblingApplying(true);
+        try {
+          const writes = indices.map(i => {
+            const s = regSiblings[i];
+            return db.collection(s.collection).doc(s.eventId).collection('signups').doc(s.signupId).update({
+              registration: reg,
+              status: 'confirmed',
+              registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          });
+          await Promise.all(writes);
+          setRegSiblingApplied(indices.length);
+        } catch (err) {
+          console.error('Error applying to siblings:', err);
+          setRegSiblingApplied(-1);
+        } finally {
+          setRegSiblingApplying(false);
         }
       };
 
@@ -2280,6 +2333,57 @@
                       Mahalo! Your registration is complete.
                     </h2>
                     <p style={{ color: '#666', fontSize: '14px' }}>You may now close this window.</p>
+
+                    {/* Sibling-signup prompt */}
+                    {regSiblings.length > 0 && !regSiblingDismissed && regSiblingApplied === 0 && (
+                      <div style={{ background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '10px', padding: '16px', textAlign: 'left', marginTop: '20px' }}>
+                        <p style={{ color: '#0369A1', fontWeight: 700, fontSize: '14px', margin: '0 0 6px 0' }}>
+                          You're also signed up for {regSiblings.length} other event{regSiblings.length > 1 ? 's' : ''}.
+                        </p>
+                        <p style={{ color: '#374151', fontSize: '13px', margin: '0 0 10px 0' }}>
+                          If this registration applies to the same child, select the events below and we'll use the same answers. If not, leave them unchecked and complete each one when we email you.
+                        </p>
+                        <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                          {regSiblings.map((s, idx) => (
+                            <label key={s.signupId} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '6px 4px', cursor: 'pointer' }}>
+                              <input type="checkbox"
+                                checked={!!regSiblingChecked[idx]}
+                                onChange={(e) => setRegSiblingChecked(prev => ({ ...prev, [idx]: e.target.checked }))}
+                                style={{ marginTop: '3px', cursor: 'pointer' }} />
+                              <span style={{ fontSize: '13px', color: '#0F172A' }}>
+                                {s.eventTitle || 'Event'}
+                                {s.sessionDate && <span style={{ color: '#64748B', fontSize: '12px' }}> ({s.sessionDate})</span>}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                          <button onClick={handleApplySiblings} disabled={regSiblingApplying}
+                            style={{ flex: 1, padding: '10px', background: 'linear-gradient(135deg,#0891B2,#0E7490)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: regSiblingApplying ? 'default' : 'pointer', opacity: regSiblingApplying ? 0.6 : 1 }}>
+                            {regSiblingApplying ? 'Applying...' : 'Apply to Selected'}
+                          </button>
+                          <button onClick={() => setRegSiblingDismissed(true)}
+                            style={{ padding: '10px 16px', background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
+                            No Thanks
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {regSiblingApplied > 0 && (
+                      <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '10px', padding: '14px', marginTop: '20px' }}>
+                        <p style={{ color: '#065F46', fontWeight: 700, fontSize: '13px', margin: 0 }}>
+                          Registration applied to {regSiblingApplied} other event{regSiblingApplied > 1 ? 's' : ''}. Mahalo!
+                        </p>
+                      </div>
+                    )}
+                    {regSiblingApplied === -1 && (
+                      <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '10px', padding: '14px', marginTop: '20px' }}>
+                        <p style={{ color: '#991B1B', fontWeight: 600, fontSize: '13px', margin: 0 }}>
+                          Couldn't apply to the other events. You can still complete them from the email link.
+                        </p>
+                      </div>
+                    )}
+
                     {regFormData.role === 'Parent/Guardian' && (
                     <React.Fragment>
                     <p style={{ color: '#555', fontSize: '14px', marginTop: '16px' }}>
