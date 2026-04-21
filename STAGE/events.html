@@ -408,6 +408,7 @@
           }
           await db.collection(collectionName).doc(regEventId).collection('signups').doc(regToken).update({
             registration: registration,
+            registrantType: registration.role || '',
             status: 'confirmed',
             registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp()
           });
