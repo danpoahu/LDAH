@@ -587,7 +587,16 @@
       const regularCurrent = events.filter(isEventCurrent)
         .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
-      const currentEvents = [...recurringVirtualEvents, ...regularCurrent];
+      const _mergedCurrent = [...recurringVirtualEvents, ...regularCurrent];
+      const _acceptsSignups = (ev) => {
+        if (!ev) return false;
+        if (ev._isFlyerOnly || ev.isFlyerOnly) return false;
+        if (ev._isRecurring || ev.isRecurring) return true;
+        return !!(ev.signupDates && ev.signupDates.length > 0);
+      };
+      const _tier1 = _mergedCurrent.filter(_acceptsSignups);
+      const _tier2 = _mergedCurrent.filter(e => !_acceptsSignups(e));
+      const currentEvents = [..._tier1, ..._tier2];
 
       const pastEvents = events.filter(isEventPast).sort((a, b) =>
         new Date(b.moveToPastDate) - new Date(a.moveToPastDate)
