@@ -301,8 +301,9 @@
       const [regAlreadyCompleted, setRegAlreadyCompleted] = useState(false);
       const [regError, setRegError] = useState(null);
       const [regRegistrantName, setRegRegistrantName] = useState('');
-      const [regSignupInfo, setRegSignupInfo] = useState(null); // {name, email, phone}
+      const [regSignupInfo, setRegSignupInfo] = useState(null); // {name, email, phone, selectedDates}
       const [regLastRegistration, setRegLastRegistration] = useState(null);
+      const [regSiblingDraft, setRegSiblingDraft] = useState(null); // {name, email, phone, selectedDates, eventId, type, collectionName}
       const [regFormData, setRegFormData] = useState({
         streetAddress: '', city: '', zipCode: '',
         role: '', reasonForAttending: '',
@@ -321,7 +322,7 @@
       const [regSiblingDismissed, setRegSiblingDismissed] = useState(false);
 
       // ── Registration modal helpers ──────────────────────────────────────
-      const openRegistration = async (token, eventId, type, prefill) => {
+      const openRegistration = async (token, eventId, type, prefill, siblingDraft) => {
         setRegToken(token);
         setRegEventId(eventId);
         setRegType(type);
@@ -335,6 +336,8 @@
         setRegSiblingChecked({});
         setRegSiblingApplied(0);
         setRegSiblingDismissed(false);
+        // Clear any stale sibling draft unless this call is opening in draft mode
+        if (token !== '__SIBLING_DRAFT__') setRegSiblingDraft(null);
         setShowRegistrationModal(true);
         setRegLoading(true);
 
@@ -359,6 +362,20 @@
           accommodations: pf.accommodations || ''
         });
 
+        // Sibling draft mode — no Firestore doc yet. Skip fetch and show form directly.
+        if (token === '__SIBLING_DRAFT__') {
+          const draft = siblingDraft || {};
+          setRegSignupInfo({
+            name: draft.name || '',
+            email: draft.email || '',
+            phone: draft.phone || '',
+            selectedDates: Array.isArray(draft.selectedDates) ? draft.selectedDates.slice() : []
+          });
+          setRegRegistrantName(draft.name || 'Attendee');
+          setRegLoading(false);
+          return;
+        }
+
         // Fetch signup doc
         try {
           const collectionName = type === 'recurring' ? 'recurringEvents' : 'events';
@@ -369,7 +386,7 @@
             return;
           }
           const data = doc.data();
-          setRegSignupInfo({ name: data.name || '', email: data.email || '', phone: data.phone || '' });
+          setRegSignupInfo({ name: data.name || '', email: data.email || '', phone: data.phone || '', selectedDates: Array.isArray(data.selectedDates) ? data.selectedDates.slice() : [] });
           setRegRegistrantName(data.name || 'Attendee');
 
           if (data.status === 'confirmed') {
@@ -417,12 +434,41 @@
             registration.ethnicity = '';
             registration.disabilityCategories = [];
           }
-          await db.collection(collectionName).doc(regEventId).collection('signups').doc(regToken).update({
-            registration: registration,
-            registrantType: registration.role || '',
-            status: 'confirmed',
-            registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
+
+          // Sibling draft path — create a fully-formed confirmed signup now (no pending write, no email).
+          let effectiveToken = regToken;
+          if (regSiblingDraft) {
+            const draft = regSiblingDraft;
+            const newDocRef = await db.collection(collectionName).doc(regEventId).collection('signups').add({
+              name: draft.name || '',
+              email: draft.email || '',
+              phone: draft.phone || '',
+              selectedDates: Array.isArray(draft.selectedDates) ? draft.selectedDates : [],
+              status: 'confirmed',
+              registration: registration,
+              registrantType: registration.role || '',
+              registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            // Update denormalized counts (best-effort — CF will also reconcile)
+            try {
+              await db.collection(collectionName).doc(regEventId).update({
+                signupCount: firebase.firestore.FieldValue.increment(1)
+              });
+            } catch (countErr) {
+              console.warn('Count update deferred to Cloud Function:', countErr.message);
+            }
+            effectiveToken = newDocRef.id;
+            setRegToken(effectiveToken);
+            setRegSiblingDraft(null);
+          } else {
+            await db.collection(collectionName).doc(regEventId).collection('signups').doc(regToken).update({
+              registration: registration,
+              registrantType: registration.role || '',
+              status: 'confirmed',
+              registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }
           setRegLastRegistration({ ...regFormData });
           setRegSuccess(true);
           // Kick off sibling-signup lookup (non-blocking)
@@ -431,7 +477,7 @@
               const resp = await fetch('https://us-central1-ldah-932d5.cloudfunctions.net/findSiblingPendingSignups', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ collection: collectionName, eventId: regEventId, signupId: regToken })
+                body: JSON.stringify({ collection: collectionName, eventId: regEventId, signupId: effectiveToken })
               });
               if (!resp.ok) return;
               const data = await resp.json();
@@ -477,34 +523,23 @@
         }
       };
 
-      const handleRegisterAnotherChild = async () => {
+      const handleRegisterAnotherChild = () => {
         if (!regSignupInfo || !regEventId || !regType) return;
-        setRegLoading(true);
-        try {
-          const collectionName = regType === 'recurring' ? 'recurringEvents' : 'events';
-          const newDocRef = await db.collection(collectionName).doc(regEventId).collection('signups').add({
-            name: regSignupInfo.name || '',
-            email: regSignupInfo.email || '',
-            phone: regSignupInfo.phone || '',
-            status: 'pending',
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          // Update denormalized counts
-          try {
-            await db.collection(collectionName).doc(regEventId).update({
-              signupCount: firebase.firestore.FieldValue.increment(1),
-              pendingCount: firebase.firestore.FieldValue.increment(1)
-            });
-          } catch (countErr) {
-            console.warn('Count update deferred:', countErr.message);
-          }
-          // Open registration with prefilled family data
-          openRegistration(newDocRef.id, regEventId, regType, regLastRegistration);
-        } catch (err) {
-          console.error('Error creating sibling signup:', err);
-          setRegError('There was an error. Please try again.');
-          setRegLoading(false);
-        }
+        // Defer Firestore write until the sibling's registration form is submitted.
+        // Stash draft context — handleRegSubmit picks it up via regSiblingDraft state.
+        const collectionName = regType === 'recurring' ? 'recurringEvents' : 'events';
+        const draft = {
+          name: regSignupInfo.name || '',
+          email: regSignupInfo.email || '',
+          phone: regSignupInfo.phone || '',
+          selectedDates: Array.isArray(regSignupInfo.selectedDates) ? regSignupInfo.selectedDates.slice() : [],
+          eventId: regEventId,
+          type: regType,
+          collectionName: collectionName
+        };
+        setRegSiblingDraft(draft);
+        // Open the registration form in draft mode. The sentinel token matches W2's convention.
+        openRegistration('__SIBLING_DRAFT__', regEventId, regType, regLastRegistration, draft);
       };
 
       // Auto-open registration from URL params (email links)
