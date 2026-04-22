@@ -50,6 +50,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="./formatters.js"></script>
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -1501,6 +1502,7 @@
                         required
                         value={formData.name}
                         onChange={(e) => handleFormChange('name', e.target.value)}
+                        onBlur={(e) => handleFormChange('name', window.LDAHFormat ? window.LDAHFormat.formatNameSmart(e.target.value) : e.target.value)}
                         disabled={submitting}
                         placeholder="Your answer"
                         style={{
@@ -1547,6 +1549,7 @@
                         required
                         value={formData.phone}
                         onChange={(e) => handlePhoneChange(e.target.value)}
+                        onBlur={(e) => handleFormChange('phone', window.LDAHFormat ? window.LDAHFormat.formatPhone(e.target.value) : e.target.value)}
                         disabled={submitting}
                         placeholder="(808) 555-1234"
                         style={{
@@ -1903,6 +1906,7 @@
                         type="text" required
                         value={recurringFormData.name}
                         onChange={(e) => handleRecurringFormChange('name', e.target.value)}
+                        onBlur={(e) => handleRecurringFormChange('name', window.LDAHFormat ? window.LDAHFormat.formatNameSmart(e.target.value) : e.target.value)}
                         disabled={recurringSubmitting}
                         placeholder="Your answer"
                         style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
@@ -1966,6 +1970,7 @@
                             : `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
                           handleRecurringFormChange('phone', fmt);
                         }}
+                        onBlur={(e) => handleRecurringFormChange('phone', window.LDAHFormat ? window.LDAHFormat.formatPhone(e.target.value) : e.target.value)}
                         disabled={recurringSubmitting}
                         placeholder="(808) 555-1234"
                         style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
@@ -2010,6 +2015,7 @@
                         <input type="text" required
                           value={recurringFormData.studentName}
                           onChange={(e) => handleRecurringFormChange('studentName', e.target.value)}
+                          onBlur={(e) => handleRecurringFormChange('studentName', window.LDAHFormat ? window.LDAHFormat.formatNameSmart(e.target.value) : e.target.value)}
                           disabled={recurringSubmitting} placeholder="First and last name"
                           style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
                         />
@@ -2101,6 +2107,7 @@
                         <input type="text" required
                           value={recurringFormData.careCoordinator}
                           onChange={(e) => handleRecurringFormChange('careCoordinator', e.target.value)}
+                          onBlur={(e) => handleRecurringFormChange('careCoordinator', window.LDAHFormat ? window.LDAHFormat.formatNameSmart(e.target.value) : e.target.value)}
                           disabled={recurringSubmitting} placeholder="Care coordinator name"
                           style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
                         />
