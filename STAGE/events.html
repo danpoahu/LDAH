@@ -50,6 +50,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="./formatters.js"></script>
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -300,8 +301,9 @@
       const [regAlreadyCompleted, setRegAlreadyCompleted] = useState(false);
       const [regError, setRegError] = useState(null);
       const [regRegistrantName, setRegRegistrantName] = useState('');
-      const [regSignupInfo, setRegSignupInfo] = useState(null); // {name, email, phone}
+      const [regSignupInfo, setRegSignupInfo] = useState(null); // {name, email, phone, selectedDates}
       const [regLastRegistration, setRegLastRegistration] = useState(null);
+      const [regSiblingDraft, setRegSiblingDraft] = useState(null); // {name, email, phone, selectedDates, eventId, type, collectionName}
       const [regFormData, setRegFormData] = useState({
         streetAddress: '', city: '', zipCode: '',
         role: '', reasonForAttending: '',
@@ -312,9 +314,15 @@
         howHeard: '', howHeardOther: '', accommodations: ''
       });
       const [regDisabilityError, setRegDisabilityError] = useState(false);
+      // Sibling-signup prompt state
+      const [regSiblings, setRegSiblings] = useState([]); // [{collection, eventId, signupId, eventTitle, sessionDate}]
+      const [regSiblingChecked, setRegSiblingChecked] = useState({});
+      const [regSiblingApplying, setRegSiblingApplying] = useState(false);
+      const [regSiblingApplied, setRegSiblingApplied] = useState(0); // >0 means applied to N
+      const [regSiblingDismissed, setRegSiblingDismissed] = useState(false);
 
       // ── Registration modal helpers ──────────────────────────────────────
-      const openRegistration = async (token, eventId, type, prefill) => {
+      const openRegistration = async (token, eventId, type, prefill, siblingDraft) => {
         setRegToken(token);
         setRegEventId(eventId);
         setRegType(type);
@@ -324,6 +332,12 @@
         setRegError(null);
         setRegDisabilityError(false);
         setRegSubmitting(false);
+        setRegSiblings([]);
+        setRegSiblingChecked({});
+        setRegSiblingApplied(0);
+        setRegSiblingDismissed(false);
+        // Clear any stale sibling draft unless this call is opening in draft mode
+        if (token !== '__SIBLING_DRAFT__') setRegSiblingDraft(null);
         setShowRegistrationModal(true);
         setRegLoading(true);
 
@@ -348,6 +362,20 @@
           accommodations: pf.accommodations || ''
         });
 
+        // Sibling draft mode — no Firestore doc yet. Skip fetch and show form directly.
+        if (token === '__SIBLING_DRAFT__') {
+          const draft = siblingDraft || {};
+          setRegSignupInfo({
+            name: draft.name || '',
+            email: draft.email || '',
+            phone: draft.phone || '',
+            selectedDates: Array.isArray(draft.selectedDates) ? draft.selectedDates.slice() : []
+          });
+          setRegRegistrantName(draft.name || 'Attendee');
+          setRegLoading(false);
+          return;
+        }
+
         // Fetch signup doc
         try {
           const collectionName = type === 'recurring' ? 'recurringEvents' : 'events';
@@ -358,7 +386,7 @@
             return;
           }
           const data = doc.data();
-          setRegSignupInfo({ name: data.name || '', email: data.email || '', phone: data.phone || '' });
+          setRegSignupInfo({ name: data.name || '', email: data.email || '', phone: data.phone || '', selectedDates: Array.isArray(data.selectedDates) ? data.selectedDates.slice() : [] });
           setRegRegistrantName(data.name || 'Attendee');
 
           if (data.status === 'confirmed') {
@@ -406,14 +434,61 @@
             registration.ethnicity = '';
             registration.disabilityCategories = [];
           }
-          await db.collection(collectionName).doc(regEventId).collection('signups').doc(regToken).update({
-            registration: registration,
-            registrantType: registration.role || '',
-            status: 'confirmed',
-            registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
+
+          // Sibling draft path — create a fully-formed confirmed signup now (no pending write, no email).
+          let effectiveToken = regToken;
+          if (regSiblingDraft) {
+            const draft = regSiblingDraft;
+            const newDocRef = await db.collection(collectionName).doc(regEventId).collection('signups').add({
+              name: draft.name || '',
+              email: draft.email || '',
+              phone: draft.phone || '',
+              selectedDates: Array.isArray(draft.selectedDates) ? draft.selectedDates : [],
+              status: 'confirmed',
+              registration: registration,
+              registrantType: registration.role || '',
+              registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            // Update denormalized counts (best-effort — CF will also reconcile)
+            try {
+              await db.collection(collectionName).doc(regEventId).update({
+                signupCount: firebase.firestore.FieldValue.increment(1)
+              });
+            } catch (countErr) {
+              console.warn('Count update deferred to Cloud Function:', countErr.message);
+            }
+            effectiveToken = newDocRef.id;
+            setRegToken(effectiveToken);
+            setRegSiblingDraft(null);
+          } else {
+            await db.collection(collectionName).doc(regEventId).collection('signups').doc(regToken).update({
+              registration: registration,
+              registrantType: registration.role || '',
+              status: 'confirmed',
+              registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }
           setRegLastRegistration({ ...regFormData });
           setRegSuccess(true);
+          // Kick off sibling-signup lookup (non-blocking)
+          (async () => {
+            try {
+              const resp = await fetch('https://us-central1-ldah-932d5.cloudfunctions.net/findSiblingPendingSignups', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ collection: collectionName, eventId: regEventId, signupId: effectiveToken })
+              });
+              if (!resp.ok) return;
+              const data = await resp.json();
+              const siblings = (data && data.siblings) || [];
+              if (!siblings.length) return;
+              const initChecked = {};
+              siblings.forEach((_, i) => { initChecked[i] = true; });
+              setRegSiblings(siblings);
+              setRegSiblingChecked(initChecked);
+            } catch (e) { console.warn('Sibling signup check skipped:', e.message); }
+          })();
         } catch (err) {
           console.error('Error submitting registration:', err);
           setRegError('There was an error submitting your registration. Please try again later.');
@@ -422,34 +497,49 @@
         }
       };
 
-      const handleRegisterAnotherChild = async () => {
-        if (!regSignupInfo || !regEventId || !regType) return;
-        setRegLoading(true);
+      const handleApplySiblings = async () => {
+        const reg = regLastRegistration;
+        if (!reg || !regSiblings.length) return;
+        const indices = Object.keys(regSiblingChecked).filter(k => regSiblingChecked[k]).map(Number);
+        if (!indices.length) { setRegSiblingDismissed(true); return; }
+        setRegSiblingApplying(true);
         try {
-          const collectionName = regType === 'recurring' ? 'recurringEvents' : 'events';
-          const newDocRef = await db.collection(collectionName).doc(regEventId).collection('signups').add({
-            name: regSignupInfo.name || '',
-            email: regSignupInfo.email || '',
-            phone: regSignupInfo.phone || '',
-            status: 'pending',
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          // Update denormalized counts
-          try {
-            await db.collection(collectionName).doc(regEventId).update({
-              signupCount: firebase.firestore.FieldValue.increment(1),
-              pendingCount: firebase.firestore.FieldValue.increment(1)
+          const writes = indices.map(i => {
+            const s = regSiblings[i];
+            return db.collection(s.collection).doc(s.eventId).collection('signups').doc(s.signupId).update({
+              registration: reg,
+              registrantType: reg.role || '',
+              status: 'confirmed',
+              registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-          } catch (countErr) {
-            console.warn('Count update deferred:', countErr.message);
-          }
-          // Open registration with prefilled family data
-          openRegistration(newDocRef.id, regEventId, regType, regLastRegistration);
+          });
+          await Promise.all(writes);
+          setRegSiblingApplied(indices.length);
         } catch (err) {
-          console.error('Error creating sibling signup:', err);
-          setRegError('There was an error. Please try again.');
-          setRegLoading(false);
+          console.error('Error applying to siblings:', err);
+          setRegSiblingApplied(-1);
+        } finally {
+          setRegSiblingApplying(false);
         }
+      };
+
+      const handleRegisterAnotherChild = () => {
+        if (!regSignupInfo || !regEventId || !regType) return;
+        // Defer Firestore write until the sibling's registration form is submitted.
+        // Stash draft context — handleRegSubmit picks it up via regSiblingDraft state.
+        const collectionName = regType === 'recurring' ? 'recurringEvents' : 'events';
+        const draft = {
+          name: regSignupInfo.name || '',
+          email: regSignupInfo.email || '',
+          phone: regSignupInfo.phone || '',
+          selectedDates: Array.isArray(regSignupInfo.selectedDates) ? regSignupInfo.selectedDates.slice() : [],
+          eventId: regEventId,
+          type: regType,
+          collectionName: collectionName
+        };
+        setRegSiblingDraft(draft);
+        // Open the registration form in draft mode. The sentinel token matches W2's convention.
+        openRegistration('__SIBLING_DRAFT__', regEventId, regType, regLastRegistration, draft);
       };
 
       // Auto-open registration from URL params (email links)
@@ -532,7 +622,16 @@
       const regularCurrent = events.filter(isEventCurrent)
         .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
-      const currentEvents = [...recurringVirtualEvents, ...regularCurrent];
+      const _mergedCurrent = [...recurringVirtualEvents, ...regularCurrent];
+      const _acceptsSignups = (ev) => {
+        if (!ev) return false;
+        if (ev._isFlyerOnly || ev.isFlyerOnly) return false;
+        if (ev._isRecurring || ev.isRecurring) return true;
+        return !!(ev.signupDates && ev.signupDates.length > 0);
+      };
+      const _tier1 = _mergedCurrent.filter(_acceptsSignups);
+      const _tier2 = _mergedCurrent.filter(e => !_acceptsSignups(e));
+      const currentEvents = [..._tier1, ..._tier2];
 
       const pastEvents = events.filter(isEventPast).sort((a, b) =>
         new Date(b.moveToPastDate) - new Date(a.moveToPastDate)
@@ -1447,6 +1546,7 @@
                         required
                         value={formData.name}
                         onChange={(e) => handleFormChange('name', e.target.value)}
+                        onBlur={(e) => handleFormChange('name', window.LDAHFormat ? window.LDAHFormat.formatNameSmart(e.target.value) : e.target.value)}
                         disabled={submitting}
                         placeholder="Your answer"
                         style={{
@@ -1493,6 +1593,7 @@
                         required
                         value={formData.phone}
                         onChange={(e) => handlePhoneChange(e.target.value)}
+                        onBlur={(e) => handleFormChange('phone', window.LDAHFormat ? window.LDAHFormat.formatPhone(e.target.value) : e.target.value)}
                         disabled={submitting}
                         placeholder="(808) 555-1234"
                         style={{
@@ -1849,6 +1950,7 @@
                         type="text" required
                         value={recurringFormData.name}
                         onChange={(e) => handleRecurringFormChange('name', e.target.value)}
+                        onBlur={(e) => handleRecurringFormChange('name', window.LDAHFormat ? window.LDAHFormat.formatNameSmart(e.target.value) : e.target.value)}
                         disabled={recurringSubmitting}
                         placeholder="Your answer"
                         style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
@@ -1912,6 +2014,7 @@
                             : `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
                           handleRecurringFormChange('phone', fmt);
                         }}
+                        onBlur={(e) => handleRecurringFormChange('phone', window.LDAHFormat ? window.LDAHFormat.formatPhone(e.target.value) : e.target.value)}
                         disabled={recurringSubmitting}
                         placeholder="(808) 555-1234"
                         style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
@@ -1956,6 +2059,7 @@
                         <input type="text" required
                           value={recurringFormData.studentName}
                           onChange={(e) => handleRecurringFormChange('studentName', e.target.value)}
+                          onBlur={(e) => handleRecurringFormChange('studentName', window.LDAHFormat ? window.LDAHFormat.formatNameSmart(e.target.value) : e.target.value)}
                           disabled={recurringSubmitting} placeholder="First and last name"
                           style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
                         />
@@ -2047,6 +2151,7 @@
                         <input type="text" required
                           value={recurringFormData.careCoordinator}
                           onChange={(e) => handleRecurringFormChange('careCoordinator', e.target.value)}
+                          onBlur={(e) => handleRecurringFormChange('careCoordinator', window.LDAHFormat ? window.LDAHFormat.formatNameSmart(e.target.value) : e.target.value)}
                           disabled={recurringSubmitting} placeholder="Care coordinator name"
                           style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
                         />
@@ -2281,6 +2386,57 @@
                       Mahalo! Your registration is complete.
                     </h2>
                     <p style={{ color: '#666', fontSize: '14px' }}>You may now close this window.</p>
+
+                    {/* Sibling-signup prompt */}
+                    {regSiblings.length > 0 && !regSiblingDismissed && regSiblingApplied === 0 && (
+                      <div style={{ background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '10px', padding: '16px', textAlign: 'left', marginTop: '20px' }}>
+                        <p style={{ color: '#0369A1', fontWeight: 700, fontSize: '14px', margin: '0 0 6px 0' }}>
+                          You're also signed up for {regSiblings.length} other event{regSiblings.length > 1 ? 's' : ''}.
+                        </p>
+                        <p style={{ color: '#374151', fontSize: '13px', margin: '0 0 10px 0' }}>
+                          If this registration applies to the same child, select the events below and we'll use the same answers. If not, leave them unchecked and complete each one when we email you.
+                        </p>
+                        <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                          {regSiblings.map((s, idx) => (
+                            <label key={s.signupId} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '6px 4px', cursor: 'pointer' }}>
+                              <input type="checkbox"
+                                checked={!!regSiblingChecked[idx]}
+                                onChange={(e) => setRegSiblingChecked(prev => ({ ...prev, [idx]: e.target.checked }))}
+                                style={{ marginTop: '3px', cursor: 'pointer' }} />
+                              <span style={{ fontSize: '13px', color: '#0F172A' }}>
+                                {s.eventTitle || 'Event'}
+                                {s.sessionDate && <span style={{ color: '#64748B', fontSize: '12px' }}> ({s.sessionDate})</span>}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                          <button onClick={handleApplySiblings} disabled={regSiblingApplying}
+                            style={{ flex: 1, padding: '10px', background: 'linear-gradient(135deg,#0891B2,#0E7490)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: regSiblingApplying ? 'default' : 'pointer', opacity: regSiblingApplying ? 0.6 : 1 }}>
+                            {regSiblingApplying ? 'Applying...' : 'Apply to Selected'}
+                          </button>
+                          <button onClick={() => setRegSiblingDismissed(true)}
+                            style={{ padding: '10px 16px', background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
+                            No Thanks
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {regSiblingApplied > 0 && (
+                      <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '10px', padding: '14px', marginTop: '20px' }}>
+                        <p style={{ color: '#065F46', fontWeight: 700, fontSize: '13px', margin: 0 }}>
+                          Registration applied to {regSiblingApplied} other event{regSiblingApplied > 1 ? 's' : ''}. Mahalo!
+                        </p>
+                      </div>
+                    )}
+                    {regSiblingApplied === -1 && (
+                      <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '10px', padding: '14px', marginTop: '20px' }}>
+                        <p style={{ color: '#991B1B', fontWeight: 600, fontSize: '13px', margin: 0 }}>
+                          Couldn't apply to the other events. You can still complete them from the email link.
+                        </p>
+                      </div>
+                    )}
+
                     {regFormData.role === 'Parent/Guardian' && (
                     <React.Fragment>
                     <p style={{ color: '#555', fontSize: '14px', marginTop: '16px' }}>

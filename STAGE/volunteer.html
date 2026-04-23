@@ -28,6 +28,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="./formatters.js"></script>
   <link rel="stylesheet" href="styles.css">
   <style>
     /* Page-specific styles only */
@@ -522,6 +523,22 @@
         submitBtn.textContent = 'Submit Application';
       }
     });
+
+    (function () {
+      function wireFormatters() {
+        if (!window.LDAHFormat) return;
+        ['firstName', 'lastName'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) window.LDAHFormat.attachFormatter(el, 'name');
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', wireFormatters);
+      } else {
+        wireFormatters();
+      }
+      document.addEventListener('click', function () { setTimeout(wireFormatters, 50); }, true);
+    })();
   </script>
 
   </main>
