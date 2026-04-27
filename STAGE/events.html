@@ -167,6 +167,26 @@
       const display = `${label} \u00b7 ${occ.schedule.location}${venue} \u00b7 ${timeRange}`;
       return { key, display };
     };
+
+    // Render the recurring pattern of a single schedule entry — used on the
+    // events-list card so users see the actual cadence (e.g. "2nd Thursdays")
+    // rather than just the next computed occurrence.
+    const DOW_PLURAL = ['Sundays','Mondays','Tuesdays','Wednesdays','Thursdays','Fridays','Saturdays'];
+    const DOW_SINGULAR = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const ORDINAL = ['', '1st', '2nd', '3rd', '4th', '5th'];
+    const formatScheduleLine = (sch) => {
+      if (sch == null || typeof sch.dayOfWeek !== 'number') return null;
+      const time = `${fmt12(sch.startTime)} – ${fmt12(sch.endTime)}`;
+      const where = sch.venue ? `${sch.location} – ${sch.venue}` : (sch.location || '');
+      let when;
+      if (sch.frequency === 'weekly') {
+        when = DOW_PLURAL[sch.dayOfWeek] || '';
+      } else {
+        const ord = ORDINAL[sch.weekOfMonth] || '';
+        when = ord ? `${ord} ${DOW_SINGULAR[sch.dayOfWeek]}` : DOW_SINGULAR[sch.dayOfWeek];
+      }
+      return { when, time, where };
+    };
     // ────────────────────────────────────────────────────────────────────────
 
     // Firebase configuration
@@ -1078,13 +1098,37 @@
                               letterSpacing: '-.01em',
                               lineHeight: '1.25'
                             }}>{event.title}</h3>
-                            {event._isRecurring && event._nextLabel && !event._isFlyerOnly && (
-                              <p style={{
+                            {event._isRecurring && !event._isFlyerOnly && Array.isArray(event.schedules) && event.schedules.length > 0 && (
+                              <ul style={{
+                                listStyle: 'none',
+                                padding: 0,
                                 margin: '0 0 14px',
-                                fontSize: '13px',
-                                color: '#0D7A7A',
-                                fontWeight: '700'
-                              }}>Next: {event._nextLabel}</p>
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px'
+                              }}>
+                                {event.schedules.map((sch, _si) => {
+                                  const line = formatScheduleLine(sch);
+                                  if (!line) return null;
+                                  return (
+                                    <li key={_si} style={{
+                                      fontSize: '13px',
+                                      color: '#0F172A',
+                                      lineHeight: '1.35',
+                                      display: 'flex',
+                                      flexWrap: 'wrap',
+                                      alignItems: 'baseline',
+                                      gap: '6px'
+                                    }}>
+                                      <span style={{ color: '#0D7A7A', fontWeight: '800', minWidth: '110px' }}>{line.when}</span>
+                                      <span style={{ color: '#475569', fontWeight: '600' }}>{line.time}</span>
+                                      {line.where && (
+                                        <span style={{ color: '#64748B', fontWeight: '500', flex: '1 1 100%', paddingLeft: '0' }}>{line.where}</span>
+                                      )}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
                             )}
                             {!event._isRecurring && event.startDate && (
                               <p style={{
