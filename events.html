@@ -323,7 +323,8 @@
         studentName: '', dob: '', studentId: '', grade: '',
         currentSchool: '', iepReviewDate: '', reevDate: '', careCoordinator: '',
         participationType: 'Individual', groupName: '', groupSize: '',
-        selectedSessions: [], additionalComments: ''
+        selectedSessions: [], additionalComments: '',
+        multipleSessionsReason: ''
       });
       const [recurringSubmitting, setRecurringSubmitting] = useState(false);
       const [recurringSubmitSuccess, setRecurringSubmitSuccess] = useState(false);
@@ -762,7 +763,8 @@
           studentName: '', dob: '', studentId: '', grade: '',
           currentSchool: '', iepReviewDate: '', reevDate: '', careCoordinator: '',
           participationType: 'Individual', groupName: '', groupSize: '',
-          selectedSessions: [], additionalComments: ''
+          selectedSessions: [], additionalComments: '',
+          multipleSessionsReason: ''
         });
         setRecurringSubmitSuccess(false);
 
@@ -805,6 +807,18 @@
         const phoneDigits = recurringFormData.phone.replace(/\D/g, '');
         if (phoneDigits.length !== 10) {
           alert('Please enter a valid 10-digit phone number.');
+          return;
+        }
+
+        // Multi-session guard — same content each week, so anything beyond one
+        // session needs a written reason (e.g. signing up multiple kids).
+        if (recurringFormData.selectedSessions.length === 0) {
+          alert('Please pick the session you will attend.');
+          return;
+        }
+        if (recurringFormData.selectedSessions.length > 1 &&
+            recurringFormData.multipleSessionsReason.trim().length < 10) {
+          alert('Each session covers the same content. Please tell us briefly why you need more than one (for example, signing up multiple children).');
           return;
         }
 
@@ -2216,10 +2230,38 @@
                           </label>
                         );
                       })}
-                      {recurringFormData.selectedSessions.length === 0 && (
-                        <p style={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
-                          Please select at least one session
-                        </p>
+                      {recurringFormData.selectedSessions.length > 1 && (
+                        <div style={{
+                          marginTop: '14px',
+                          padding: '14px 16px',
+                          background: '#FEF3C7',
+                          border: '1px solid #FBBF24',
+                          borderRadius: '12px'
+                        }}>
+                          <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#78350F', fontWeight: '700', lineHeight: '1.4' }}>
+                            Heads up — these sessions all cover the same content.
+                          </p>
+                          <p style={{ margin: '0 0 10px', fontSize: '12.5px', color: '#92400E', lineHeight: '1.45' }}>
+                            You've picked <strong>{recurringFormData.selectedSessions.length}</strong> sessions. If you're signing up for more than one (for example, multiple children), please tell us why so we can plan accordingly.
+                          </p>
+                          <textarea
+                            required
+                            value={recurringFormData.multipleSessionsReason}
+                            onChange={(e) => setRecurringFormData(prev => ({ ...prev, multipleSessionsReason: e.target.value }))}
+                            placeholder="e.g., Signing up two children for different days"
+                            rows={3}
+                            style={{
+                              width: '100%',
+                              padding: '8px 10px',
+                              border: '1px solid #D1D5DB',
+                              borderRadius: '8px',
+                              fontSize: '13px',
+                              fontFamily: 'inherit',
+                              resize: 'vertical',
+                              boxSizing: 'border-box'
+                            }}
+                          />
+                        </div>
                       )}
                     </div>
 
