@@ -167,6 +167,26 @@
       const display = `${label} \u00b7 ${occ.schedule.location}${venue} \u00b7 ${timeRange}`;
       return { key, display };
     };
+
+    // Render the recurring pattern of a single schedule entry — used on the
+    // events-list card so users see the actual cadence (e.g. "2nd Thursdays")
+    // rather than just the next computed occurrence.
+    const DOW_PLURAL = ['Sundays','Mondays','Tuesdays','Wednesdays','Thursdays','Fridays','Saturdays'];
+    const DOW_SINGULAR = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const ORDINAL = ['', '1st', '2nd', '3rd', '4th', '5th'];
+    const formatScheduleLine = (sch) => {
+      if (sch == null || typeof sch.dayOfWeek !== 'number') return null;
+      const time = `${fmt12(sch.startTime)} – ${fmt12(sch.endTime)}`;
+      const where = sch.venue ? `${sch.location} – ${sch.venue}` : (sch.location || '');
+      let when;
+      if (sch.frequency === 'weekly') {
+        when = DOW_PLURAL[sch.dayOfWeek] || '';
+      } else {
+        const ord = ORDINAL[sch.weekOfMonth] || '';
+        when = ord ? `${ord} ${DOW_SINGULAR[sch.dayOfWeek]}` : DOW_SINGULAR[sch.dayOfWeek];
+      }
+      return { when, time, where };
+    };
     // ────────────────────────────────────────────────────────────────────────
 
     // Firebase configuration
@@ -243,6 +263,28 @@
       if (!iso) return false;
       return new Date(iso + 'T23:59:59') < new Date();
     }
+
+    // Split a free-form signupDate string into a tidy { when, time, expired } row
+    // for display on the events list card. Falls back to the raw string if parse fails.
+    const formatSignupDateRow = (dateStr) => {
+      if (!dateStr) return null;
+      const iso = parseSignupDateString(dateStr);
+      let when = dateStr;
+      let time = '';
+      if (iso) {
+        const d = new Date(iso + 'T00:00:00');
+        when = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+      }
+      const timeMatch = dateStr.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm)\s*[-–]\s*\d{1,2}(?::\d{2})?\s*(?:am|pm))/i);
+      if (timeMatch) {
+        time = timeMatch[1]
+          .replace(/\s*-\s*/g, ' – ')
+          .replace(/\s+/g, ' ')
+          .replace(/(\d)\s*(am|pm)/gi, (_, d, ap) => `${d} ${ap.toUpperCase()}`);
+      }
+      const expired = iso ? new Date(iso + 'T23:59:59') < new Date() : false;
+      return { when, time, expired };
+    };
 
     const EventsApp = () => {
       const [events, setEvents] = useState([]);
@@ -999,244 +1041,227 @@
                   </div>
                 )}
 
-                {activeEvents.length > 0 && currentIndex < activeEvents.length && activeEvents[currentIndex] ? (
-                  <div style={{ position: 'relative', marginBottom: '32px' }}>
-                    {/* Carousel Container */}
-                    <div style={{
-                      backgroundColor: 'transparent',
-                      borderRadius: '24px',
-                      padding: '40px 20px 32px',
-                      border: 'none',
-                      position: 'relative'
-                    }}>
-                      {/* Left Arrow */}
-                      {activeEvents.length > 1 && (
-                        <button
-                          onClick={goToPrev}
+                {activeEvents.length > 0 ? (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '18px',
+                    padding: '12px 4px 32px'
+                  }}>
+                    {activeEvents.map((event, _idx) => {
+                      const _accepts = !event._isFlyerOnly && (
+                        event._isRecurring ||
+                        (event.signupDates && event.signupDates.length > 0)
+                      );
+                      return (
+                        <article
+                          key={event.id || _idx}
+                          onClick={() => setSelectedEvent(event)}
                           style={{
-                            position: 'absolute',
-                            left: '10px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            backgroundColor: '#004E7C',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '60px',
-                            height: '60px',
-                            fontSize: '32px',
+                            backgroundColor: 'white',
+                            borderRadius: '20px',
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 14px rgba(15,23,42,.08)',
                             cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 10,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                            transition: 'all 0.2s'
+                            transition: 'transform .15s, box-shadow .15s',
+                            opacity: isPastEvents ? 0.88 : 1
                           }}
                           onMouseOver={(e) => {
-                            e.currentTarget.style.backgroundColor = '#003A5D';
-                            e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 10px 26px rgba(15,23,42,.12)';
                           }}
                           onMouseOut={(e) => {
-                            e.currentTarget.style.backgroundColor = '#004E7C';
-                            e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 4px 14px rgba(15,23,42,.08)';
                           }}
                         >
-                          ‹
-                        </button>
-                      )}
-
-                      {/* Event Content */}
-                      <div style={{ 
-                        textAlign: 'center',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                      }}>
-                        {activeEvents[currentIndex].imageUrl && (
-                          <div
-                            onClick={() => setSelectedEvent(activeEvents[currentIndex])}
-                            style={{
-                              cursor: 'pointer',
-                              marginBottom: '8px',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center'
-                            }}
-                          >
-                            <img
-                              src={activeEvents[currentIndex].imageUrl}
-                              alt={activeEvents[currentIndex].title}
-                              style={{
-                                width: '50%',
-                                height: 'auto',
-                                borderRadius: '16px',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                transition: 'transform 0.2s',
-                                filter: isPastEvents ? 'grayscale(30%)' : 'none',
-                                display: 'block',
-                                marginBottom: '10px'
-                              }}
-                              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-                              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                            />
-                            {/* Ongoing badge + next date for recurring events */}
-                            {activeEvents[currentIndex]._isRecurring && (
-                              <div style={{ textAlign: 'center' }}>
+                          {event.imageUrl && (
+                            <div style={{ position: 'relative', backgroundColor: '#F8FAFC' }}>
+                              <img
+                                src={event.imageUrl}
+                                alt={event.title}
+                                style={{
+                                  width: '100%',
+                                  height: 'auto',
+                                  maxHeight: '340px',
+                                  objectFit: 'contain',
+                                  display: 'block',
+                                  filter: isPastEvents ? 'grayscale(40%)' : 'none'
+                                }}
+                              />
+                              {event._isRecurring && !event._isFlyerOnly && (
                                 <span style={{
+                                  position: 'absolute', top: '12px', left: '12px',
                                   backgroundColor: '#0D7A7A', color: 'white',
-                                  padding: '4px 12px', borderRadius: '12px',
-                                  fontSize: '12px', fontWeight: 'bold',
-                                  display: 'inline-block', marginBottom: '4px'
+                                  padding: '4px 11px', borderRadius: '10px',
+                                  fontSize: '11px', fontWeight: '800',
+                                  letterSpacing: '.04em', textTransform: 'uppercase',
+                                  boxShadow: '0 2px 6px rgba(0,0,0,.18)'
                                 }}>Ongoing</span>
-                                <p style={{
-                                  color: '#0D7A7A', fontWeight: 'bold',
-                                  fontSize: '13px', margin: '0'
-                                }}>
-                                  Next: {activeEvents[currentIndex]._nextLabel}
-                                </p>
-                              </div>
+                              )}
+                              {event._isFlyerOnly && (
+                                <span style={{
+                                  position: 'absolute', top: '12px', left: '12px',
+                                  backgroundColor: '#FBBF24', color: '#004E7C',
+                                  padding: '4px 11px', borderRadius: '10px',
+                                  fontSize: '11px', fontWeight: '800',
+                                  letterSpacing: '.04em', textTransform: 'uppercase',
+                                  boxShadow: '0 2px 6px rgba(0,0,0,.18)'
+                                }}>Info</span>
+                              )}
+                            </div>
+                          )}
+                          <div style={{ padding: '14px 18px 18px' }}>
+                            <h3 style={{
+                              margin: '0 0 6px',
+                              fontSize: '17px',
+                              fontWeight: '800',
+                              color: '#004E7C',
+                              letterSpacing: '-.01em',
+                              lineHeight: '1.25'
+                            }}>{event.title}</h3>
+                            {event._isRecurring && !event._isFlyerOnly && Array.isArray(event.schedules) && event.schedules.length > 0 && (
+                              <ul style={{
+                                listStyle: 'none',
+                                padding: 0,
+                                margin: '0 0 14px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px'
+                              }}>
+                                {event.schedules.map((sch, _si) => {
+                                  const line = formatScheduleLine(sch);
+                                  if (!line) return null;
+                                  return (
+                                    <li key={_si} style={{
+                                      fontSize: '13px',
+                                      color: '#0F172A',
+                                      lineHeight: '1.35',
+                                      display: 'flex',
+                                      flexWrap: 'wrap',
+                                      alignItems: 'baseline',
+                                      gap: '6px'
+                                    }}>
+                                      <span style={{ color: '#0D7A7A', fontWeight: '800', minWidth: '110px' }}>{line.when}</span>
+                                      <span style={{ color: '#475569', fontWeight: '600' }}>{line.time}</span>
+                                      {line.where && (
+                                        <span style={{ color: '#64748B', fontWeight: '500', flex: '1 1 100%', paddingLeft: '0' }}>{line.where}</span>
+                                      )}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
                             )}
-
-                            {/* Action buttons below image */}
+                            {!event._isRecurring && Array.isArray(event.signupDates) && event.signupDates.length > 0 && (
+                              <ul style={{
+                                listStyle: 'none',
+                                padding: 0,
+                                margin: '0 0 14px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px'
+                              }}>
+                                {event.signupDates.map((ds, _di) => {
+                                  const row = formatSignupDateRow(ds);
+                                  if (!row) return null;
+                                  return (
+                                    <li key={_di} style={{
+                                      fontSize: '13px',
+                                      lineHeight: '1.35',
+                                      display: 'flex',
+                                      flexWrap: 'wrap',
+                                      alignItems: 'baseline',
+                                      gap: '8px',
+                                      textDecoration: row.expired ? 'line-through' : 'none',
+                                      opacity: row.expired ? 0.55 : 1
+                                    }}>
+                                      <span style={{ color: '#0D7A7A', fontWeight: '800', minWidth: '110px' }}>{row.when}</span>
+                                      {row.time && (
+                                        <span style={{ color: '#475569', fontWeight: '600' }}>{row.time}</span>
+                                      )}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            )}
+                            {!event._isRecurring && (!event.signupDates || event.signupDates.length === 0) && event.eventDate && (
+                              <p style={{
+                                margin: '0 0 14px',
+                                fontSize: '13px',
+                                color: '#475569',
+                                fontWeight: '600'
+                              }}>{formatDate(event.eventDate)}</p>
+                            )}
                             {!isPastEvents && (
-                              <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                 <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedEvent(activeEvents[currentIndex]);
-                                  }}
+                                  onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}
                                   style={{
-                                    backgroundColor: '#004E7C', color: 'white', border: 'none',
-                                    borderRadius: '24px', padding: '10px 24px', fontSize: '14px',
-                                    fontWeight: '600', cursor: 'pointer',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)', transition: 'all 0.2s',
-                                    display: 'flex', alignItems: 'center', gap: '6px'
+                                    flex: '1 1 130px',
+                                    backgroundColor: 'white',
+                                    color: '#004E7C',
+                                    border: '2px solid #004E7C',
+                                    borderRadius: '22px',
+                                    padding: '10px 18px',
+                                    fontSize: '14px',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    transition: 'all .15s'
                                   }}
-                                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#003A5D'; e.currentTarget.style.transform = 'scale(1.05)'; }}
-                                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#004E7C'; e.currentTarget.style.transform = 'scale(1)'; }}
+                                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#004E7C'; e.currentTarget.style.color = 'white'; }}
+                                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = '#004E7C'; }}
                                 >
-                                  🔍 View Full Flyer
+                                  View Flyer
                                 </button>
-                                {activeEvents[currentIndex]._isRecurring && !activeEvents[currentIndex]._isFlyerOnly ? (
+                                {_accepts && event._isRecurring ? (
                                   <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleRecurringSignupClick(activeEvents[currentIndex]);
-                                    }}
+                                    onClick={(e) => { e.stopPropagation(); handleRecurringSignupClick(event); }}
                                     style={{
-                                      backgroundColor: '#0D7A7A', color: 'white', border: 'none',
-                                      borderRadius: '24px', padding: '10px 24px', fontSize: '14px',
-                                      fontWeight: '600', cursor: 'pointer',
-                                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)', transition: 'all 0.2s',
-                                      display: 'flex', alignItems: 'center', gap: '6px'
+                                      flex: '1 1 130px',
+                                      backgroundColor: '#0D7A7A',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '22px',
+                                      padding: '10px 18px',
+                                      fontSize: '14px',
+                                      fontWeight: '700',
+                                      cursor: 'pointer',
+                                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                      transition: 'all .15s'
                                     }}
-                                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#0a5f5f'; e.currentTarget.style.transform = 'scale(1.05)'; }}
-                                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#0D7A7A'; e.currentTarget.style.transform = 'scale(1)'; }}
+                                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#0a5f5f'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#0D7A7A'; }}
                                   >
-                                    📝 Sign Up
+                                    Sign Up
                                   </button>
-                                ) : activeEvents[currentIndex].signupDates && activeEvents[currentIndex].signupDates.length > 0 ? (
+                                ) : _accepts ? (
                                   <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSignupClick(activeEvents[currentIndex]);
-                                    }}
+                                    onClick={(e) => { e.stopPropagation(); handleSignupClick(event); }}
                                     style={{
-                                      backgroundColor: '#0D7A7A', color: 'white', border: 'none',
-                                      borderRadius: '24px', padding: '10px 24px', fontSize: '14px',
-                                      fontWeight: '600', cursor: 'pointer',
-                                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)', transition: 'all 0.2s',
-                                      display: 'flex', alignItems: 'center', gap: '6px'
+                                      flex: '1 1 130px',
+                                      backgroundColor: '#0D7A7A',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '22px',
+                                      padding: '10px 18px',
+                                      fontSize: '14px',
+                                      fontWeight: '700',
+                                      cursor: 'pointer',
+                                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                      transition: 'all .15s'
                                     }}
-                                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#0a5f5f'; e.currentTarget.style.transform = 'scale(1.05)'; }}
-                                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#0D7A7A'; e.currentTarget.style.transform = 'scale(1)'; }}
+                                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#0a5f5f'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#0D7A7A'; }}
                                   >
-                                    📝 Sign Up
+                                    Sign Up
                                   </button>
                                 ) : null}
                               </div>
                             )}
                           </div>
-                        )}
-                      </div>
-
-                      {/* Right Arrow */}
-                      {activeEvents.length > 1 && (
-                        <button
-                          onClick={goToNext}
-                          style={{
-                            position: 'absolute',
-                            right: '10px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            backgroundColor: '#004E7C',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '60px',
-                            height: '60px',
-                            fontSize: '32px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 10,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.backgroundColor = '#003A5D';
-                            e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.backgroundColor = '#004E7C';
-                            e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-                          }}
-                        >
-                          ›
-                        </button>
-                      )}
-
-                      {/* Dots Navigation */}
-                      {activeEvents.length > 1 && (
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          marginTop: '24px'
-                        }}>
-                          {activeEvents.map((_, index) => (
-                            <button
-                              key={index}
-                              onClick={() => goToSlide(index)}
-                              style={{
-                                width: '12px',
-                                height: '12px',
-                                borderRadius: '50%',
-                                border: 'none',
-                                backgroundColor: index === currentIndex
-                                  ? (activeEvents[index]?._isRecurring ? '#0D7A7A' : '#004E7C')
-                                  : '#D1D5DB',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                padding: 0
-                              }}
-                              onMouseOver={(e) => {
-                                if (index !== currentIndex) {
-                                  e.currentTarget.style.backgroundColor = '#9CA3AF';
-                                }
-                              }}
-                              onMouseOut={(e) => {
-                                if (index !== currentIndex) {
-                                  e.currentTarget.style.backgroundColor = '#D1D5DB';
-                                }
-                              }}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                        </article>
+                      );
+                    })}
                   </div>
                 ) : null}
               </>
@@ -2161,7 +2186,7 @@
                     {/* ── Session Selection ── */}
                     <div style={{ marginBottom: '20px' }}>
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                        Select Session(s) to Attend *
+                        Select ONE session you will be attending *
                       </label>
                       {recurringSignupEvent._occurrences && recurringSignupEvent._occurrences.map((occ, i) => {
                         const { key, display } = formatOccurrence(occ);
