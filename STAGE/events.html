@@ -2452,7 +2452,24 @@
                     <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
                       Mahalo! Your registration is complete.
                     </h2>
-                    <p style={{ color: '#666', fontSize: '14px' }}>You may now close this window.</p>
+                    <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>You may now close this window.</p>
+
+                    <div style={{
+                      background: 'rgba(8,145,178,0.08)',
+                      borderLeft: '4px solid #0891B2',
+                      borderRadius: '0 8px 8px 0',
+                      padding: '14px 18px',
+                      margin: '0 auto 16px',
+                      maxWidth: '440px',
+                      textAlign: 'left'
+                    }}>
+                      <p style={{ margin: '0 0 6px', color: '#004E7C', fontWeight: 700, fontSize: '14px' }}>
+                        Watch your email for reminders
+                      </p>
+                      <p style={{ margin: 0, color: '#1E293B', fontSize: '13.5px', lineHeight: 1.5 }}>
+                        We will send you a reminder <strong>5 days before</strong> your session and again <strong>the day before</strong>, with the Zoom link or location and anything you may need to bring.
+                      </p>
+                    </div>
 
                     {/* Sibling-signup prompt */}
                     {regSiblings.length > 0 && !regSiblingDismissed && regSiblingApplied === 0 && (
