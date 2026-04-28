@@ -264,6 +264,28 @@
       return new Date(iso + 'T23:59:59') < new Date();
     }
 
+    // Split a free-form signupDate string into a tidy { when, time, expired } row
+    // for display on the events list card. Falls back to the raw string if parse fails.
+    const formatSignupDateRow = (dateStr) => {
+      if (!dateStr) return null;
+      const iso = parseSignupDateString(dateStr);
+      let when = dateStr;
+      let time = '';
+      if (iso) {
+        const d = new Date(iso + 'T00:00:00');
+        when = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+      }
+      const timeMatch = dateStr.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm)\s*[-–]\s*\d{1,2}(?::\d{2})?\s*(?:am|pm))/i);
+      if (timeMatch) {
+        time = timeMatch[1]
+          .replace(/\s*-\s*/g, ' – ')
+          .replace(/\s+/g, ' ')
+          .replace(/(\d)\s*(am|pm)/gi, (_, d, ap) => `${d} ${ap.toUpperCase()}`);
+      }
+      const expired = iso ? new Date(iso + 'T23:59:59') < new Date() : false;
+      return { when, time, expired };
+    };
+
     const EventsApp = () => {
       const [events, setEvents] = useState([]);
       const [loading, setLoading] = useState(true);
@@ -1130,13 +1152,45 @@
                                 })}
                               </ul>
                             )}
-                            {!event._isRecurring && event.startDate && (
+                            {!event._isRecurring && Array.isArray(event.signupDates) && event.signupDates.length > 0 && (
+                              <ul style={{
+                                listStyle: 'none',
+                                padding: 0,
+                                margin: '0 0 14px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px'
+                              }}>
+                                {event.signupDates.map((ds, _di) => {
+                                  const row = formatSignupDateRow(ds);
+                                  if (!row) return null;
+                                  return (
+                                    <li key={_di} style={{
+                                      fontSize: '13px',
+                                      lineHeight: '1.35',
+                                      display: 'flex',
+                                      flexWrap: 'wrap',
+                                      alignItems: 'baseline',
+                                      gap: '8px',
+                                      textDecoration: row.expired ? 'line-through' : 'none',
+                                      opacity: row.expired ? 0.55 : 1
+                                    }}>
+                                      <span style={{ color: '#0D7A7A', fontWeight: '800', minWidth: '110px' }}>{row.when}</span>
+                                      {row.time && (
+                                        <span style={{ color: '#475569', fontWeight: '600' }}>{row.time}</span>
+                                      )}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            )}
+                            {!event._isRecurring && (!event.signupDates || event.signupDates.length === 0) && event.eventDate && (
                               <p style={{
                                 margin: '0 0 14px',
                                 fontSize: '13px',
                                 color: '#475569',
                                 fontWeight: '600'
-                              }}>{formatDate(event.startDate)}</p>
+                              }}>{formatDate(event.eventDate)}</p>
                             )}
                             {!isPastEvents && (
                               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
