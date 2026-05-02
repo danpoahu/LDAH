@@ -2624,26 +2624,41 @@
                       <div style={{ marginBottom: '14px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Military Status</label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {/* Canonical militaryStatus values (v120.1.0): 'Not military' | 'Active Duty' | 'Veteran' | 'Reserves'
+                              Tolerates legacy lowercase 'none'/'active' from prefill data. */}
                           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
-                            <input type="radio" name="regMilitary" value="none" checked={regFormData.militaryStatus === 'none'}
+                            <input type="radio" name="regMilitary" value="Not military" checked={regFormData.militaryStatus === 'Not military' || regFormData.militaryStatus === 'none'}
                               onChange={(e) => handleRegFormChange('militaryStatus', e.target.value)} disabled={regSubmitting}
                               style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
                             <span style={{ fontSize: '14px', color: '#374151' }}>Not military affiliated</span>
                           </label>
                           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
-                            <input type="radio" name="regMilitary" value="active" checked={regFormData.militaryStatus === 'active'}
+                            <input type="radio" name="regMilitary" value="Active Duty" checked={regFormData.militaryStatus === 'Active Duty' || regFormData.militaryStatus === 'active'}
                               onChange={(e) => handleRegFormChange('militaryStatus', e.target.value)} disabled={regSubmitting}
                               style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
                             <span style={{ fontSize: '14px', color: '#374151' }}>Active Duty/Military Family</span>
                           </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
+                            <input type="radio" name="regMilitary" value="Veteran" checked={regFormData.militaryStatus === 'Veteran'}
+                              onChange={(e) => handleRegFormChange('militaryStatus', e.target.value)} disabled={regSubmitting}
+                              style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
+                            <span style={{ fontSize: '14px', color: '#374151' }}>Veteran</span>
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
+                            <input type="radio" name="regMilitary" value="Reserves" checked={regFormData.militaryStatus === 'Reserves'}
+                              onChange={(e) => handleRegFormChange('militaryStatus', e.target.value)} disabled={regSubmitting}
+                              style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
+                            <span style={{ fontSize: '14px', color: '#374151' }}>Reserves</span>
+                          </label>
                         </div>
-                        {regFormData.militaryStatus === 'active' && (
+                        {(regFormData.militaryStatus === 'Active Duty' || regFormData.militaryStatus === 'active' || regFormData.militaryStatus === 'Veteran' || regFormData.militaryStatus === 'Reserves') && (
                           <div style={{ marginTop: '10px', paddingLeft: '26px' }}>
                             <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Branch</label>
-                            <select value={regFormData.militaryBranch} onChange={(e) => handleRegFormChange('militaryBranch', e.target.value)} disabled={regSubmitting}
+                            <select value={regFormData.militaryBranch === 'Marines' ? 'Marine Corps' : regFormData.militaryBranch} onChange={(e) => handleRegFormChange('militaryBranch', e.target.value)} disabled={regSubmitting}
                               style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', background: 'white', opacity: regSubmitting ? 0.6 : 1 }}>
                               <option value="">-- Select --</option>
-                              {['Army', 'Navy', 'Marines', 'Air Force', 'Coast Guard', 'Reserves'].map(b => (
+                              {/* Canonical branch list: Marine Corps not Marines; Reserves removed (status, not branch) */}
+                              {['Army', 'Marine Corps', 'Navy', 'Air Force', 'Space Force', 'Coast Guard'].map(b => (
                                 <option key={b} value={b}>{b}</option>
                               ))}
                             </select>
@@ -2660,25 +2675,30 @@
 
                       <div style={{ marginBottom: '14px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Child's Age Range <span style={{ color: '#DC2626' }}>*</span></label>
+                        {/* Canonical childAgeRange values (v120.1.0): '0-2'|'3-5'|'6-12'|'13-17'|'High School'|'Adult'
+                            Visible labels stay friendly; only stored values are canonical. */}
                         <select required value={regFormData.childAgeRange} onChange={(e) => handleRegFormChange('childAgeRange', e.target.value)} disabled={regSubmitting}
                           style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', background: 'white', opacity: regSubmitting ? 0.6 : 1 }}>
                           <option value="">-- Select --</option>
-                          <option value="Birth-2 yrs">Birth-2 yrs</option>
-                          <option value="3-5 yrs">3-5 yrs</option>
-                          <option value="6-11 yrs">6-11 yrs</option>
-                          <option value="12-14 yrs">12-14 yrs</option>
-                          <option value="15-18 yrs">15-18 yrs</option>
-                          <option value="Beyond H.S.">Beyond H.S.</option>
+                          <option value="0-2">Birth-2 yrs</option>
+                          <option value="3-5">3-5 yrs</option>
+                          <option value="6-12">6-12 yrs</option>
+                          <option value="13-17">13-17 yrs</option>
+                          <option value="High School">High School</option>
+                          <option value="Adult">Adult (Beyond H.S.)</option>
                         </select>
                       </div>
 
                       <div style={{ marginBottom: '14px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Child's Gender</label>
+                        {/* Canonical childGender values (v120.1.0): Female | Male | Non-binary | Prefer not to say */}
                         <select value={regFormData.childGender} onChange={(e) => handleRegFormChange('childGender', e.target.value)} disabled={regSubmitting}
                           style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', background: 'white', opacity: regSubmitting ? 0.6 : 1 }}>
                           <option value="">-- Select --</option>
-                          <option value="Male">Male</option>
                           <option value="Female">Female</option>
+                          <option value="Male">Male</option>
+                          <option value="Non-binary">Non-binary</option>
+                          <option value="Prefer not to say">Prefer not to say</option>
                         </select>
                       </div>
 
