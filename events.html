@@ -351,7 +351,7 @@
         streetAddress: '', city: '', zipCode: '',
         role: '', reasonForAttending: '',
         militaryStatus: '', militaryBranch: '',
-        childAgeRange: '', childGender: '', ethnicity: '',
+        childName: '', childAgeRange: '', childGender: '', ethnicity: '',
         disabilityCategories: [],
         priorTraining: '', priorTrainingDate: '',
         howHeard: '', howHeardOther: '', accommodations: ''
@@ -394,6 +394,7 @@
           reasonForAttending: pf.reasonForAttending || '',
           militaryStatus: pf.militaryStatus || '',
           militaryBranch: pf.militaryBranch || '',
+          childName: '',
           childAgeRange: '',
           childGender: '',
           ethnicity: '',
@@ -472,6 +473,7 @@
           if (registration.role !== 'Parent/Guardian') {
             registration.militaryStatus = '';
             registration.militaryBranch = '';
+            registration.childName = '';
             registration.childAgeRange = '';
             registration.childGender = '';
             registration.ethnicity = '';
@@ -2672,6 +2674,12 @@
                     {regFormData.role === 'Parent/Guardian' && (
                     <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
                       <h3 style={{ color: '#004E7C', fontSize: '16px', fontWeight: 'bold', marginBottom: '14px', marginTop: 0 }}>Child Information</h3>
+
+                      <div style={{ marginBottom: '14px' }}>
+                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Child's full name <span style={{ color: '#DC2626' }}>*</span></label>
+                        <input type="text" required value={regFormData.childName} onChange={(e) => handleRegFormChange('childName', e.target.value)} disabled={regSubmitting}
+                          style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: regSubmitting ? 0.6 : 1 }} />
+                      </div>
 
                       <div style={{ marginBottom: '14px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Child's Age Range <span style={{ color: '#DC2626' }}>*</span></label>
