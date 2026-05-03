@@ -313,6 +313,81 @@
       const [lastSignupEventId, setLastSignupEventId] = useState(null);
       const [lastSignupType, setLastSignupType] = useState(null); // 'event' or 'recurring'
 
+      // Pre-fill OTP-by-email state (B'' flow — see W2 events.html for the
+      // canonical implementation. Same Cloud Function endpoints, same UX.)
+      const [prefillModalOpen, setPrefillModalOpen] = useState(false);
+      const [prefillCode, setPrefillCode] = useState('');
+      const [prefillError, setPrefillError] = useState('');
+      const [prefillBusy, setPrefillBusy] = useState(false);
+      const [prefillApplied, setPrefillApplied] = useState(false);
+      const [prefillStash, setPrefillStash] = useState(null); // demographics for stage 2
+
+      const requestPrefillCode = async () => {
+        const email = (formData.email || '').trim();
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          alert('Please enter your email address above first, then tap "Pre-fill from email".');
+          return;
+        }
+        setPrefillBusy(true);
+        try {
+          await fetch('https://us-central1-ldah-932d5.cloudfunctions.net/requestPrefillCode', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          });
+        } catch (_) { /* swallow — modal still opens */ }
+        setPrefillBusy(false);
+        setPrefillCode('');
+        setPrefillError('');
+        setPrefillModalOpen(true);
+      };
+
+      const verifyPrefillCode = async () => {
+        const code = (prefillCode || '').trim();
+        if (!/^\d{6}$/.test(code)) { setPrefillError('Please enter the 6-digit code.'); return; }
+        setPrefillBusy(true); setPrefillError('');
+        try {
+          const resp = await fetch('https://us-central1-ldah-932d5.cloudfunctions.net/verifyPrefillCodeAndPrefill', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: (formData.email || '').trim(), code }),
+          });
+          const result = await resp.json();
+          if (!resp.ok || !result.ok) {
+            setPrefillError(result.error || 'Verification failed. Please try again.');
+            setPrefillBusy(false);
+            return;
+          }
+          const pf = result.prefill || {};
+          setFormData(prev => ({
+            ...prev,
+            name: pf.displayName || ((pf.firstName || '') + ' ' + (pf.lastName || '')).trim() || prev.name,
+            phone: pf.phone || prev.phone,
+          }));
+          // Stash demographics for stage 2 (registration form)
+          setPrefillStash({
+            streetAddress: pf.streetAddress || '',
+            city: pf.city || '',
+            zipCode: pf.zipCode || '',
+            militaryStatus: pf.militaryStatus || '',
+            militaryBranch: pf.militaryBranch || '',
+            ethnicity: pf.ethnicity || '',
+            priorTraining: pf.priorTraining || '',
+            priorTrainingDate: pf.priorTrainingDate || '',
+            howHeard: pf.howHeard || '',
+            accommodations: pf.accommodations || '',
+            childName: (pf.children && pf.children[0] && pf.children[0].name) || '',
+            childAgeRange: (pf.children && pf.children[0] && pf.children[0].ageRange) || '',
+            childGender: (pf.children && pf.children[0] && pf.children[0].gender) || '',
+            disabilityCategories: (pf.children && pf.children[0] && pf.children[0].disabilityCategories) || [],
+          });
+          setPrefillApplied(true);
+          setPrefillBusy(false);
+          setPrefillModalOpen(false);
+        } catch (err) {
+          setPrefillError('Network error. Please try again.');
+          setPrefillBusy(false);
+        }
+      };
+
       // Recurring-event state
       const [recurringPrograms, setRecurringPrograms] = useState([]);
       const [showRecurringModal, setShowRecurringModal] = useState(false);
@@ -394,11 +469,11 @@
           reasonForAttending: pf.reasonForAttending || '',
           militaryStatus: pf.militaryStatus || '',
           militaryBranch: pf.militaryBranch || '',
-          childName: '',
-          childAgeRange: '',
-          childGender: '',
-          ethnicity: '',
-          disabilityCategories: [],
+          childName: pf.childName || '',
+          childAgeRange: pf.childAgeRange || '',
+          childGender: pf.childGender || '',
+          ethnicity: pf.ethnicity || '',
+          disabilityCategories: Array.isArray(pf.disabilityCategories) ? pf.disabilityCategories : [],
           priorTraining: pf.priorTraining || '',
           priorTrainingDate: pf.priorTrainingDate || '',
           howHeard: pf.howHeard || '',
@@ -1540,7 +1615,7 @@
                       onClick={() => {
                         setShowSignupModal(false);
                         setSubmitSuccess(false);
-                        openRegistration(lastSignupDocId, lastSignupEventId, 'event');
+                        openRegistration(lastSignupDocId, lastSignupEventId, 'event', prefillStash || undefined);
                       }}
                       style={{
                         display: 'inline-block', padding: '14px 32px',
@@ -1622,6 +1697,13 @@
                           opacity: submitting ? 0.6 : 1
                         }}
                       />
+                      {prefillApplied ? (
+                        <div style={{ marginTop: '6px', fontSize: '13px', color: '#16A34A', fontWeight: 700 }}>Pre-filled from your account on file. You can edit anything below.</div>
+                      ) : (
+                        <div style={{ marginTop: '6px', fontSize: '13px' }}>
+                          <a href="javascript:void(0)" onClick={requestPrefillCode} style={{ color: '#1a73e8', textDecoration: 'none', fontWeight: 600 }}>Returning family? Pre-fill from email</a>
+                        </div>
+                      )}
                     </div>
 
                     {/* Phone */}
@@ -1944,7 +2026,7 @@
                       onClick={() => {
                         setShowRecurringModal(false);
                         setRecurringSubmitSuccess(false);
-                        openRegistration(recurringLastSignupDocId, lastSignupEventId, 'recurring');
+                        openRegistration(recurringLastSignupDocId, lastSignupEventId, 'recurring', prefillStash || undefined);
                       }}
                       style={{
                         display: 'inline-block', padding: '14px 32px',
@@ -2884,6 +2966,34 @@
               <span>Contact</span>
             </a>
           </nav>
+
+          {/* Pre-fill Verification Modal (B'' OTP-by-email) */}
+          {prefillModalOpen && (
+            <div onClick={(e) => { if (e.target === e.currentTarget) setPrefillModalOpen(false); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10001, padding: '16px' }}>
+              <div style={{ background: '#fff', borderRadius: '12px', maxWidth: '420px', width: '100%', padding: '28px 24px', boxShadow: '0 12px 40px rgba(0,0,0,0.3)' }}>
+                <h2 style={{ margin: '0 0 8px', color: '#004E7C', fontSize: '20px' }}>Verify it's you</h2>
+                <p style={{ margin: '0 0 6px', fontSize: '14px', color: '#374151' }}>If you have an LDAH account, we just emailed a 6-digit code to:</p>
+                <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#0f172a', fontWeight: 700, wordBreak: 'break-all' }}>{(formData.email || '').trim()}</p>
+                <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#666' }}>Enter the code to pre-fill your information. Code expires in 10 minutes.</p>
+                <input
+                  type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6}
+                  placeholder="123456" autoComplete="one-time-code" value={prefillCode}
+                  onChange={(e) => setPrefillCode(e.target.value.replace(/\D/g, ''))}
+                  onKeyDown={(e) => { if (e.key === 'Enter') verifyPrefillCode(); }}
+                  autoFocus
+                  style={{ width: '100%', padding: '14px', fontSize: '24px', letterSpacing: '8px', textAlign: 'center', border: '2px solid #1a3c6e', borderRadius: '8px', fontFamily: 'Courier,monospace', marginBottom: '8px' }}
+                />
+                {prefillError && (
+                  <div style={{ color: '#DC2626', fontSize: '13px', marginBottom: '8px' }}>{prefillError}</div>
+                )}
+                <div style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
+                  <button type="button" onClick={() => setPrefillModalOpen(false)} style={{ flex: '0 0 auto', padding: '12px 18px', background: '#fff', color: '#666', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Skip</button>
+                  <button type="button" onClick={verifyPrefillCode} disabled={prefillBusy} style={{ flex: 1, padding: '12px', background: '#1a3c6e', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: prefillBusy ? 'wait' : 'pointer', opacity: prefillBusy ? 0.6 : 1 }}>{prefillBusy ? 'Verifying...' : 'Verify & Pre-fill'}</button>
+                </div>
+                <div style={{ marginTop: '14px', fontSize: '12px', color: '#94a3b8', textAlign: 'center' }}>Didn't get it? Check spam, or <a href="javascript:void(0)" onClick={() => { setPrefillModalOpen(false); requestPrefillCode(); }} style={{ color: '#1a73e8' }}>resend</a>.</div>
+              </div>
+            </div>
+          )}
         </div>
       );
     };
