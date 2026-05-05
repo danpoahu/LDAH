@@ -843,25 +843,10 @@
 
     // Modal functions
     function openIframeModal(title, url) {
-      // On small screens (iPhone), skip the modal and open directly
-      if (window.innerWidth <= 768) {
-        window.open(url, '_blank');
-        return;
-      }
-
-      const modal = document.getElementById('iframeModal');
-      const titleEl = document.getElementById('iframeTitle');
-      const frame = document.getElementById('iframeFrame');
-
-      titleEl.textContent = title;
-
-      // Reset to iframe if needed
-      if (frame.tagName !== 'IFRAME') {
-        frame.outerHTML = '<iframe id="iframeFrame" class="iframe-frame" src="" allowfullscreen loading="lazy"></iframe>';
-      }
-      document.getElementById('iframeFrame').src = url;
-      modal.classList.add('active');
-      document.body.style.overflow = 'hidden';
+      // App always opens external links in a new tab. Embedded-iframe mode
+      // (still used on W2) misbehaves on iPad: sites with X-Frame-Options:
+      // DENY produce a blank modal AND Safari pops a new tab.
+      window.open(url, '_blank', 'noopener');
     }
 
     function closeIframeModal(event) {
