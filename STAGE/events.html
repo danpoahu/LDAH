@@ -1758,7 +1758,18 @@
                         it in handleSignupClick and just display the date as a read-only
                         line so the user still sees what they signed up for. */}
                     {(() => {
-                      const allDates = (signupEvent.signupDates) || [];
+                      const allDatesRaw = (signupEvent.signupDates) || [];
+                      // Per-client soft block: hide Mondays for one specific email (LDAH request).
+                      // Removable later — case-insensitive, trimmed match.
+                      const blockedMondays = (formData.email || '').trim().toLowerCase() === 'containerscapes@gmail.com';
+                      const allDates = allDatesRaw.filter(d => {
+                        if (!blockedMondays) return true;
+                        const ymd = parseSignupDateString(d);
+                        if (!ymd) return true;
+                        const [y, m, day] = ymd.split('-').map(Number);
+                        // Date-parts constructor (avoids documented UTC bugs from string-parsed dates)
+                        return new Date(y, m - 1, day).getDay() !== 1;
+                      });
                       const nonExpired = allDates.filter(d => !isSignupDateExpired(d));
                       if (nonExpired.length === 1) {
                         return (
