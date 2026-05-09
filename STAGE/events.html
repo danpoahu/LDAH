@@ -2288,9 +2288,8 @@
                       </label>
                       {(() => {
                         const blockedMondays = (recurringFormData.email || '').trim().toLowerCase() === 'containerscapes@gmail.com';
-                        const isConnectGen = (recurringSignupEvent?.title || '').toLowerCase().replace(/[\s-]/g, '').includes('connectgen');
                         const visibleOccurrences = (recurringSignupEvent._occurrences || []).filter(occ => {
-                          if (!blockedMondays || !isConnectGen) return true;
+                          if (!blockedMondays) return true;
                           const datePart = (occ.key || '').split('|')[0]; // "YYYY-MM-DD"
                           const m = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
                           if (!m) return true;
