@@ -2286,7 +2286,14 @@
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Select ONE session you will be attending *
                       </label>
-                      {recurringSignupEvent._occurrences && recurringSignupEvent._occurrences.map((occ, i) => {
+                      {(() => {
+                        const blockedMondays = (recurringFormData.email || '').trim().toLowerCase() === 'containerscapes@gmail.com';
+                        // _occurrences items are raw {date, schedule} — read date.getDay() directly (1 = Monday)
+                        const visibleOccurrences = (recurringSignupEvent._occurrences || []).filter(occ => {
+                          if (!blockedMondays) return true;
+                          return !occ.date || occ.date.getDay() !== 1;
+                        });
+                        return visibleOccurrences.map((occ, i) => {
                         const { key, display } = formatOccurrence(occ);
                         const isFull = (sessionConfirmedCounts[key] || 0) >= RECURRING_SESSION_CAPACITY;
                         return (
@@ -2313,7 +2320,8 @@
                             </span>
                           </label>
                         );
-                      })}
+                        });
+                      })()}
                       {recurringFormData.selectedSessions.length > 1 && (
                         <div style={{
                           marginTop: '14px',
