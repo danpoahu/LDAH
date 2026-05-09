@@ -1,5 +1,6 @@
-// Service Worker for LDAH Progressive Web App
-const CACHE_NAME = 'ldah-v2';
+// Service Worker for LDAH Progressive Web App — STAGE
+// Separate cache namespace from production so STAGE and live don't share cached HTML.
+const CACHE_NAME = 'ldah-stage-v3';
 const urlsToCache = [
   './',
   './index.html',
@@ -30,27 +31,36 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Fetch event - stale-while-revalidate strategy
+// Fetch event:
+//   HTML (navigation/document requests) — network-first so freshly-pushed STAGE always wins.
+//   Everything else — stale-while-revalidate.
 self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  const isHTML = req.mode === 'navigate' || req.destination === 'document' ||
+                 (req.url.endsWith('.html') || req.url.endsWith('/'));
+  if (isHTML) {
+    event.respondWith(
+      fetch(req).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
+        }
+        return networkResponse;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
   event.respondWith(
-    caches.match(event.request)
-      .then((cachedResponse) => {
-        // Return cached version immediately, but also fetch fresh copy
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          // Update cache with fresh response
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return networkResponse;
-        }).catch(() => {
-          // Network failed, cached response already returned above
-        });
-
-        return cachedResponse || fetchPromise;
-      })
+    caches.match(req).then((cachedResponse) => {
+      const fetchPromise = fetch(req).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
+        }
+        return networkResponse;
+      }).catch(() => {});
+      return cachedResponse || fetchPromise;
+    })
   );
 });
 
