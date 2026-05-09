@@ -1758,18 +1758,7 @@
                         it in handleSignupClick and just display the date as a read-only
                         line so the user still sees what they signed up for. */}
                     {(() => {
-                      const allDatesRaw = (signupEvent.signupDates) || [];
-                      // Per-client soft block: hide Mondays for one specific email (LDAH request).
-                      // Removable later — case-insensitive, trimmed match.
-                      const blockedMondays = (formData.email || '').trim().toLowerCase() === 'containerscapes@gmail.com';
-                      const allDates = allDatesRaw.filter(d => {
-                        if (!blockedMondays) return true;
-                        const ymd = parseSignupDateString(d);
-                        if (!ymd) return true;
-                        const [y, m, day] = ymd.split('-').map(Number);
-                        // Date-parts constructor (avoids documented UTC bugs from string-parsed dates)
-                        return new Date(y, m - 1, day).getDay() !== 1;
-                      });
+                      const allDates = (signupEvent.signupDates) || [];
                       const nonExpired = allDates.filter(d => !isSignupDateExpired(d));
                       if (nonExpired.length === 1) {
                         return (
@@ -2299,8 +2288,9 @@
                       </label>
                       {(() => {
                         const blockedMondays = (recurringFormData.email || '').trim().toLowerCase() === 'containerscapes@gmail.com';
+                        const isConnectGen = (recurringSignupEvent?.title || '').toLowerCase().replace(/[\s-]/g, '').includes('connectgen');
                         const visibleOccurrences = (recurringSignupEvent._occurrences || []).filter(occ => {
-                          if (!blockedMondays) return true;
+                          if (!blockedMondays || !isConnectGen) return true;
                           const datePart = (occ.key || '').split('|')[0]; // "YYYY-MM-DD"
                           const m = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
                           if (!m) return true;
