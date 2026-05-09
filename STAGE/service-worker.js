@@ -1,6 +1,6 @@
 // Service Worker for LDAH Progressive Web App — STAGE
 // Separate cache namespace from production so STAGE and live don't share cached HTML.
-const CACHE_NAME = 'ldah-stage-v3';
+const CACHE_NAME = 'ldah-stage-v4';
 const urlsToCache = [
   './',
   './index.html',
@@ -12,22 +12,23 @@ const urlsToCache = [
   './install.html',
   './styles.css',
   './analytics-tracker.js',
-  './accessibility.js',
   './logo_transparent.png',
   './background.png',
   './icon-192.png',
   './icon-512.png'
 ];
 
-// Install event - cache resources
+// Install event - cache resources, tolerate individual 404s
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('Opened cache');
+      // addAll fails atomically on any 404, so cache one-by-one with tolerance
+      return Promise.all(urlsToCache.map(url =>
+        cache.add(url).catch(err => console.warn('SW skip', url, err.message))
+      ));
+    })
   );
 });
 

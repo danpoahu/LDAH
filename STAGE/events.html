@@ -2288,13 +2288,10 @@
                       </label>
                       {(() => {
                         const blockedMondays = (recurringFormData.email || '').trim().toLowerCase() === 'containerscapes@gmail.com';
+                        // _occurrences items are raw {date, schedule} — read date.getDay() directly (1 = Monday)
                         const visibleOccurrences = (recurringSignupEvent._occurrences || []).filter(occ => {
                           if (!blockedMondays) return true;
-                          const datePart = (occ.key || '').split('|')[0]; // "YYYY-MM-DD"
-                          const m = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-                          if (!m) return true;
-                          const [, y, mo, d] = m;
-                          return new Date(Number(y), Number(mo) - 1, Number(d)).getDay() !== 1;
+                          return !occ.date || occ.date.getDay() !== 1;
                         });
                         return visibleOccurrences.map((occ, i) => {
                         const { key, display } = formatOccurrence(occ);
