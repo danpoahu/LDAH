@@ -2288,6 +2288,8 @@
                       </label>
                       {(() => {
                         const blockedMondays = (recurringFormData.email || '').trim().toLowerCase() === 'containerscapes@gmail.com';
+                        // Connect-Gen (zoomMode === 'program') forces single-date selection via radio inputs
+                        const isConnectGen = recurringSignupEvent.zoomMode === 'program';
                         // _occurrences items are raw {date, schedule} — read date.getDay() directly (1 = Monday)
                         const visibleOccurrences = (recurringSignupEvent._occurrences || []).filter(occ => {
                           if (!blockedMondays) return true;
@@ -2306,9 +2308,17 @@
                             opacity: isFull ? 0.6 : 1
                           }}>
                             <input
-                              type="checkbox"
+                              type={isConnectGen ? 'radio' : 'checkbox'}
+                              name={isConnectGen ? 'recurringSessionSelection' : undefined}
                               checked={recurringFormData.selectedSessions.includes(key)}
-                              onChange={() => handleSessionToggle(key)}
+                              onChange={() => {
+                                if (isConnectGen) {
+                                  // Single-select: replace any prior selection
+                                  setRecurringFormData(prev => ({ ...prev, selectedSessions: [key] }));
+                                } else {
+                                  handleSessionToggle(key);
+                                }
+                              }}
                               disabled={recurringSubmitting || isFull}
                               style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0, cursor: isFull ? 'not-allowed' : 'pointer' }}
                             />
@@ -2322,7 +2332,7 @@
                         );
                         });
                       })()}
-                      {recurringFormData.selectedSessions.length > 1 && (
+                      {recurringSignupEvent.zoomMode !== 'program' && recurringFormData.selectedSessions.length > 1 && (
                         <div style={{
                           marginTop: '14px',
                           padding: '14px 16px',
