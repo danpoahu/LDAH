@@ -399,7 +399,8 @@
         currentSchool: '', iepReviewDate: '', reevDate: '', careCoordinator: '',
         participationType: 'Individual', groupName: '', groupSize: '',
         selectedSessions: [], additionalComments: '',
-        multipleSessionsReason: ''
+        multipleSessionsReason: '',
+        priorConnectGen: ''
       });
       const [recurringSubmitting, setRecurringSubmitting] = useState(false);
       const [recurringSubmitSuccess, setRecurringSubmitSuccess] = useState(false);
@@ -841,7 +842,8 @@
           currentSchool: '', iepReviewDate: '', reevDate: '', careCoordinator: '',
           participationType: 'Individual', groupName: '', groupSize: '',
           selectedSessions: [], additionalComments: '',
-          multipleSessionsReason: ''
+          multipleSessionsReason: '',
+          priorConnectGen: ''
         });
         setRecurringSubmitSuccess(false);
 
@@ -896,6 +898,13 @@
         if (recurringFormData.selectedSessions.length > 1 &&
             recurringFormData.multipleSessionsReason.trim().length < 10) {
           alert('Each session covers the same content. Please tell us briefly why you need more than one (for example, signing up multiple children).');
+          return;
+        }
+
+        // Connect-Gen only: returning-family front-end signal.
+        const isConnectGenSubmit = recurringSignupEvent && recurringSignupEvent.zoomMode === 'program';
+        if (isConnectGenSubmit && !recurringFormData.priorConnectGen) {
+          alert('Please tell us whether you have ever participated in a Connect-Gen session before.');
           return;
         }
 
@@ -2411,6 +2420,29 @@
                           </div>
                         )}
                       </>
+                    )}
+
+                    {/* ── Returning Connect-Gen Family (CG only) ── */}
+                    {recurringSignupEvent.zoomMode === 'program' && (
+                      <div style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                          Have you ever participated in a Connect-Gen session before? *
+                        </label>
+                        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                          {['Yes', 'No'].map(opt => (
+                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                              <input
+                                type="radio" name="recurringPriorCG" value={opt} required
+                                checked={recurringFormData.priorConnectGen === opt}
+                                onChange={(e) => handleRecurringFormChange('priorConnectGen', e.target.value)}
+                                disabled={recurringSubmitting}
+                                style={{ width: '18px', height: '18px', accentColor: '#0369a1' }}
+                              />
+                              <span style={{ fontSize: '14px', color: '#374151' }}>{opt}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
                     )}
 
                     {/* ── Additional Comments ── */}
