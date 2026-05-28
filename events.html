@@ -129,9 +129,11 @@
       return `${hour}:${String(m).padStart(2,'0')} ${ampm}`;
     };
 
-    const getOccurrencesInNext30Days = (schedules) => {
+    const getOccurrencesInNext30Days = (schedules, cancelledDates) => {
       const today = new Date(); today.setHours(0,0,0,0);
       const end = new Date(today); end.setDate(end.getDate() + 30);
+      // cancelledDates entries are either "YYYY-MM-DD" strings or { date: "YYYY-MM-DD", ... }
+      const cancelledSet = new Set((cancelledDates || []).map(cd => cd.date || cd));
       const results = [];
       (schedules || []).forEach(sch => {
         if (sch.frequency === 'weekly') {
@@ -139,7 +141,9 @@
           const diff = (sch.dayOfWeek - d.getDay() + 7) % 7;
           d.setDate(d.getDate() + diff);
           while (d <= end) {
-            results.push({ date: new Date(d), schedule: sch });
+            if (!cancelledSet.has(d.toISOString().slice(0, 10))) {
+              results.push({ date: new Date(d), schedule: sch });
+            }
             d.setDate(d.getDate() + 7);
           }
         } else { // monthly
@@ -149,7 +153,7 @@
             const dayOffset = (sch.dayOfWeek - firstDow + 7) % 7;
             const nth = new Date(ref.getFullYear(), ref.getMonth(),
                                  1 + dayOffset + (sch.weekOfMonth - 1) * 7);
-            if (nth.getMonth() === ref.getMonth() && nth >= today && nth <= end)
+            if (nth.getMonth() === ref.getMonth() && nth >= today && nth <= end && !cancelledSet.has(nth.toISOString().slice(0, 10)))
               results.push({ date: nth, schedule: sch });
           }
         }
@@ -731,7 +735,7 @@
             return { ...prog, _isRecurring: true, _isFlyerOnly: true,
                      _nextDate: new Date(), _nextLabel: 'Informational' };
           }
-          const occ = getOccurrencesInNext30Days(prog.schedules || []);
+          const occ = getOccurrencesInNext30Days(prog.schedules || [], prog.cancelledDates);
           if (!occ.length) return null;
           const { display } = formatOccurrence(occ[0]);
           return { ...prog, _isRecurring: true, _nextDate: occ[0].date,
@@ -2197,17 +2201,67 @@
                         />
                       </div>
 
-                      {/* Date of Birth */}
+                      {/* Date of Birth — three selects (mobile-friendly; iOS scroll wheel
+                          is painful 10+ years back). Combined into YYYY-MM-DD on every change
+                          so recurringFormData.dob stays the canonical value. */}
                       <div style={{ marginBottom: '14px' }}>
                         <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
                           Date of Birth *
                         </label>
-                        <input type="date" required
-                          value={recurringFormData.dob}
-                          onChange={(e) => handleRecurringFormChange('dob', e.target.value)}
-                          disabled={recurringSubmitting}
-                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
-                        />
+                        {(() => {
+                          const dob = recurringFormData.dob || '';
+                          const parts = dob.split('-');
+                          const yV = parts[0] || '';
+                          const mV = parts[1] || '';
+                          const dV = parts[2] || '';
+                          const setDob = (nm, nd, ny) => {
+                            if (nm && nd && ny) {
+                              const iso = ny + '-' + nm + '-' + nd;
+                              const dt = new Date(iso + 'T12:00:00Z');
+                              if (!isNaN(dt.getTime()) &&
+                                  dt.getUTCFullYear() === parseInt(ny, 10) &&
+                                  dt.getUTCMonth() === parseInt(nm, 10) - 1 &&
+                                  dt.getUTCDate() === parseInt(nd, 10)) {
+                                handleRecurringFormChange('dob', iso);
+                                return;
+                              }
+                            }
+                            handleRecurringFormChange('dob', '');
+                          };
+                          const months = [
+                            ['01','January'],['02','February'],['03','March'],['04','April'],
+                            ['05','May'],['06','June'],['07','July'],['08','August'],
+                            ['09','September'],['10','October'],['11','November'],['12','December']
+                          ];
+                          const cy = new Date().getFullYear();
+                          const years = [];
+                          for (let y = cy; y >= cy - 100; y--) years.push(y);
+                          const days = [];
+                          for (let d = 1; d <= 31; d++) days.push(d < 10 ? '0' + d : String(d));
+                          const selStyle = { padding: '10px 8px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', background: '#fff', minWidth: 0, boxSizing: 'border-box', opacity: recurringSubmitting ? 0.6 : 1 };
+                          return (
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <select required value={mV} disabled={recurringSubmitting}
+                                onChange={(e) => setDob(e.target.value, dV, yV)}
+                                style={{ ...selStyle, flex: 1.6 }}>
+                                <option value="">Month</option>
+                                {months.map(m => <option key={m[0]} value={m[0]}>{m[1]}</option>)}
+                              </select>
+                              <select required value={dV} disabled={recurringSubmitting}
+                                onChange={(e) => setDob(mV, e.target.value, yV)}
+                                style={{ ...selStyle, flex: 1 }}>
+                                <option value="">Day</option>
+                                {days.map(d => <option key={d} value={d}>{parseInt(d, 10)}</option>)}
+                              </select>
+                              <select required value={yV} disabled={recurringSubmitting}
+                                onChange={(e) => setDob(mV, dV, e.target.value)}
+                                style={{ ...selStyle, flex: 1.2 }}>
+                                <option value="">Year</option>
+                                {years.map(y => <option key={y} value={y}>{y}</option>)}
+                              </select>
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* Student ID */}
