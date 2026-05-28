@@ -518,8 +518,17 @@
 
           // Bridge the role captured at signup into the registration form so we
           // don't re-ask "About You" (v47.11). Drives the Parent/Guardian gating.
+          // Also bridge the child/student name so registration doesn't re-ask
+          // it (v47.13) — CG signup collects studentName inline.
           var signupRole = data.role || data.registrantType || '';
-          if (signupRole) setRegFormData(prev => ({ ...prev, role: signupRole }));
+          var signupChildName = data.studentName || '';
+          if (signupRole || signupChildName) {
+            setRegFormData(prev => ({
+              ...prev,
+              role: signupRole || prev.role,
+              childName: signupChildName || prev.childName
+            }));
+          }
 
           if (data.status === 'confirmed') {
             setRegAlreadyCompleted(true);
