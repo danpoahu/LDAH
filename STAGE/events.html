@@ -129,9 +129,11 @@
       return `${hour}:${String(m).padStart(2,'0')} ${ampm}`;
     };
 
-    const getOccurrencesInNext30Days = (schedules) => {
+    const getOccurrencesInNext30Days = (schedules, cancelledDates) => {
       const today = new Date(); today.setHours(0,0,0,0);
       const end = new Date(today); end.setDate(end.getDate() + 30);
+      // cancelledDates entries are either "YYYY-MM-DD" strings or { date: "YYYY-MM-DD", ... }
+      const cancelledSet = new Set((cancelledDates || []).map(cd => cd.date || cd));
       const results = [];
       (schedules || []).forEach(sch => {
         if (sch.frequency === 'weekly') {
@@ -139,7 +141,9 @@
           const diff = (sch.dayOfWeek - d.getDay() + 7) % 7;
           d.setDate(d.getDate() + diff);
           while (d <= end) {
-            results.push({ date: new Date(d), schedule: sch });
+            if (!cancelledSet.has(d.toISOString().slice(0, 10))) {
+              results.push({ date: new Date(d), schedule: sch });
+            }
             d.setDate(d.getDate() + 7);
           }
         } else { // monthly
@@ -149,7 +153,7 @@
             const dayOffset = (sch.dayOfWeek - firstDow + 7) % 7;
             const nth = new Date(ref.getFullYear(), ref.getMonth(),
                                  1 + dayOffset + (sch.weekOfMonth - 1) * 7);
-            if (nth.getMonth() === ref.getMonth() && nth >= today && nth <= end)
+            if (nth.getMonth() === ref.getMonth() && nth >= today && nth <= end && !cancelledSet.has(nth.toISOString().slice(0, 10)))
               results.push({ date: nth, schedule: sch });
           }
         }
@@ -731,7 +735,7 @@
             return { ...prog, _isRecurring: true, _isFlyerOnly: true,
                      _nextDate: new Date(), _nextLabel: 'Informational' };
           }
-          const occ = getOccurrencesInNext30Days(prog.schedules || []);
+          const occ = getOccurrencesInNext30Days(prog.schedules || [], prog.cancelledDates);
           if (!occ.length) return null;
           const { display } = formatOccurrence(occ[0]);
           return { ...prog, _isRecurring: true, _nextDate: occ[0].date,
