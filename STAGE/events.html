@@ -303,6 +303,7 @@
         name: '',
         email: '',
         phone: '',
+        registrantType: '',
         preferredContact: '',
         participationType: '',
         groupName: '',
@@ -512,6 +513,11 @@
           const data = doc.data();
           setRegSignupInfo({ name: data.name || '', email: data.email || '', phone: data.phone || '', selectedDates: Array.isArray(data.selectedDates) ? data.selectedDates.slice() : [] });
           setRegRegistrantName(data.name || 'Attendee');
+
+          // Bridge the role captured at signup into the registration form so we
+          // don't re-ask "About You" (v47.11). Drives the Parent/Guardian gating.
+          var signupRole = data.role || data.registrantType || '';
+          if (signupRole) setRegFormData(prev => ({ ...prev, role: signupRole }));
 
           if (data.status === 'confirmed') {
             setRegAlreadyCompleted(true);
@@ -917,6 +923,9 @@
           const docRef = await db.collection('recurringEvents').doc(recurringSignupEvent.id)
             .collection('signups').add({
               ...recurringFormData,
+              // Mirror the signup role into `role` so the registration step
+              // reads it and skips re-asking "About You" (v47.11).
+              role: recurringFormData.registrantType || '',
               status: 'pending',
               timestamp: firebase.firestore.FieldValue.serverTimestamp(),
               programTitle: recurringSignupEvent.title
@@ -956,6 +965,9 @@
         try {
           const docRef = await db.collection('events').doc(signupEvent.id).collection('signups').add({
             ...formData,
+            // Mirror the signup role into `role` so the registration step reads
+            // it and skips re-asking "About You" (v47.11).
+            role: formData.registrantType || '',
             status: 'pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             eventTitle: signupEvent.title
@@ -1689,6 +1701,26 @@
                       />
                     </div>
 
+                    {/* Registrant Type (role captured at signup, v47.11) */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        I am a... *
+                      </label>
+                      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                        {['Parent/Guardian', 'Professional', 'Student', 'Community Member'].map(opt => (
+                          <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
+                            <input type="radio" name="oneTimeRegistrantType" value={opt} required
+                              checked={formData.registrantType === opt}
+                              onChange={(e) => handleFormChange('registrantType', e.target.value)}
+                              disabled={submitting}
+                              style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                            />
+                            <span style={{ fontSize: '14px', color: '#374151' }}>{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Email */}
                     <div style={{ marginBottom: '20px' }}>
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
@@ -2116,6 +2148,24 @@
                             style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
                           />
                           <span style={{ fontSize: '14px', color: '#374151' }}>Professional</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <input type="radio" name="registrantType" value="Student" required
+                            checked={recurringFormData.registrantType === 'Student'}
+                            onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
+                            disabled={recurringSubmitting}
+                            style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                          />
+                          <span style={{ fontSize: '14px', color: '#374151' }}>Student</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <input type="radio" name="registrantType" value="Community Member" required
+                            checked={recurringFormData.registrantType === 'Community Member'}
+                            onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
+                            disabled={recurringSubmitting}
+                            style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                          />
+                          <span style={{ fontSize: '14px', color: '#374151' }}>Community Member</span>
                         </label>
                       </div>
                     </div>
@@ -2780,22 +2830,11 @@
                     </div>
 
                     {/* ── About You ── */}
+                    {/* "I am a..." removed here (v47.11) — role is captured at
+                        signup and bridged into regFormData.role on load. The
+                        Parent/Guardian gating below reads regFormData.role. */}
                     <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
                       <h3 style={{ color: '#004E7C', fontSize: '16px', fontWeight: 'bold', marginBottom: '14px', marginTop: 0 }}>About You</h3>
-
-                      <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>I am a... <span style={{ color: '#DC2626' }}>*</span></label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {['Parent/Guardian', 'Professional', 'Student', 'Community Member'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
-                              <input type="radio" name="regRole" value={opt} required checked={regFormData.role === opt}
-                                onChange={(e) => handleRegFormChange('role', e.target.value)} disabled={regSubmitting}
-                                style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
-                              <span style={{ fontSize: '14px', color: '#374151' }}>{opt}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
 
                       <div style={{ marginBottom: '14px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Reason for Attending <span style={{ color: '#DC2626' }}>*</span></label>
