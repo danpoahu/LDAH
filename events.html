@@ -303,6 +303,7 @@
         name: '',
         email: '',
         phone: '',
+        registrantType: '',
         preferredContact: '',
         participationType: '',
         groupName: '',
@@ -399,7 +400,9 @@
       const [recurringFormData, setRecurringFormData] = useState({
         name: '', email: '', phone: '', preferredContact: '',
         registrantType: '',
-        studentName: '', dob: '', studentId: '', grade: '',
+        // DOB is captured as three parts so partial selections persist; dob
+        // (YYYY-MM-DD) is recomputed whenever all three are set + valid.
+        studentName: '', dob: '', dobMonth: '', dobDay: '', dobYear: '', studentId: '', grade: '',
         currentSchool: '', iepReviewDate: '', reevDate: '', careCoordinator: '',
         participationType: 'Individual', groupName: '', groupSize: '',
         selectedSessions: [], additionalComments: '',
@@ -512,6 +515,20 @@
           const data = doc.data();
           setRegSignupInfo({ name: data.name || '', email: data.email || '', phone: data.phone || '', selectedDates: Array.isArray(data.selectedDates) ? data.selectedDates.slice() : [] });
           setRegRegistrantName(data.name || 'Attendee');
+
+          // Bridge the role captured at signup into the registration form so we
+          // don't re-ask "About You" (v47.11). Drives the Parent/Guardian gating.
+          // Also bridge the child/student name so registration doesn't re-ask
+          // it (v47.13) — CG signup collects studentName inline.
+          var signupRole = data.role || data.registrantType || '';
+          var signupChildName = data.studentName || '';
+          if (signupRole || signupChildName) {
+            setRegFormData(prev => ({
+              ...prev,
+              role: signupRole || prev.role,
+              childName: signupChildName || prev.childName
+            }));
+          }
 
           if (data.status === 'confirmed') {
             setRegAlreadyCompleted(true);
@@ -914,9 +931,15 @@
 
         setRecurringSubmitting(true);
         try {
+          // Strip the DOB part fields (dobMonth/dobDay/dobYear) — they're UI
+          // state only; the canonical value is `dob` (YYYY-MM-DD).
+          const { dobMonth, dobDay, dobYear, ...recurringClean } = recurringFormData;
           const docRef = await db.collection('recurringEvents').doc(recurringSignupEvent.id)
             .collection('signups').add({
-              ...recurringFormData,
+              ...recurringClean,
+              // Mirror the signup role into `role` so the registration step
+              // reads it and skips re-asking "About You" (v47.11).
+              role: recurringFormData.registrantType || '',
               status: 'pending',
               timestamp: firebase.firestore.FieldValue.serverTimestamp(),
               programTitle: recurringSignupEvent.title
@@ -956,6 +979,9 @@
         try {
           const docRef = await db.collection('events').doc(signupEvent.id).collection('signups').add({
             ...formData,
+            // Mirror the signup role into `role` so the registration step reads
+            // it and skips re-asking "About You" (v47.11).
+            role: formData.registrantType || '',
             status: 'pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             eventTitle: signupEvent.title
@@ -1689,6 +1715,26 @@
                       />
                     </div>
 
+                    {/* Registrant Type (role captured at signup, v47.11) */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        I am a... *
+                      </label>
+                      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                        {['Parent/Guardian', 'Professional', 'Student', 'Community Member'].map(opt => (
+                          <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
+                            <input type="radio" name="oneTimeRegistrantType" value={opt} required
+                              checked={formData.registrantType === opt}
+                              onChange={(e) => handleFormChange('registrantType', e.target.value)}
+                              disabled={submitting}
+                              style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                            />
+                            <span style={{ fontSize: '14px', color: '#374151' }}>{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Email */}
                     <div style={{ marginBottom: '20px' }}>
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
@@ -2117,6 +2163,24 @@
                           />
                           <span style={{ fontSize: '14px', color: '#374151' }}>Professional</span>
                         </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <input type="radio" name="registrantType" value="Student" required
+                            checked={recurringFormData.registrantType === 'Student'}
+                            onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
+                            disabled={recurringSubmitting}
+                            style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                          />
+                          <span style={{ fontSize: '14px', color: '#374151' }}>Student</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <input type="radio" name="registrantType" value="Community Member" required
+                            checked={recurringFormData.registrantType === 'Community Member'}
+                            onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
+                            disabled={recurringSubmitting}
+                            style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                          />
+                          <span style={{ fontSize: '14px', color: '#374151' }}>Community Member</span>
+                        </label>
                       </div>
                     </div>
 
@@ -2209,24 +2273,32 @@
                           Date of Birth *
                         </label>
                         {(() => {
-                          const dob = recurringFormData.dob || '';
-                          const parts = dob.split('-');
-                          const yV = parts[0] || '';
-                          const mV = parts[1] || '';
-                          const dV = parts[2] || '';
-                          const setDob = (nm, nd, ny) => {
-                            if (nm && nd && ny) {
-                              const iso = ny + '-' + nm + '-' + nd;
-                              const dt = new Date(iso + 'T12:00:00Z');
-                              if (!isNaN(dt.getTime()) &&
-                                  dt.getUTCFullYear() === parseInt(ny, 10) &&
-                                  dt.getUTCMonth() === parseInt(nm, 10) - 1 &&
-                                  dt.getUTCDate() === parseInt(nd, 10)) {
-                                handleRecurringFormChange('dob', iso);
-                                return;
+                          // Each dropdown is bound to its OWN state field so a
+                          // partial selection persists; dob (YYYY-MM-DD) is
+                          // recomputed when all three are set + valid. Falls
+                          // back to splitting a prefilled dob on first render.
+                          const dobStr = recurringFormData.dob || '';
+                          const mV = recurringFormData.dobMonth || dobStr.split('-')[1] || '';
+                          const dV = recurringFormData.dobDay   || dobStr.split('-')[2] || '';
+                          const yV = recurringFormData.dobYear  || dobStr.split('-')[0] || '';
+                          const setPart = (field, val) => {
+                            setRecurringFormData(prev => {
+                              const next = { ...prev, [field]: val };
+                              const m = next.dobMonth, d = next.dobDay, y = next.dobYear;
+                              let iso = '';
+                              if (m && d && y) {
+                                const cand = y + '-' + m + '-' + d;
+                                const dt = new Date(cand + 'T12:00:00Z');
+                                if (!isNaN(dt.getTime()) &&
+                                    dt.getUTCFullYear() === parseInt(y, 10) &&
+                                    dt.getUTCMonth() === parseInt(m, 10) - 1 &&
+                                    dt.getUTCDate() === parseInt(d, 10)) {
+                                  iso = cand;
+                                }
                               }
-                            }
-                            handleRecurringFormChange('dob', '');
+                              next.dob = iso;
+                              return next;
+                            });
                           };
                           const months = [
                             ['01','January'],['02','February'],['03','March'],['04','April'],
@@ -2242,19 +2314,19 @@
                           return (
                             <div style={{ display: 'flex', gap: '6px' }}>
                               <select required value={mV} disabled={recurringSubmitting}
-                                onChange={(e) => setDob(e.target.value, dV, yV)}
+                                onChange={(e) => setPart('dobMonth', e.target.value)}
                                 style={{ ...selStyle, flex: 1.6 }}>
                                 <option value="">Month</option>
                                 {months.map(m => <option key={m[0]} value={m[0]}>{m[1]}</option>)}
                               </select>
                               <select required value={dV} disabled={recurringSubmitting}
-                                onChange={(e) => setDob(mV, e.target.value, yV)}
+                                onChange={(e) => setPart('dobDay', e.target.value)}
                                 style={{ ...selStyle, flex: 1 }}>
                                 <option value="">Day</option>
                                 {days.map(d => <option key={d} value={d}>{parseInt(d, 10)}</option>)}
                               </select>
                               <select required value={yV} disabled={recurringSubmitting}
-                                onChange={(e) => setDob(mV, dV, e.target.value)}
+                                onChange={(e) => setPart('dobYear', e.target.value)}
                                 style={{ ...selStyle, flex: 1.2 }}>
                                 <option value="">Year</option>
                                 {years.map(y => <option key={y} value={y}>{y}</option>)}
@@ -2780,22 +2852,11 @@
                     </div>
 
                     {/* ── About You ── */}
+                    {/* "I am a..." removed here (v47.11) — role is captured at
+                        signup and bridged into regFormData.role on load. The
+                        Parent/Guardian gating below reads regFormData.role. */}
                     <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
                       <h3 style={{ color: '#004E7C', fontSize: '16px', fontWeight: 'bold', marginBottom: '14px', marginTop: 0 }}>About You</h3>
-
-                      <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>I am a... <span style={{ color: '#DC2626' }}>*</span></label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {['Parent/Guardian', 'Professional', 'Student', 'Community Member'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
-                              <input type="radio" name="regRole" value={opt} required checked={regFormData.role === opt}
-                                onChange={(e) => handleRegFormChange('role', e.target.value)} disabled={regSubmitting}
-                                style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
-                              <span style={{ fontSize: '14px', color: '#374151' }}>{opt}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
 
                       <div style={{ marginBottom: '14px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Reason for Attending <span style={{ color: '#DC2626' }}>*</span></label>
