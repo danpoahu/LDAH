@@ -1817,7 +1817,49 @@
                       * Indicates required question
                     </p>
 
-                    {/* Name */}
+                    {/* Email — first field; on-blur lookup pre-fills Name + other fields (v48.1.0) */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        autoFocus
+                        value={formData.email}
+                        onChange={(e) => handleFormChange('email', e.target.value)}
+                        onBlur={handleEmailBlur}
+                        disabled={submitting}
+                        placeholder="Your answer"
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          border: '1px solid #D1D5DB',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          opacity: submitting ? 0.6 : 1
+                        }}
+                      />
+                      {/* Welcome-back banner (v48.0.0) */}
+                      {emailPrefillBanner && !emailPrefillDismissed && (
+                        <div style={{ marginTop: '8px', background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: '8px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#92400E' }}>
+                          <span>Welcome back, {emailPrefillBanner.firstName} — we've pre-filled some fields below from your last visit. Edit anything that's changed.</span>
+                          <button type="button" onClick={() => setEmailPrefillDismissed(true)}
+                            style={{ background: 'none', border: 'none', color: '#92400E', cursor: 'pointer', fontWeight: 700, fontSize: '16px', lineHeight: 1, padding: '0 4px', flexShrink: 0 }}
+                            aria-label="Dismiss banner"
+                          >x</button>
+                        </div>
+                      )}
+                      {prefillApplied ? (
+                        <div style={{ marginTop: '6px', fontSize: '13px', color: '#16A34A', fontWeight: 700 }}>Pre-filled from your account on file. You can edit anything below.</div>
+                      ) : (
+                        <div style={{ marginTop: '6px', fontSize: '13px' }}>
+                          <a href="javascript:void(0)" onClick={requestPrefillCode} style={{ color: '#1a73e8', textDecoration: 'none', fontWeight: 600 }}>Returning family? Pre-fill from email</a>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Name — pre-filled by email-blur lookup for returning users */}
                     <div style={{ marginBottom: '20px' }}>
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Full Name *
@@ -1972,47 +2014,6 @@
                         </div>
                       </div>
                     )}
-
-                    {/* Email */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                        Email Address *
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={(e) => handleFormChange('email', e.target.value)}
-                        onBlur={handleEmailBlur}
-                        disabled={submitting}
-                        placeholder="Your answer"
-                        style={{
-                          width: '100%',
-                          padding: '12px',
-                          border: '1px solid #D1D5DB',
-                          borderRadius: '8px',
-                          fontSize: '14px',
-                          opacity: submitting ? 0.6 : 1
-                        }}
-                      />
-                      {/* Email-blur prefill banner (v48.0.0) */}
-                      {emailPrefillBanner && !emailPrefillDismissed && (
-                        <div style={{ marginTop: '8px', background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: '8px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#92400E' }}>
-                          <span>Welcome back, {emailPrefillBanner.firstName} — we've pre-filled some fields below from your last visit. Edit anything that's changed.</span>
-                          <button type="button" onClick={() => setEmailPrefillDismissed(true)}
-                            style={{ background: 'none', border: 'none', color: '#92400E', cursor: 'pointer', fontWeight: 700, fontSize: '16px', lineHeight: 1, padding: '0 4px', flexShrink: 0 }}
-                            aria-label="Dismiss banner"
-                          >x</button>
-                        </div>
-                      )}
-                      {prefillApplied ? (
-                        <div style={{ marginTop: '6px', fontSize: '13px', color: '#16A34A', fontWeight: 700 }}>Pre-filled from your account on file. You can edit anything below.</div>
-                      ) : (
-                        <div style={{ marginTop: '6px', fontSize: '13px' }}>
-                          <a href="javascript:void(0)" onClick={requestPrefillCode} style={{ color: '#1a73e8', textDecoration: 'none', fontWeight: 600 }}>Returning family? Pre-fill from email</a>
-                        </div>
-                      )}
-                    </div>
 
                     {/* Phone */}
                     <div style={{ marginBottom: '20px' }}>
@@ -2372,6 +2373,22 @@
                     </p>
 
                     {/* ── Contact Info ── */}
+                    {/* Email — first field; consistent with one-time form (v48.1.0) */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        Email Address *
+                      </label>
+                      <input
+                        type="email" required
+                        autoFocus
+                        value={recurringFormData.email}
+                        onChange={(e) => handleRecurringFormChange('email', e.target.value)}
+                        disabled={recurringSubmitting}
+                        placeholder="Your answer"
+                        style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                      />
+                    </div>
+
                     {/* Full Name */}
                     <div style={{ marginBottom: '20px' }}>
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
@@ -2431,21 +2448,6 @@
                           <span style={{ fontSize: '14px', color: '#374151' }}>Community Member</span>
                         </label>
                       </div>
-                    </div>
-
-                    {/* Email */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                        Email Address *
-                      </label>
-                      <input
-                        type="email" required
-                        value={recurringFormData.email}
-                        onChange={(e) => handleRecurringFormChange('email', e.target.value)}
-                        disabled={recurringSubmitting}
-                        placeholder="Your answer"
-                        style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
-                      />
                     </div>
 
                     {/* Phone */}
