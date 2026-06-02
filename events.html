@@ -310,13 +310,66 @@
         groupSize: '',
         selectedDates: [],
         customAnswers: {},
-        additionalComments: ''
+        additionalComments: '',
+        // Inline registration fields for non-Parent/Guardian roles (v48.0.0)
+        streetAddress: '',
+        city: '',
+        zipCode: '',
+        reasonForAttending: '',
+        priorTraining: '',
+        priorTrainingDate: '',
+        howHeard: '',
+        howHeardOther: '',
+        accommodations: ''
       });
       const [submitting, setSubmitting] = useState(false);
       const [submitSuccess, setSubmitSuccess] = useState(false);
       const [lastSignupDocId, setLastSignupDocId] = useState(null);
       const [lastSignupEventId, setLastSignupEventId] = useState(null);
       const [lastSignupType, setLastSignupType] = useState(null); // 'event' or 'recurring'
+      const [lastSignupWasInlineReg, setLastSignupWasInlineReg] = useState(false); // v48.0.0
+
+      // Email-blur prefill banner (v48.0.0)
+      const [emailPrefillBanner, setEmailPrefillBanner] = useState(null); // null | {firstName}
+      const [emailPrefillDismissed, setEmailPrefillDismissed] = useState(false);
+
+      // Helper: does this role need the separate registration step?
+      const roleNeedsRegistration = (role) => role === 'Parent/Guardian';
+
+      // Email onBlur handler: silent lookup via getContactForPrefill?email=...
+      const handleEmailBlur = async () => {
+        const email = (formData.email || '').trim();
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+        try {
+          const resp = await fetch(
+            'https://us-central1-ldah-932d5.cloudfunctions.net/getContactForPrefill?email=' +
+            encodeURIComponent(email.toLowerCase()),
+            { method: 'GET' }
+          );
+          if (!resp.ok) return; // 404 = no match — silent
+          const c = await resp.json();
+          // Pre-fill only empty/untouched fields; never override role
+          setFormData(prev => ({
+            ...prev,
+            name: prev.name.trim() ? prev.name : ((c.displayName || [c.firstName, c.lastName].filter(Boolean).join(' ') || '').trim() || prev.name),
+            phone: prev.phone.trim() ? prev.phone : (c.phone || prev.phone),
+            streetAddress: prev.streetAddress.trim() ? prev.streetAddress : (c.streetAddress || prev.streetAddress),
+            city: prev.city.trim() ? prev.city : (c.city || prev.city),
+            zipCode: prev.zipCode.trim() ? prev.zipCode : (c.zipCode || prev.zipCode),
+            reasonForAttending: prev.reasonForAttending ? prev.reasonForAttending : (c.reasonForAttending || prev.reasonForAttending),
+            priorTraining: prev.priorTraining ? prev.priorTraining : (c.priorTraining || prev.priorTraining),
+            priorTrainingDate: prev.priorTrainingDate ? prev.priorTrainingDate : (c.priorTrainingDate || prev.priorTrainingDate),
+            howHeard: prev.howHeard ? prev.howHeard : (c.howHeard || prev.howHeard),
+            howHeardOther: prev.howHeardOther.trim() ? prev.howHeardOther : (c.howHeardOther || prev.howHeardOther),
+            accommodations: prev.accommodations.trim() ? prev.accommodations : (c.accommodations || prev.accommodations),
+          }));
+          const firstName = c.firstName || (c.displayName || '').split(' ')[0] || '';
+          if (firstName) {
+            setEmailPrefillBanner({ firstName });
+            setEmailPrefillDismissed(false);
+          }
+        } catch (_) { /* silent on CF failure */ }
+      };
 
       // Pre-fill OTP-by-email state (B'' flow — see W2 events.html for the
       // canonical implementation. Same Cloud Function endpoints, same UX.)
@@ -806,15 +859,29 @@
           name: '',
           email: '',
           phone: '',
+          registrantType: '',
           preferredContact: '',
           participationType: '',
           groupName: '',
           groupSize: '',
           selectedDates: preselected,
           customAnswers: {},
-          additionalComments: ''
+          additionalComments: '',
+          // Inline registration fields (v48.0.0)
+          streetAddress: '',
+          city: '',
+          zipCode: '',
+          reasonForAttending: '',
+          priorTraining: '',
+          priorTrainingDate: '',
+          howHeard: '',
+          howHeardOther: '',
+          accommodations: ''
         });
         setSubmitSuccess(false);
+        setLastSignupWasInlineReg(false);
+        setEmailPrefillBanner(null);
+        setEmailPrefillDismissed(false);
       };
 
       const handleFormChange = (field, value) => {
@@ -977,21 +1044,59 @@
         setSubmitting(true);
 
         try {
-          const docRef = await db.collection('events').doc(signupEvent.id).collection('signups').add({
+          // Non-Parent/Guardian roles complete registration inline at signup (v48.0.0).
+          // Parent/Guardian remains pending and receives a registration email link.
+          const isInlineReg = !roleNeedsRegistration(formData.registrantType) && formData.registrantType !== '';
+          const signupStatus = isInlineReg ? 'confirmed' : 'pending';
+
+          // Build the signup doc. For inline-reg, fold registration fields in directly.
+          const signupDoc = {
             ...formData,
             // Mirror the signup role into `role` so the registration step reads
             // it and skips re-asking "About You" (v47.11).
             role: formData.registrantType || '',
-            status: 'pending',
+            status: signupStatus,
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             eventTitle: signupEvent.title
-          });
+          };
+
+          if (isInlineReg) {
+            // Embed registration data directly (mirrors what handleRegSubmit writes for the
+            // separate-step path). Backend CF reads `registration` to send confirmation email.
+            signupDoc.registration = {
+              streetAddress: formData.streetAddress || '',
+              city: formData.city || '',
+              zipCode: formData.zipCode || '',
+              role: formData.registrantType || '',
+              reasonForAttending: formData.reasonForAttending || '',
+              militaryStatus: '',
+              militaryBranch: '',
+              childName: '',
+              childAgeRange: '',
+              childGender: '',
+              ethnicity: '',
+              disabilityCategories: [],
+              priorTraining: formData.priorTraining || '',
+              priorTrainingDate: formData.priorTraining === 'Yes' ? (formData.priorTrainingDate || '') : '',
+              howHeard: formData.howHeard || '',
+              howHeardOther: formData.howHeard === 'Other' ? (formData.howHeardOther || '') : '',
+              accommodations: formData.accommodations || ''
+            };
+            signupDoc.registrantType = formData.registrantType || '';
+            signupDoc.registrationCompletedAt = firebase.firestore.FieldValue.serverTimestamp();
+            signupDoc.registrationFlow = 'inline-at-signup';
+          }
+
+          const docRef = await db.collection('events').doc(signupEvent.id).collection('signups').add(signupDoc);
 
           // Update denormalized counts on parent doc
-          await db.collection('events').doc(signupEvent.id).update({
-            signupCount: firebase.firestore.FieldValue.increment(1),
-            pendingCount: firebase.firestore.FieldValue.increment(1)
-          });
+          const countUpdate = { signupCount: firebase.firestore.FieldValue.increment(1) };
+          if (isInlineReg) {
+            countUpdate.confirmedCount = firebase.firestore.FieldValue.increment(1);
+          } else {
+            countUpdate.pendingCount = firebase.firestore.FieldValue.increment(1);
+          }
+          await db.collection('events').doc(signupEvent.id).update(countUpdate);
 
           // Track analytics event
           try {
@@ -1020,6 +1125,7 @@
           setLastSignupDocId(docRef.id);
           setLastSignupEventId(signupEvent.id);
           setLastSignupType('event');
+          setLastSignupWasInlineReg(isInlineReg);
           setSubmitSuccess(true);
         } catch (error) {
           console.error('Error submitting signup:', error);
@@ -1644,33 +1750,53 @@
                     <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
                       Mahalo! You're signed up.
                     </h2>
-                    <p style={{ color: '#666', fontSize: '16px', marginBottom: '8px' }}>
-                      One more step -- please complete your registration so we can reserve your spot.
-                    </p>
-                    <p style={{ color: '#555', fontSize: '14px', marginBottom: '24px' }}>
-                      Please remember to register each person who will be attending.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setShowSignupModal(false);
-                        setSubmitSuccess(false);
-                        openRegistration(lastSignupDocId, lastSignupEventId, 'event', prefillStash || undefined);
-                      }}
-                      style={{
-                        display: 'inline-block', padding: '14px 32px',
-                        background: 'linear-gradient(135deg, #004E7C, #0066a1)',
-                        color: 'white', border: 'none', borderRadius: '50px',
-                        fontWeight: '600', fontSize: '16px', cursor: 'pointer',
-                        transition: 'transform 0.15s, box-shadow 0.15s',
-                        boxShadow: '0 2px 8px rgba(0, 78, 124, 0.3)',
-                        marginBottom: '12px'
-                      }}
-                      onMouseOver={(e) => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,78,124,0.4)'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,78,124,0.3)'; }}
-                    >
-                      Complete Registration
-                    </button>
-                    <br />
+                    {lastSignupWasInlineReg ? (
+                      <React.Fragment>
+                        <p style={{ color: '#666', fontSize: '16px', marginBottom: '16px' }}>
+                          Your spot is confirmed. Watch your email for reminders.
+                        </p>
+                        <div style={{
+                          background: 'rgba(8,145,178,0.08)', borderLeft: '4px solid #0891B2',
+                          borderRadius: '0 8px 8px 0', padding: '14px 18px',
+                          margin: '0 auto 20px', maxWidth: '440px', textAlign: 'left'
+                        }}>
+                          <p style={{ margin: '0 0 6px', color: '#004E7C', fontWeight: 700, fontSize: '14px' }}>Watch your email for reminders</p>
+                          <p style={{ margin: 0, color: '#1E293B', fontSize: '13.5px', lineHeight: 1.5 }}>
+                            We will send you a reminder <strong>3 days before</strong> your session and again <strong>on the day of the session</strong>, with the Zoom link or location and anything you may need to bring.
+                          </p>
+                        </div>
+                      </React.Fragment>
+                    ) : (
+                      <React.Fragment>
+                        <p style={{ color: '#666', fontSize: '16px', marginBottom: '8px' }}>
+                          One more step -- please complete your registration so we can reserve your spot.
+                        </p>
+                        <p style={{ color: '#555', fontSize: '14px', marginBottom: '24px' }}>
+                          Please remember to register each person who will be attending.
+                        </p>
+                        <button
+                          onClick={() => {
+                            setShowSignupModal(false);
+                            setSubmitSuccess(false);
+                            openRegistration(lastSignupDocId, lastSignupEventId, 'event', prefillStash || undefined);
+                          }}
+                          style={{
+                            display: 'inline-block', padding: '14px 32px',
+                            background: 'linear-gradient(135deg, #004E7C, #0066a1)',
+                            color: 'white', border: 'none', borderRadius: '50px',
+                            fontWeight: '600', fontSize: '16px', cursor: 'pointer',
+                            transition: 'transform 0.15s, box-shadow 0.15s',
+                            boxShadow: '0 2px 8px rgba(0, 78, 124, 0.3)',
+                            marginBottom: '12px'
+                          }}
+                          onMouseOver={(e) => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,78,124,0.4)'; }}
+                          onMouseOut={(e) => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,78,124,0.3)'; }}
+                        >
+                          Complete Registration
+                        </button>
+                        <br />
+                      </React.Fragment>
+                    )}
                     <button
                       onClick={() => { setShowSignupModal(false); setSubmitSuccess(false); }}
                       style={{
@@ -1735,6 +1861,118 @@
                       </div>
                     </div>
 
+                    {/* ── Inline registration fields for non-Parent/Guardian (v48.0.0) ──
+                        When role !== Parent/Guardian, we collect registration info here
+                        so the signup can be immediately confirmed without a follow-up email. */}
+                    {formData.registrantType && !roleNeedsRegistration(formData.registrantType) && (
+                      <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '12px', padding: '18px', marginBottom: '20px' }}>
+                        <h3 style={{ color: '#004E7C', fontSize: '15px', fontWeight: 'bold', marginBottom: '4px', marginTop: 0 }}>Tell us a bit more</h3>
+                        <p style={{ color: '#555', fontSize: '13px', marginBottom: '16px' }}>This helps us track training impact. Your signup will be confirmed immediately.</p>
+
+                        {/* Address */}
+                        <div style={{ marginBottom: '14px' }}>
+                          <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Street Address</label>
+                          <input type="text" value={formData.streetAddress}
+                            onChange={(e) => handleFormChange('streetAddress', e.target.value)}
+                            disabled={submitting} placeholder="Your answer"
+                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: submitting ? 0.6 : 1 }} />
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', marginBottom: '14px' }}>
+                          <div style={{ flex: 2 }}>
+                            <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>City <span style={{ color: '#DC2626' }}>*</span></label>
+                            <input type="text" required value={formData.city}
+                              onChange={(e) => handleFormChange('city', e.target.value)}
+                              disabled={submitting} placeholder="Your answer"
+                              style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: submitting ? 0.6 : 1 }} />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Zip Code <span style={{ color: '#DC2626' }}>*</span></label>
+                            <input type="text" required value={formData.zipCode}
+                              onChange={(e) => handleFormChange('zipCode', e.target.value)}
+                              disabled={submitting} placeholder="96XXX"
+                              style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: submitting ? 0.6 : 1 }} />
+                          </div>
+                        </div>
+
+                        {/* Reason for Attending */}
+                        <div style={{ marginBottom: '14px' }}>
+                          <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Reason for Attending <span style={{ color: '#DC2626' }}>*</span></label>
+                          <select required value={formData.reasonForAttending}
+                            onChange={(e) => handleFormChange('reasonForAttending', e.target.value)}
+                            disabled={submitting}
+                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', background: 'white', opacity: submitting ? 0.6 : 1 }}>
+                            <option value="">-- Select --</option>
+                            {['Parent/Guardian', 'Surrogate Parent', 'Grandparent', 'Student', 'Professional', 'Other'].map(r => (
+                              <option key={r} value={r}>{r}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Prior Training */}
+                        <div style={{ marginBottom: '14px' }}>
+                          <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Prior LDAH training in the past 12 months?</label>
+                          <div style={{ display: 'flex', gap: '16px' }}>
+                            {['No', 'Yes'].map(val => (
+                              <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
+                                <input type="radio" name="inlinePriorTraining" value={val}
+                                  checked={formData.priorTraining === val}
+                                  onChange={(e) => handleFormChange('priorTraining', e.target.value)}
+                                  disabled={submitting}
+                                  style={{ width: '16px', height: '16px', cursor: submitting ? 'not-allowed' : 'pointer' }} />
+                                <span style={{ fontSize: '14px', color: '#374151' }}>{val}</span>
+                              </label>
+                            ))}
+                          </div>
+                          {formData.priorTraining === 'Yes' && (
+                            <div style={{ marginTop: '10px', paddingLeft: '24px' }}>
+                              <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '13px' }}>Date of last training</label>
+                              <input type="date" value={formData.priorTrainingDate}
+                                onChange={(e) => handleFormChange('priorTrainingDate', e.target.value)}
+                                disabled={submitting}
+                                style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: submitting ? 0.6 : 1 }} />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* How Heard */}
+                        <div style={{ marginBottom: '14px' }}>
+                          <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>How did you hear about this training? <span style={{ color: '#DC2626' }}>*</span></label>
+                          <select required value={formData.howHeard}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              handleFormChange('howHeard', v);
+                              if (v !== 'Other') handleFormChange('howHeardOther', '');
+                            }}
+                            disabled={submitting}
+                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', background: 'white', opacity: submitting ? 0.6 : 1 }}>
+                            <option value="">-- Select --</option>
+                            {['Agency', 'Newspaper', 'School', 'Radio', 'Website', 'Facebook', 'Other'].map(h => (
+                              <option key={h} value={h}>{h}</option>
+                            ))}
+                          </select>
+                          {formData.howHeard === 'Other' && (
+                            <div style={{ marginTop: '10px' }}>
+                              <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '13px' }}>Please specify <span style={{ color: '#DC2626' }}>*</span></label>
+                              <input type="text" required value={formData.howHeardOther} maxLength="200"
+                                onChange={(e) => handleFormChange('howHeardOther', e.target.value)}
+                                disabled={submitting} placeholder="Tell us how you heard about us"
+                                style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: submitting ? 0.6 : 1 }} />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Accommodations */}
+                        <div style={{ marginBottom: '0' }}>
+                          <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Accommodations Needed</label>
+                          <textarea value={formData.accommodations}
+                            onChange={(e) => handleFormChange('accommodations', e.target.value)}
+                            disabled={submitting} rows="3"
+                            placeholder="Please let us know at least 2 weeks prior to the event..."
+                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', fontFamily: 'inherit', resize: 'vertical', opacity: submitting ? 0.6 : 1 }} />
+                        </div>
+                      </div>
+                    )}
+
                     {/* Email */}
                     <div style={{ marginBottom: '20px' }}>
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
@@ -1745,6 +1983,7 @@
                         required
                         value={formData.email}
                         onChange={(e) => handleFormChange('email', e.target.value)}
+                        onBlur={handleEmailBlur}
                         disabled={submitting}
                         placeholder="Your answer"
                         style={{
@@ -1756,6 +1995,16 @@
                           opacity: submitting ? 0.6 : 1
                         }}
                       />
+                      {/* Email-blur prefill banner (v48.0.0) */}
+                      {emailPrefillBanner && !emailPrefillDismissed && (
+                        <div style={{ marginTop: '8px', background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: '8px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#92400E' }}>
+                          <span>Welcome back, {emailPrefillBanner.firstName} — we've pre-filled some fields below from your last visit. Edit anything that's changed.</span>
+                          <button type="button" onClick={() => setEmailPrefillDismissed(true)}
+                            style={{ background: 'none', border: 'none', color: '#92400E', cursor: 'pointer', fontWeight: 700, fontSize: '16px', lineHeight: 1, padding: '0 4px', flexShrink: 0 }}
+                            aria-label="Dismiss banner"
+                          >x</button>
+                        </div>
+                      )}
                       {prefillApplied ? (
                         <div style={{ marginTop: '6px', fontSize: '13px', color: '#16A34A', fontWeight: 700 }}>Pre-filled from your account on file. You can edit anything below.</div>
                       ) : (

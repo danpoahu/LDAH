@@ -1,5 +1,4 @@
 // Service Worker for LDAH Progressive Web App — STAGE
-// Separate cache namespace from production so STAGE and live don't share cached HTML.
 const CACHE_NAME = 'ldah-stage-v4';
 const urlsToCache = [
   './',
