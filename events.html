@@ -1890,7 +1890,8 @@
                         I am a... *
                       </label>
                       <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                        {['Parent/Guardian', 'Professional', 'Student', 'Community Member'].map(opt => (
+                        {/* Parent Talk Cafe is Parent/Guardian-only */}
+                        {(/parent\s*talk\s*caf[eé]/i.test((signupEvent && signupEvent.title) || '') ? ['Parent/Guardian'] : ['Parent/Guardian', 'Professional', 'Student', 'Community Member']).map(opt => (
                           <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
                             <input type="radio" name="oneTimeRegistrantType" value={opt} required
                               checked={formData.registrantType === opt}
