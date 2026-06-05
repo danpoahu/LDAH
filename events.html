@@ -885,6 +885,24 @@
         setEmailPrefillDismissed(false);
       };
 
+      // Auto-open the SIGNUP modal from a deep-link: ?eventId=X&autoOpen=1
+      // (used by the Learning Labs June homepage popup's "Sign Up Now" button).
+      // Mirrors W2 events.html. Runs once after events load; ignores the
+      // registration token+type flow handled by its own effect above.
+      const autoOpenedRef = React.useRef(false);
+      useEffect(() => {
+        if (autoOpenedRef.current || loading) return;
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('autoOpen') !== '1') return;
+        const eid = params.get('eventId');
+        if (!eid) return;
+        if (params.get('token') && params.get('type')) return; // registration flow owns those links
+        const ev = events.find(e => e.id === eid);
+        if (!ev) return;
+        autoOpenedRef.current = true;
+        handleSignupClick(ev);
+      }, [events, loading]);
+
       const handleFormChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
       };
