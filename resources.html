@@ -663,13 +663,21 @@
           // Only show real partner directory entries on this page.
           const partnerDocs = snapshot.docs.filter(doc => {
             const d = doc.data() || {};
-            return (d.name || '').trim() !== '';
+            // Exclude archived partners from the public directory.
+            return (d.name || '').trim() !== '' && d.archived !== true;
           });
-          resourcesData = partnerDocs.map((doc) => ({
+          resourcesData = partnerDocs.map((doc) => {
+            const data = doc.data();
+            // Canonical multi-type: prefer types[] array, fall back to legacy type.
+            const typesArr = (Array.isArray(data.types) && data.types.length)
+              ? data.types
+              : (data.type ? [data.type] : []);
+            return ({
             id: doc.id,
-            ...doc.data(),
+            ...data,
             name: doc.data().name || '',
-            type: doc.data().type || doc.data().types?.[0] || 'Specialized Resources',
+            types: typesArr,
+            type: typesArr[0] || '',
             person: doc.data().person || '',
             address: doc.data().address || '',
             city: doc.data().city || '',
@@ -681,7 +689,8 @@
             services: doc.data().services || '',
             island: doc.data().island || '',
             logo: doc.data().logo || ''
-          }));
+            });
+          });
           resourcesData.sort((a, b) => a.name.localeCompare(b.name));
         }
 
@@ -712,7 +721,7 @@
           <div class="resource-header" onclick="toggleCard('${resource.id}')">
             ${logoHtml}
             <div class="resource-summary">
-              <div class="resource-type-badge">${resource.type}</div>
+              <div class="resource-type-badge">${(resource.types && resource.types.length ? resource.types.join(' · ') : (resource.type || ''))}</div>
               <h3 class="resource-name">${resource.name}</h3>
               <div class="resource-meta">
                 <span>📍 ${displayIsland}</span>
@@ -765,9 +774,9 @@
           resourceIsland === currentIslandFilter.toLowerCase() ||
           (currentIslandFilter !== 'all' && isStatewide);
         
-        const resourceType = (resource.type || '').toLowerCase();
-        const matchesType = currentTypeFilter === 'all' || 
-          resourceType.includes(currentTypeFilter.toLowerCase());
+        const matchesType = currentTypeFilter === 'all' ||
+          (Array.isArray(resource.types) && resource.types.some(t => (t || '').toLowerCase() === currentTypeFilter.toLowerCase())) ||
+          (resource.type || '').toLowerCase().includes(currentTypeFilter.toLowerCase());
         
         const searchLower = searchQuery.toLowerCase();
         const matchesSearch = searchQuery === '' || 
@@ -797,6 +806,49 @@
     }
 
     // Set up filter buttons
+    // Build the Type filter pills from the types actually present on the
+    // resources matching the current island filter — so no empty type button
+    // shows and they always match the live data. (2026-06-06)
+    function generateTypeFilters() {
+      const container = document.getElementById('typeFilters');
+      if (!container) return;
+      const typeSet = new Set();
+      resourcesData.forEach(resource => {
+        if (resource.archived) return;
+        const resourceIsland = (resource.island || '').toLowerCase();
+        const isStatewide = !resource.island || resourceIsland === 'statewide';
+        const matchesIsland = currentIslandFilter === 'all' ||
+          resourceIsland === currentIslandFilter.toLowerCase() ||
+          (currentIslandFilter !== 'all' && isStatewide);
+        if (!matchesIsland) return;
+        const arr = (Array.isArray(resource.types) && resource.types.length)
+          ? resource.types
+          : (resource.type ? [resource.type] : []);
+        arr.forEach(t => { const v = (t || '').toString().trim(); if (v) typeSet.add(v); });
+      });
+      const sorted = Array.from(typeSet).sort((a, b) => a.localeCompare(b));
+      if (currentTypeFilter !== 'all' && !typeSet.has(currentTypeFilter)) currentTypeFilter = 'all';
+      let html = `<button class="filter-pill${currentTypeFilter === 'all' ? ' active' : ''}" data-filter="all">All</button>`;
+      sorted.forEach(t => {
+        const esc = t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        html += `<button class="filter-pill${t === currentTypeFilter ? ' active' : ''}" data-filter="${esc}">${esc}</button>`;
+      });
+      container.innerHTML = html;
+      setupTypeFilters();
+    }
+
+    // Bind clicks on the dynamically-generated type pills (re-run each rebuild).
+    function setupTypeFilters() {
+      document.querySelectorAll('#typeFilters .filter-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#typeFilters .filter-pill').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentTypeFilter = btn.dataset.filter;
+          filterAndRender();
+        });
+      });
+    }
+
     function setupFilters() {
       // Island filters
       document.querySelectorAll('#islandFilters .filter-pill').forEach(btn => {
@@ -804,35 +856,22 @@
           document.querySelectorAll('#islandFilters .filter-pill').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           currentIslandFilter = btn.dataset.filter;
-          
-          // Show/hide type filter based on island selection
+
+          // Type filters appear once an island is chosen; build them from that
+          // island's resources so every pill returns at least one card.
           const typeSection = document.getElementById('typeFilterSection');
           if (currentIslandFilter !== 'all') {
+            currentTypeFilter = 'all';
+            generateTypeFilters();
             typeSection.style.display = 'block';
-            // Trigger reflow for transition
-            typeSection.offsetHeight;
+            typeSection.offsetHeight; // reflow for transition
             typeSection.style.opacity = '1';
           } else {
             typeSection.style.opacity = '0';
-            setTimeout(() => {
-              typeSection.style.display = 'none';
-            }, 300);
-            // Reset type filter to 'all' when hiding
+            setTimeout(() => { typeSection.style.display = 'none'; }, 300);
             currentTypeFilter = 'all';
-            document.querySelectorAll('#typeFilters .filter-pill').forEach(b => b.classList.remove('active'));
-            document.querySelector('#typeFilters .filter-pill[data-filter="all"]').classList.add('active');
           }
-          
-          filterAndRender();
-        });
-      });
 
-      // Type filters
-      document.querySelectorAll('#typeFilters .filter-pill').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('#typeFilters .filter-pill').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          currentTypeFilter = btn.dataset.filter;
           filterAndRender();
         });
       });
