@@ -43,6 +43,33 @@
       animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== Agenda events list (v48.3.0 redesign) ===== */
+    .ev-month{padding:16px 4px 10px;}
+    .ev-month span{font-size:13px;font-weight:800;color:#004E7C;letter-spacing:1px;text-transform:uppercase;}
+    .ev-month .ev-ln{height:2px;background:linear-gradient(90deg,#0D7A7A,transparent);border-radius:2px;margin-top:5px;}
+    .ev-card{background:transparent;border:1.5px solid rgba(0,78,124,.28);border-radius:20px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 10px rgba(15,23,42,.05);}
+    .ev-row{display:flex;align-items:stretch;border-bottom:1px solid #E2E8F0;}
+    .ev-row:last-child{border-bottom:0;}
+    .ev-tile{flex:0 0 66px;background:linear-gradient(160deg,#004E7C,#0D7A7A);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 4px;text-align:center;}
+    .ev-tile .ev-mo{font-size:11px;font-weight:800;letter-spacing:1px;opacity:.92;}
+    .ev-tile .ev-dy{font-size:25px;font-weight:800;line-height:1;margin-top:2px;}
+    .ev-tile.ev-ong{background:linear-gradient(160deg,#0D7A7A,#0891B2);}
+    .ev-tile.ev-ong .ev-dy{font-size:14px;line-height:1.15;margin-top:4px;}
+    .ev-tile.ev-flyer{background:linear-gradient(160deg,#b8860b,#FBBF24);color:#3b2f00;}
+    .ev-tile.ev-flyer .ev-dy{font-size:13px;margin-top:3px;}
+    .ev-body{flex:1;padding:13px 6px 13px 14px;min-width:0;cursor:pointer;}
+    .ev-title{font-size:15.5px;font-weight:800;color:#004E7C;line-height:1.25;margin:0 0 7px;}
+    .ev-line{display:flex;align-items:center;gap:7px;font-size:12.5px;color:#475569;font-weight:600;margin-top:3px;}
+    .ev-line svg{flex:0 0 auto;}
+    .ev-vpill{font-size:10.5px;font-weight:800;color:#0891B2;background:#E0F2FE;padding:1px 7px;border-radius:999px;margin-left:2px;}
+    .ev-flyerlink{display:inline-flex;align-items:center;gap:5px;margin-top:9px;font-size:12.5px;font-weight:700;color:#0066a1;cursor:pointer;background:none;border:0;padding:0;font-family:inherit;}
+    .ev-flyerlink:hover{text-decoration:underline;}
+    .ev-aside{flex:0 0 auto;display:flex;align-items:center;padding:0 12px;}
+    .ev-signup{border:0;background:linear-gradient(135deg,#004E7C,#0D7A7A);color:#fff;font-weight:800;font-size:12.5px;padding:10px 15px;border-radius:999px;cursor:pointer;box-shadow:0 2px 8px rgba(0,78,124,.25);font-family:inherit;}
+    .ev-chevron{flex:0 0 auto;display:flex;align-items:center;padding-right:12px;color:#cbd5e1;cursor:pointer;}
+    .ev-row.ev-expired{opacity:.55;}
+    .ev-row.ev-expired .ev-title{text-decoration:line-through;}
   </style>
   <script defer src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script defer src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -289,6 +316,47 @@
       }
       const expired = iso ? new Date(iso + 'T23:59:59') < new Date() : false;
       return { when, time, expired };
+    };
+
+    // ===== Agenda (events list) helpers — v48.3.0 redesign =====
+    const DOW_ABBR = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    const ORDINAL_ABBR = { 1: '1ST', 2: '2ND', 3: '3RD', 4: '4TH', 5: '5TH' };
+    const evLooksVirtual = (s) => !!(s && /\b(online|virtual|zoom|facebook|fb|webinar|teams|google meet|livestream|live stream)\b/i.test(s));
+    const evToIso = (v) => {
+      if (!v) return null;
+      let d = null;
+      if (v instanceof Date) d = v;
+      else if (typeof v === 'object' && typeof v.toDate === 'function') d = v.toDate(); // Firestore Timestamp
+      else if (typeof v === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
+        return parseSignupDateString(v);
+      }
+      if (d && !isNaN(d.getTime())) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+      return null;
+    };
+    const evTileFromIso = (iso) => {
+      if (!iso) return null;
+      const d = new Date(iso + 'T00:00:00');
+      if (isNaN(d.getTime())) return null;
+      return { mo: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(), dy: String(d.getDate()) };
+    };
+    const evMonthLabel = (iso) => {
+      if (!iso) return '';
+      const d = new Date(iso + 'T00:00:00');
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    };
+    // "June 10, 2026 - Navigating Transitions - 5:00 PM" -> "Navigating Transitions"
+    const evSessionLabel = (ds) => {
+      if (!ds) return '';
+      const rem = ds
+        .replace(/(\d{1,2}(?::\d{2})?\s*(?:am|pm)\s*[-–]\s*\d{1,2}(?::\d{2})?\s*(?:am|pm))/i, '')
+        .replace(/\b\d{1,2}(?::\d{2})?\s*(?:am|pm)\b/i, '');
+      const parts = rem.split(/\s*[-–]\s*/).map(p => p.trim()).filter(Boolean);
+      if (parts.length <= 1) return '';
+      return parts.slice(1).join(' · ').replace(/[,\s]+$/, '').trim();
     };
 
     const EventsApp = () => {
@@ -1296,229 +1364,148 @@
                   </div>
                 )}
 
-                {activeEvents.length > 0 ? (
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '18px',
-                    padding: '12px 4px 32px'
-                  }}>
-                    {activeEvents.map((event, _idx) => {
-                      const _accepts = !event._isFlyerOnly && (
-                        event._isRecurring ||
-                        (event.signupDates && event.signupDates.length > 0)
+                {activeEvents.length > 0 ? (() => {
+                  let lastMonth = '';
+                  const out = [];
+                  activeEvents.forEach((event, _idx) => {
+                    const isFlyer = !!event._isFlyerOnly;
+                    const isRecurring = !!event._isRecurring && !isFlyer;
+                    const _accepts = !isFlyer && (isRecurring || (event.signupDates && event.signupDates.length > 0));
+
+                    // Month-grouping anchor for this event
+                    let anchorIso = null;
+                    if (isRecurring) anchorIso = evToIso(event._nextDate);
+                    else if (event.signupDates && event.signupDates.length > 0) anchorIso = evToIso(event.signupDates[0]);
+                    else if (event.eventDate) anchorIso = evToIso(event.eventDate);
+                    const monthLbl = evMonthLabel(anchorIso);
+                    if (monthLbl && monthLbl !== lastMonth) {
+                      lastMonth = monthLbl;
+                      out.push(
+                        <div className="ev-month" key={'m-' + _idx}>
+                          <span>{monthLbl}</span>
+                          <div className="ev-ln"></div>
+                        </div>
                       );
-                      return (
-                        <article
-                          key={event.id || _idx}
-                          onClick={() => setSelectedEvent(event)}
-                          style={{
-                            backgroundColor: 'white',
-                            borderRadius: '20px',
-                            overflow: 'hidden',
-                            boxShadow: '0 4px 14px rgba(15,23,42,.08)',
-                            cursor: 'pointer',
-                            transition: 'transform .15s, box-shadow .15s',
-                            opacity: isPastEvents ? 0.88 : 1
-                          }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                            e.currentTarget.style.boxShadow = '0 10px 26px rgba(15,23,42,.12)';
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)';
-                            e.currentTarget.style.boxShadow = '0 4px 14px rgba(15,23,42,.08)';
-                          }}
-                        >
-                          {event.imageUrl && (
-                            <div style={{ position: 'relative', backgroundColor: '#F8FAFC' }}>
-                              <img
-                                src={event.imageUrl}
-                                alt={event.title}
-                                style={{
-                                  width: '100%',
-                                  height: 'auto',
-                                  maxHeight: '340px',
-                                  objectFit: 'contain',
-                                  display: 'block',
-                                  filter: isPastEvents ? 'grayscale(40%)' : 'none'
-                                }}
-                              />
-                              {event._isRecurring && !event._isFlyerOnly && (
-                                <span style={{
-                                  position: 'absolute', top: '12px', left: '12px',
-                                  backgroundColor: '#0D7A7A', color: 'white',
-                                  padding: '4px 11px', borderRadius: '10px',
-                                  fontSize: '11px', fontWeight: '800',
-                                  letterSpacing: '.04em', textTransform: 'uppercase',
-                                  boxShadow: '0 2px 6px rgba(0,0,0,.18)'
-                                }}>Ongoing</span>
-                              )}
-                              {event._isFlyerOnly && (
-                                <span style={{
-                                  position: 'absolute', top: '12px', left: '12px',
-                                  backgroundColor: '#FBBF24', color: '#004E7C',
-                                  padding: '4px 11px', borderRadius: '10px',
-                                  fontSize: '11px', fontWeight: '800',
-                                  letterSpacing: '.04em', textTransform: 'uppercase',
-                                  boxShadow: '0 2px 6px rgba(0,0,0,.18)'
-                                }}>Info</span>
-                              )}
+                    }
+
+                    // Build the rows for this event card
+                    const rows = [];
+                    if (isRecurring && Array.isArray(event.schedules) && event.schedules.length > 0) {
+                      event.schedules.forEach((sch, _si) => {
+                        const line = formatScheduleLine(sch);
+                        if (!line) return;
+                        let mo = 'EVERY';
+                        if (sch.frequency !== 'weekly') mo = ORDINAL_ABBR[sch.weekOfMonth] || 'EACH';
+                        rows.push({
+                          key: 'r' + _si,
+                          tileClass: 'ev-ong',
+                          tileMo: mo,
+                          tileDy: DOW_ABBR[sch.dayOfWeek] || '',
+                          title: event.title,
+                          timeText: [line.when, line.time].filter(Boolean).join(' · '),
+                          whereText: line.where || '',
+                          virtual: evLooksVirtual(line.where),
+                          expired: false,
+                          signup: () => handleRecurringSignupClick(event)
+                        });
+                      });
+                    } else if (!isFlyer && Array.isArray(event.signupDates) && event.signupDates.length > 0) {
+                      event.signupDates.forEach((ds, _di) => {
+                        const row = formatSignupDateRow(ds);
+                        const tile = evTileFromIso(evToIso(ds));
+                        const label = evSessionLabel(ds);
+                        rows.push({
+                          key: 'r' + _di,
+                          tileClass: '',
+                          tileMo: tile ? tile.mo : '',
+                          tileDy: tile ? tile.dy : '•',
+                          title: label ? (event.title + ' · ' + label) : event.title,
+                          timeText: (row && row.time) ? row.time : (row ? row.when : ds),
+                          whereText: '',
+                          virtual: evLooksVirtual(ds),
+                          expired: row ? row.expired : false,
+                          signup: () => handleSignupClick(event)
+                        });
+                      });
+                    } else if (isFlyer) {
+                      rows.push({
+                        key: 'rf',
+                        tileClass: 'ev-flyer',
+                        tileMo: 'INFO',
+                        tileDy: 'Flyer',
+                        title: event.title,
+                        timeText: event.eventDate ? formatDate(event.eventDate) : '',
+                        whereText: '',
+                        virtual: false,
+                        expired: false,
+                        signup: null
+                      });
+                    } else if (event.eventDate) {
+                      const tile = evTileFromIso(evToIso(event.eventDate));
+                      rows.push({
+                        key: 'rd',
+                        tileClass: '',
+                        tileMo: tile ? tile.mo : '',
+                        tileDy: tile ? tile.dy : '•',
+                        title: event.title,
+                        timeText: formatDate(event.eventDate),
+                        whereText: '',
+                        virtual: false,
+                        expired: false,
+                        signup: null
+                      });
+                    }
+                    if (rows.length === 0) return;
+
+                    out.push(
+                      <div className="ev-card" key={event.id || _idx} style={{ opacity: isPastEvents ? 0.85 : 1 }}>
+                        {rows.map((r) => (
+                          <div className={'ev-row' + (r.expired ? ' ev-expired' : '')} key={r.key}>
+                            <div className={'ev-tile ' + r.tileClass}>
+                              <span className="ev-mo">{r.tileMo}</span>
+                              <span className="ev-dy">{r.tileDy}</span>
                             </div>
-                          )}
-                          <div style={{ padding: '14px 18px 18px' }}>
-                            <h3 style={{
-                              margin: '0 0 6px',
-                              fontSize: '17px',
-                              fontWeight: '800',
-                              color: '#004E7C',
-                              letterSpacing: '-.01em',
-                              lineHeight: '1.25'
-                            }}>{event.title}</h3>
-                            {event._isRecurring && !event._isFlyerOnly && Array.isArray(event.schedules) && event.schedules.length > 0 && (
-                              <ul style={{
-                                listStyle: 'none',
-                                padding: 0,
-                                margin: '0 0 14px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '6px'
-                              }}>
-                                {event.schedules.map((sch, _si) => {
-                                  const line = formatScheduleLine(sch);
-                                  if (!line) return null;
-                                  return (
-                                    <li key={_si} style={{
-                                      fontSize: '13px',
-                                      color: '#0F172A',
-                                      lineHeight: '1.35',
-                                      display: 'flex',
-                                      flexWrap: 'wrap',
-                                      alignItems: 'baseline',
-                                      gap: '6px'
-                                    }}>
-                                      <span style={{ color: '#0D7A7A', fontWeight: '800', minWidth: '110px' }}>{line.when}</span>
-                                      <span style={{ color: '#475569', fontWeight: '600' }}>{line.time}</span>
-                                      {line.where && (
-                                        <span style={{ color: '#64748B', fontWeight: '500', flex: '1 1 100%', paddingLeft: '0' }}>{line.where}</span>
-                                      )}
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            )}
-                            {!event._isRecurring && Array.isArray(event.signupDates) && event.signupDates.length > 0 && (
-                              <ul style={{
-                                listStyle: 'none',
-                                padding: 0,
-                                margin: '0 0 14px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '6px'
-                              }}>
-                                {event.signupDates.map((ds, _di) => {
-                                  const row = formatSignupDateRow(ds);
-                                  if (!row) return null;
-                                  return (
-                                    <li key={_di} style={{
-                                      fontSize: '13px',
-                                      lineHeight: '1.35',
-                                      display: 'flex',
-                                      flexWrap: 'wrap',
-                                      alignItems: 'baseline',
-                                      gap: '8px',
-                                      textDecoration: row.expired ? 'line-through' : 'none',
-                                      opacity: row.expired ? 0.55 : 1
-                                    }}>
-                                      <span style={{ color: '#0D7A7A', fontWeight: '800', minWidth: '110px' }}>{row.when}</span>
-                                      {row.time && (
-                                        <span style={{ color: '#475569', fontWeight: '600' }}>{row.time}</span>
-                                      )}
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            )}
-                            {!event._isRecurring && (!event.signupDates || event.signupDates.length === 0) && event.eventDate && (
-                              <p style={{
-                                margin: '0 0 14px',
-                                fontSize: '13px',
-                                color: '#475569',
-                                fontWeight: '600'
-                              }}>{formatDate(event.eventDate)}</p>
-                            )}
-                            {!isPastEvents && (
-                              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}
-                                  style={{
-                                    flex: '1 1 130px',
-                                    backgroundColor: 'white',
-                                    color: '#004E7C',
-                                    border: '2px solid #004E7C',
-                                    borderRadius: '22px',
-                                    padding: '10px 18px',
-                                    fontSize: '14px',
-                                    fontWeight: '700',
-                                    cursor: 'pointer',
-                                    transition: 'all .15s'
-                                  }}
-                                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#004E7C'; e.currentTarget.style.color = 'white'; }}
-                                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = '#004E7C'; }}
-                                >
-                                  View Flyer
-                                </button>
-                                {_accepts && event._isRecurring ? (
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); handleRecurringSignupClick(event); }}
-                                    style={{
-                                      flex: '1 1 130px',
-                                      backgroundColor: '#0D7A7A',
-                                      color: 'white',
-                                      border: 'none',
-                                      borderRadius: '22px',
-                                      padding: '10px 18px',
-                                      fontSize: '14px',
-                                      fontWeight: '700',
-                                      cursor: 'pointer',
-                                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                                      transition: 'all .15s'
-                                    }}
-                                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#0a5f5f'; }}
-                                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#0D7A7A'; }}
-                                  >
-                                    Sign Up
-                                  </button>
-                                ) : _accepts ? (
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); handleSignupClick(event); }}
-                                    style={{
-                                      flex: '1 1 130px',
-                                      backgroundColor: '#0D7A7A',
-                                      color: 'white',
-                                      border: 'none',
-                                      borderRadius: '22px',
-                                      padding: '10px 18px',
-                                      fontSize: '14px',
-                                      fontWeight: '700',
-                                      cursor: 'pointer',
-                                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                                      transition: 'all .15s'
-                                    }}
-                                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#0a5f5f'; }}
-                                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#0D7A7A'; }}
-                                  >
-                                    Sign Up
-                                  </button>
-                                ) : null}
+                            <div className="ev-body" onClick={() => setSelectedEvent(event)}>
+                              <p className="ev-title">{r.title}</p>
+                              {r.timeText && (
+                                <div className="ev-line">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D7A7A" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                                  {r.timeText}
+                                </div>
+                              )}
+                              {r.whereText && (
+                                <div className="ev-line">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="2"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                  {r.whereText}{r.virtual && <span className="ev-vpill">VIRTUAL</span>}
+                                </div>
+                              )}
+                              {!r.whereText && r.virtual && (
+                                <div className="ev-line">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="2"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                  Online <span className="ev-vpill">VIRTUAL</span>
+                                </div>
+                              )}
+                              <button type="button" className="ev-flyerlink" onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M14 2v6h6"></path></svg>
+                                View Flyer
+                              </button>
+                            </div>
+                            {(!isPastEvents && _accepts && r.signup && !r.expired) ? (
+                              <div className="ev-aside">
+                                <button type="button" className="ev-signup" onClick={(e) => { e.stopPropagation(); r.signup(); }}>Sign Up</button>
+                              </div>
+                            ) : (
+                              <div className="ev-chevron" onClick={() => setSelectedEvent(event)}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
                               </div>
                             )}
                           </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                ) : null}
+                        ))}
+                      </div>
+                    );
+                  });
+                  return <div style={{ padding: '4px 4px 32px' }}>{out}</div>;
+                })() : null}
               </>
             )}
 
@@ -3346,7 +3333,7 @@
           {/* ───────────────────────────────────────────────────────────────── */}
 
           {/* Support Our Mission */}
-          <div style={{maxWidth: '480px', margin: '2rem auto', padding: '1.5rem', background: 'white', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', textAlign: 'center'}}>
+          <div style={{maxWidth: '480px', margin: '2rem auto', padding: '1.5rem', background: 'transparent', border: '1.5px solid rgba(0,78,124,0.28)', borderRadius: '16px', boxShadow: '0 2px 10px rgba(15,23,42,0.05)', textAlign: 'center'}}>
             <h2 style={{fontSize: '1.1rem', fontWeight: '700', color: '#004E7C', marginBottom: '0.75rem'}}>Support Our Mission</h2>
             <p style={{color: '#374151', fontSize: '0.88rem', marginBottom: '1rem', lineHeight: '1.6'}}>Your generous donation helps us empower families through information, training, and advocacy.</p>
             <a href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" style={{display: 'inline-block', background: 'linear-gradient(135deg, #FF9B21 0%, #f59e0b 100%)', color: 'white', textDecoration: 'none', padding: '12px 28px', borderRadius: '50px', fontSize: '14px', fontWeight: '700', transition: 'transform 0.2s, box-shadow 0.2s'}} onMouseOver={(e) => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(255,155,33,0.4)'; }} onMouseOut={(e) => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none'; }}>
