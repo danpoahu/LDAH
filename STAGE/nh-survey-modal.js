@@ -501,6 +501,10 @@
                 }
             });
         });
+
+        // Live phone-number auto-formatting on the contact phone field.
+        var phoneEl = $('#nhSurveyContactPhone', root);
+        if (phoneEl && window.ldahAttachPhoneFormat) window.ldahAttachPhoneFormat(phoneEl);
     }
 
     function injectMarkup() {

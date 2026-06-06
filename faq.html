@@ -50,6 +50,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="js/cms-donate.js" defer></script>
   <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="./formatters.js"></script>
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -398,8 +399,9 @@
                                 );
                               } else if (/[^\s]/.test(contact) && /[\d\(\)\-\s]/.test(contact)) {
                                 const cleanPhone = contact.replace(/\D/g, '');
+                                const displayPhone = window.ldahFormatPhone ? window.ldahFormatPhone(contact) : contact;
                                 return (
-                                  <a href={`tel:${cleanPhone}`} className="text-[#004E7C] underline hover:opacity-70">{contact}</a>
+                                  <a href={`tel:${cleanPhone}`} className="text-[#004E7C] underline hover:opacity-70">{displayPhone}</a>
                                 );
                               } else {
                                 return contact;
