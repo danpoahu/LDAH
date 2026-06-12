@@ -1129,6 +1129,23 @@
           return;
         }
 
+        // Duplicate warning (warn but allow). Fails open — never blocks a signup.
+        try {
+          const _email = (formData.email || '').trim();
+          const _dates = Array.isArray(formData.selectedDates) ? formData.selectedDates : [];
+          if (_email && _dates.length) {
+            const _dr = await fetch('https://us-central1-ldah-932d5.cloudfunctions.net/checkDuplicateEventSignups', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ collection: 'events', eventId: signupEvent.id, email: _email, dates: _dates })
+            });
+            const _dup = _dr.ok ? await _dr.json() : { overlappingDates: [] };
+            if (_dup.overlappingDates && _dup.overlappingDates.length) {
+              const ok = window.confirm("It looks like you're already signed up for " + _dup.overlappingDates.join(', ') + ". Sign up again anyway?");
+              if (!ok) return;
+            }
+          }
+        } catch (err) { /* fail open — proceed */ }
+
         setSubmitting(true);
 
         try {
