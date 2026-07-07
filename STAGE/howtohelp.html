@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LDAH">
+  <meta name="theme-color" content="#004E7C">
+  <title>How to Help — LDAH</title>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-32PRRS0W85"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-32PRRS0W85');
+  </script>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS Icons -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="js/cms-donate.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="./formatters.js"></script>
+  <!-- PayPal JS SDK (Smart Buttons) for membership checkout -->
+  <!-- SANDBOX client-id (fake-money testing on STAGE). Live client-id goes in the LIVE root at go-live only. -->
+  <script src="https://www.paypal.com/sdk/js?client-id=ATtx66b6j9uKJtSvmxCeIP705ig-E6-1gwYdjyGxn9hNy2xsErTC-cFOaz-JWVodiKXkB5eRGcs_ybP8&currency=USD&intent=capture"></script>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Page-specific styles — How to Help / Membership (app-native, mb- prefix, collision-free) */
+    :root {
+      --ocean-deep: #004E7C;
+      --ocean-mid: #0066a1;
+      --ocean-light: #0a80c4;
+      --sunset-coral: #FF9B21;
+      --sunset-warm: #f59e0b;
+      --sand: #FEF3C7;
+      --sand-light: #FFFBEB;
+      --text-soft: #64748B;
+      --plumeria: #FBBF24;
+      --ink: #004E7C;
+    }
+    .mb-btn { padding: 12px 22px; border-radius: 14px; font-weight: 700; text-decoration: none; font-size: 0.95rem; transition: all 0.2s; display: inline-block; cursor: pointer; border: 2px solid #004E7C; text-align: center; }
+    .mb-btn-primary { background: #004E7C; color: #fff; }
+    .mb-btn-primary:hover { background: #003a5c; }
+    .mb-btn-outline { background: rgba(255, 255, 255, 0.25); color: #004E7C; }
+    .mb-btn-outline:hover { background: #004E7C; color: #fff; }
+
+    .mb-head { text-align: center; margin-bottom: 14px; padding: 0 4px; }
+    .mb-badge { display: inline-block; background: #004E7C; color: #fff; padding: 4px 14px; border-radius: 20px; font-weight: 700; font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; }
+    .mb-head h2 { font-size: 1.15rem; color: #004E7C; font-weight: 700; line-height: 1.35; }
+    .mb-head p { color: #4b5563; font-size: 0.82rem; margin-top: 6px; line-height: 1.5; }
+
+    .mb-card { background-color: rgba(255, 255, 255, 0.15); border: 2px solid #004E7C; border-radius: 20px; padding: 20px 22px; backdrop-filter: blur(10px); margin-bottom: 14px; }
+    .mb-letter p { margin-bottom: 12px; font-size: 0.9rem; color: #374151; line-height: 1.6; }
+    .mb-letter p:last-child { margin-bottom: 0; }
+    .mb-greeting { font-weight: 700; color: #004E7C; font-size: 1rem; }
+
+    .mb-tiers { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 14px; }
+    .mb-tier { background-color: rgba(255, 255, 255, 0.2); border: 2px solid #004E7C; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; position: relative; backdrop-filter: blur(10px); transition: all 0.2s; overflow: hidden; }
+    .mb-tier:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); }
+    .mb-tier.mb-feat { border-color: #FF9B21; background-color: rgba(255, 251, 235, 0.45); }
+    .mb-ribbon { position: absolute; top: 16px; right: -32px; transform: rotate(45deg); background: #FF9B21; color: #fff; font-size: 0.6rem; font-weight: 700; padding: 4px 38px; letter-spacing: 0.03em; }
+    .mb-tname { font-weight: 700; font-size: 1.1rem; color: #004E7C; }
+    .mb-price { font-weight: 800; font-size: 1.7rem; color: #004E7C; margin: 4px 0; }
+    .mb-price span { font-size: 0.8rem; font-weight: 600; color: #64748B; }
+    .mb-catag { display: inline-block; background: #FEF3C7; color: #B45309; font-weight: 700; font-size: 0.66rem; padding: 3px 10px; border-radius: 12px; margin-bottom: 8px; }
+    .mb-tier p { color: #4b5563; font-size: 0.85rem; margin-bottom: 14px; line-height: 1.5; }
+    .mb-tier .mb-btn { margin-top: auto; font-size: 0.85rem; padding: 10px 14px; }
+
+    .mb-panel h3 { color: #004E7C; font-size: 1rem; margin-bottom: 10px; font-weight: 700; }
+    .mb-clist { list-style: none; margin: 0; padding: 0; }
+    .mb-clist li { position: relative; padding-left: 26px; margin-bottom: 9px; color: #374151; font-size: 0.85rem; line-height: 1.45; }
+    .mb-clist li:last-child { margin-bottom: 0; }
+    .mb-clist li::before { content: ""; position: absolute; left: 0; top: 6px; width: 12px; height: 12px; border-radius: 4px; background: #004E7C; box-shadow: inset 0 0 0 3px #fff, 0 0 0 1px #004E7C; }
+    .mb-clist.mb-diff li::before { background: #FF9B21; box-shadow: inset 0 0 0 3px #fff, 0 0 0 1px #FF9B21; }
+
+    .mb-closing { text-align: center; }
+    .mb-closing p { font-size: 0.9rem; color: #374151; line-height: 1.6; }
+    .mb-sig { margin-top: 16px; }
+    .mb-name { font-weight: 700; color: #004E7C; font-size: 1rem; }
+    .mb-role { color: #64748B; font-size: 0.85rem; }
+
+    @media (min-width: 640px) {
+      .mb-tiers { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <main id="main-content">
+  <div class="min-h-screen p-2 main-content">
+    <div class="max-w-2xl mx-auto">
+      <!-- Logo Section with Hamburger Menu -->
+      <div class="text-center mb-2 mt-2 relative">
+        <!-- Hamburger Menu Icon -->
+        <button
+          onclick="toggleMenu()"
+          id="menuBtn"
+          class="menu-btn"
+          aria-controls="dropdownMenu"
+          aria-expanded="false"
+          aria-label="Open navigation menu"
+        >
+          <svg id="menuIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+          <svg id="closeIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div id="dropdownMenu" class="dropdown-menu" role="menu" aria-label="Site navigation">
+          <a href="index.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#004E7C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            Home
+          </a>
+          <a href="events.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Events
+          </a>
+          <a href="faq.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            Quick Help
+          </a>
+          <a href="volunteer.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Volunteer
+          </a>
+          <a href="resources.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            Resources
+          </a>
+          <a href="howtohelp.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            How to Help
+          </a>
+          <a href="contact.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            Contact Us
+          </a>
+          <a href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-radius: 0 0 8px 8px;" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF9B21" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            Donate
+          </a>
+        </div>
+
+        <div class="mb-2 flex justify-center">
+          <a href="index.html" style="padding: 16px; display: inline-block; cursor: pointer;">
+            <img
+              src="logo_transparent.png"
+              alt="LDAH Logo"
+              class="app-logo"
+            />
+          </a>
+        </div>
+
+        <h3 class="text-lg font-bold text-[#004E7C] mb-1">
+          How to Help
+        </h3>
+        <p class="text-gray-600 text-xs mb-2">
+          Become a member and invest in stronger families
+        </p>
+      </div>
+
+      <!-- Back Button -->
+      <div class="mb-3">
+        <a href="index.html" style="
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          padding: 8px 16px;
+          cursor: pointer;
+          transition: transform 0.2s;
+          border: 2px solid #004E7C;
+          text-decoration: none;
+          color: #004E7C;
+          font-weight: bold;
+          backdrop-filter: blur(10px);
+          font-size: 14px;
+        " onmouseover="this.style.transform='translateX(-2px)';" onmouseout="this.style.transform='translateX(0)';">
+          <span>←</span>
+          <span>Back to Home</span>
+        </a>
+      </div>
+
+      <!-- MEMBERSHIP: Rosie's letter -->
+      <div class="mb-card mb-letter">
+        <p class="mb-greeting">Dear Friend of Leadership in Disabilities &amp; Achievement of Hawai&lsquo;i (LDAH),</p>
+        <p>For more than five decades, LDAH has been helping families navigate complex educational systems, access critical resources, and advocate for children with disabilities and developmental concerns. Every day, parents turn to LDAH for trusted guidance, training, case advocacy, and support during some of the most important decisions affecting their child&rsquo;s future.</p>
+        <p>As a nonprofit organization, we rely on the generosity of individuals, families, businesses, and community partners to ensure these services remain available throughout Hawai&lsquo;i and the Pacific.</p>
+        <p>LDAH is revamping our membership program by offering parents, professionals, and community members an opportunity to stay connected with the Parent Center network of over 100 parent centers across the nation.</p>
+        <p>We invite you to become a member of LDAH and invest in stronger families, informed advocates, and brighter futures.</p>
+      </div>
+
+      <!-- MEMBERSHIP: tiers -->
+      <div class="mb-head">
+        <span class="mb-badge">Membership Levels</span>
+        <h2>Choose the level that reflects your commitment</h2>
+        <p>Every level includes local &amp; national OSERS resources, monthly IDEA &amp; Hawai&lsquo;i Administrative Rules Chapter 60 materials, current training materials, and our annual newsletter.</p>
+      </div>
+      <div class="mb-tiers">
+        <div class="mb-tier"><div class="mb-tname">Individual</div><div class="mb-price">$50<span> / year</span></div><p>Become part of the LDAH community and support our mission to empower families through education, advocacy, and leadership.</p><a href="#" class="mb-btn mb-btn-outline" onclick="openMembershipModal(event,'Individual',50)">Join as Individual</a></div>
+        <div class="mb-tier mb-feat"><div class="mb-ribbon">CASE ADVOCACY</div><div class="mb-tname">Friend</div><div class="mb-price">$100<span> / year</span></div><span class="mb-catag">Eligible for Case Advocacy Services</span><p>Your membership directly supports families seeking individualized guidance. Members at this level are eligible to receive LDAH Case Advocacy services when needed, plus all Individual benefits.</p><a href="#" class="mb-btn mb-btn-primary" onclick="openMembershipModal(event,'Friend',100)">Become a Friend</a></div>
+        <div class="mb-tier"><div class="mb-tname">Supporter</div><div class="mb-price">$200<span> / year</span></div><p>Help expand parent education, Learning Labs, Parent Talk Caf&eacute;s, community outreach, and educational resources that strengthen family leadership across Hawai&lsquo;i.</p><a href="#" class="mb-btn mb-btn-outline" onclick="openMembershipModal(event,'Supporter',200)">Become a Supporter</a></div>
+        <div class="mb-tier"><div class="mb-tname">Sponsor</div><div class="mb-price">$500<span> / year</span></div><p>Provide meaningful support that helps LDAH respond quickly to families facing educational challenges while expanding statewide programs and outreach.</p><a href="#" class="mb-btn mb-btn-outline" onclick="openMembershipModal(event,'Sponsor',500)">Become a Sponsor</a></div>
+        <div class="mb-tier"><div class="mb-tname">Partner</div><div class="mb-price">$1,000<span> / year</span></div><p>Become a leadership partner in building stronger communities &mdash; helping LDAH develop innovative programs, increase statewide impact, and improve access to information and services for families.</p><a href="#" class="mb-btn mb-btn-outline" onclick="openMembershipModal(event,'Partner',1000)">Become a Partner</a></div>
+        <div class="mb-tier"><div class="mb-tname">Benefactor</div><div class="mb-price">$2,500<span> / year</span></div><p>Our highest level recognizes a transformational investment in LDAH&rsquo;s mission &mdash; sustaining statewide advocacy, family leadership development, early identification initiatives, and critical services for children and families across Hawai&lsquo;i and the Pacific.</p><a href="#" class="mb-btn mb-btn-outline" onclick="openMembershipModal(event,'Benefactor',2500)">Become a Benefactor</a></div>
+      </div>
+
+      <!-- MEMBERSHIP: includes -->
+      <div class="mb-card mb-panel">
+        <h3>Every membership includes</h3>
+        <ul class="mb-clist">
+          <li>Local &amp; national resources and materials from the Office of Special Education and Rehabilitative Services (OSERS)</li>
+          <li>Monthly local resource materials specific to IDEA and Hawai&lsquo;i Administrative Rules Chapter 60</li>
+          <li>Access to current training materials</li>
+          <li>Our annual newsletter</li>
+          <li>Connection to the national network of 100+ parent centers</li>
+          <li><strong>Friend level and beyond:</strong> eligibility for case advocacy services from our highly trained Special Education Consultants</li>
+        </ul>
+      </div>
+
+      <!-- MEMBERSHIP: difference -->
+      <div class="mb-card mb-panel">
+        <h3>Your membership makes a difference</h3>
+        <ul class="mb-clist mb-diff">
+          <li>Empower parents to become confident advocates for their children</li>
+          <li>Provide workshops, Learning Labs, and educational resources</li>
+          <li>Offer case advocacy and technical assistance to families navigating special education</li>
+          <li>Support early childhood screening and family follow-up services</li>
+          <li>Strengthen partnerships with schools, healthcare providers, and community organizations</li>
+          <li>Build future leaders who advocate for inclusive opportunities for all children</li>
+        </ul>
+      </div>
+
+      <!-- MEMBERSHIP: closing + signature -->
+      <div class="mb-card mb-closing">
+        <p>Together, we are creating a Hawai&lsquo;i where every child has the opportunity to achieve their full potential and every family has access to the information and support they deserve. We invite you to join us today in whatever way reflects your commitment to children, families, and our community.</p>
+        <div class="mb-sig">
+          <div style="color:#64748B;margin-bottom:6px;font-size:0.85rem;">With sincere appreciation,</div>
+          <div class="mb-name">Rosie Rowe, Executive Director</div>
+          <div class="mb-role">&amp; The LDAH Team of Parents Supporting Parents</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Membership signup modal -->
+  <div id="membership-modal" class="modal">
+    <div class="modal-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+        <h2 id="mm-title" style="color:var(--ocean-deep);font-size:1.4rem;font-weight:bold;">Become a Member</h2>
+        <button type="button" onclick="closeMembershipModal()" style="background:none;border:none;font-size:1.7rem;line-height:1;cursor:pointer;color:var(--text-soft);">&times;</button>
+      </div>
+      <p id="mm-sub" style="color:var(--text-soft);margin-bottom:1.1rem;"></p>
+      <form id="mm-form" onsubmit="submitMembership(event)">
+        <label style="font-weight:600;display:block;margin-bottom:4px;">Full Name *</label>
+        <input id="mm-name" required autocomplete="name" style="width:100%;padding:11px;border:1px solid #CBD5E1;border-radius:10px;margin-bottom:12px;font-size:1rem;">
+        <label style="font-weight:600;display:block;margin-bottom:4px;">Email *</label>
+        <input id="mm-email" type="email" required autocomplete="email" style="width:100%;padding:11px;border:1px solid #CBD5E1;border-radius:10px;margin-bottom:12px;font-size:1rem;">
+        <label style="font-weight:600;display:block;margin-bottom:4px;">Phone <span style="font-weight:400;color:var(--text-soft);">(optional)</span></label>
+        <input id="mm-phone" type="tel" autocomplete="tel" style="width:100%;padding:11px;border:1px solid #CBD5E1;border-radius:10px;margin-bottom:16px;font-size:1rem;">
+        <button type="submit" id="mm-submit" class="mb-btn mb-btn-primary" style="width:100%;">Continue to Payment</button>
+        <p id="mm-msg" style="color:var(--text-soft);font-size:.85rem;margin-top:10px;text-align:center;line-height:1.5;"></p>
+      </form>
+      <!-- Step 2: PayPal Smart Buttons (shown after the info form is saved) -->
+      <div id="mm-pay-step" style="display:none;">
+        <p id="mm-pay-summary" style="color:var(--text-soft);margin-bottom:1rem;line-height:1.5;"></p>
+        <div id="mm-paypal-buttons" style="min-height:44px;"></div>
+        <p id="mm-pay-msg" style="color:var(--text-soft);font-size:.85rem;margin-top:10px;text-align:center;line-height:1.5;"></p>
+      </div>
+      <!-- Confirmation shown once payment captures -->
+      <div id="mm-success" style="display:none;text-align:center;padding:0.5rem 0;">
+        <h3 style="color:var(--ocean-deep);font-size:1.3rem;margin-bottom:0.5rem;font-weight:bold;">Mahalo!</h3>
+        <p id="mm-success-msg" style="color:var(--text-soft);line-height:1.5;margin-bottom:1.1rem;"></p>
+        <button type="button" onclick="closeMembershipModal()" class="mb-btn mb-btn-primary" style="width:100%;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Hamburger menu functionality
+    function toggleMenu() {
+      const menu = document.getElementById('dropdownMenu');
+      const menuIcon = document.getElementById('menuIcon');
+      const closeIcon = document.getElementById('closeIcon');
+      const btn = document.getElementById('menuBtn');
+
+      if (menu.style.display === 'none' || menu.style.display === '') {
+        menu.style.display = 'block';
+        menuIcon.style.display = 'none';
+        closeIcon.style.display = 'block';
+        btn.setAttribute('aria-expanded', 'true');
+        btn.setAttribute('aria-label', 'Close navigation menu');
+      } else {
+        menu.style.display = 'none';
+        menuIcon.style.display = 'block';
+        closeIcon.style.display = 'none';
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', 'Open navigation menu');
+      }
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function(event) {
+      const menu = document.getElementById('dropdownMenu');
+      const button = event.target.closest('button');
+
+      if (!button && menu.style.display === 'block') {
+        menu.style.display = 'none';
+        document.getElementById('menuIcon').style.display = 'block';
+        document.getElementById('closeIcon').style.display = 'none';
+      }
+    });
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAU3CQ07bCVKlJ1qGak-150kaJEyPKldLk",
+      authDomain: "ldah-932d5.firebaseapp.com",
+      projectId: "ldah-932d5",
+      storageBucket: "ldah-932d5.firebasestorage.app",
+      messagingSenderId: "662130454003",
+      appId: "1:662130454003:web:437576d5a5811ecd8df686"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Sign in anonymously
+    auth.signInAnonymously().catch(error => {
+      console.error('Anonymous auth failed:', error);
+    });
+
+    // Auto-format the name field like other app forms
+    (function () {
+      function wireFormatters() {
+        if (!window.LDAHFormat) return;
+        var el = document.getElementById('mm-name');
+        if (el) window.LDAHFormat.attachFormatter(el, 'name');
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', wireFormatters);
+      } else {
+        wireFormatters();
+      }
+      document.addEventListener('click', function () { setTimeout(wireFormatters, 50); }, true);
+    })();
+  </script>
+
+  </main>
+
+  <!-- Support Our Mission -->
+  <div style="max-width: 480px; margin: 2rem auto; padding: 1.5rem; background: transparent; border: 1.5px solid rgba(0,78,124,0.28); border-radius: 16px; box-shadow: 0 2px 10px rgba(15,23,42,0.05); text-align: center;">
+    <h2 style="font-size: 1.1rem; font-weight: 700; color: #004E7C; margin-bottom: 0.75rem;">Support Our Mission</h2>
+    <p style="color: #374151; font-size: 0.88rem; margin-bottom: 1rem; line-height: 1.6;">Your generous donation helps us empower families through information, training, and advocacy.</p>
+    <a href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: linear-gradient(135deg, #FF9B21 0%, #f59e0b 100%); color: white; text-decoration: none; padding: 12px 28px; border-radius: 50px; font-size: 14px; font-weight: 700; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,155,33,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px;" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>Donate Now
+    </a>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <a href="javascript:void(0)" class="nav-item a11y-nav-btn" aria-label="Accessibility Options" onclick="toggleA11yPanel()">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H13V16H11V22H9V9H3V7H21V9Z"/>
+      </svg>
+      <span>Access</span>
+    </a>
+    <a href="events.html" class="nav-item" aria-label="Events">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+      <span>Events</span>
+    </a>
+    <a href="faq.html" class="nav-item nav-item-qhelp" aria-label="Q-Help">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+      <span>Q-Help</span>
+    </a>
+    <a href="volunteer.html" class="nav-item active" aria-current="page" aria-label="Volunteer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+      <span>Volunteer</span>
+    </a>
+    <a href="resources.html" class="nav-item" aria-label="Resources">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>
+      <span>Resources</span>
+    </a>
+    <a href="contact.html" class="nav-item" aria-label="Contact">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+      </svg>
+      <span>Contact</span>
+    </a>
+  </nav>
+
+  <script>
+    /* Membership capture: record the contributor (pending), then take payment inline
+       via PayPal Smart Buttons. onApprove captures the order and flips the same doc to
+       'paid', which triggers the onMembershipPaid Cloud Function (thank-you email +
+       contact-timeline interaction). onMembershipCreated links/creates the contact. */
+    (function () {
+      var _mmLevel = '', _mmAmount = 0, _mmDocId = null, _mmName = '';
+      function el(id) { return document.getElementById(id); }
+
+      window.openMembershipModal = function (ev, level, amount) {
+        if (ev && ev.preventDefault) ev.preventDefault();
+        _mmLevel = level; _mmAmount = amount; _mmDocId = null; _mmName = '';
+        el('mm-title').textContent = 'Join as ' + level;
+        var sub = el('mm-sub');
+        sub.style.display = '';
+        sub.textContent = level + ' membership — $' + amount + ' per year. Enter your info below, then complete your gift securely through PayPal.';
+        el('mm-msg').textContent = '';
+        var f = el('mm-form'); if (f) { f.reset(); f.style.display = ''; }
+        el('mm-pay-step').style.display = 'none';
+        el('mm-pay-msg').textContent = '';
+        el('mm-success').style.display = 'none';
+        var b = el('mm-submit'); if (b) { b.disabled = false; b.textContent = 'Continue to Payment'; }
+        el('membership-modal').classList.add('active');
+      };
+
+      window.closeMembershipModal = function () {
+        el('membership-modal').classList.remove('active');
+      };
+
+      window.submitMembership = async function (ev) {
+        if (ev && ev.preventDefault) ev.preventDefault();
+        var btn = el('mm-submit');
+        var msg = el('mm-msg');
+        _mmName = el('mm-name').value.trim();
+        var email = el('mm-email').value.trim();
+        var phone = el('mm-phone').value.trim();
+        if (!_mmName || !email) return;
+        btn.disabled = true; btn.textContent = 'Saving…';
+        try {
+          var ref = await firebase.firestore().collection('members').add({
+            name: _mmName, email: email, phone: phone,
+            level: _mmLevel, amount: _mmAmount,
+            status: 'pending', source: 'app-howtohelp',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          _mmDocId = ref.id;
+        } catch (e) {
+          msg.textContent = 'Sorry, something went wrong saving your info. Please try again or call (808) 536-9684.';
+          btn.disabled = false; btn.textContent = 'Continue to Payment';
+          return;
+        }
+        // Advance to the inline PayPal payment step.
+        el('mm-form').style.display = 'none';
+        el('mm-sub').style.display = 'none';
+        el('mm-pay-summary').innerHTML = 'You’re joining as <strong>' + _mmLevel + '</strong> — <strong>$' + _mmAmount + '</strong> per year. Complete your gift below.';
+        el('mm-pay-msg').textContent = '';
+        el('mm-pay-step').style.display = '';
+        renderPayPalButtons();
+      };
+
+      function renderPayPalButtons() {
+        var container = el('mm-paypal-buttons');
+        container.innerHTML = '';
+        if (!window.paypal || !window.paypal.Buttons) {
+          el('mm-pay-msg').innerHTML = 'PayPal is still loading. Please wait a moment and refresh, or call (808) 536-9684.';
+          return;
+        }
+        window.paypal.Buttons({
+          style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
+          createOrder: function (data, actions) {
+            return actions.order.create({
+              purchase_units: [{
+                amount: { value: Number(_mmAmount).toFixed(2), currency_code: 'USD' },
+                description: 'LDAH ' + _mmLevel + ' Membership',
+                custom_id: _mmDocId
+              }]
+            });
+          },
+          onApprove: function (data, actions) {
+            return actions.order.capture().then(function (details) {
+              var orderId = (details && details.id) || data.orderID || '';
+              return firebase.firestore().collection('members').doc(_mmDocId).update({
+                status: 'paid',
+                paypalOrderId: orderId,
+                paidAt: firebase.firestore.FieldValue.serverTimestamp()
+              }).then(showSuccess, showSuccess); // payment captured — thank them either way; staff reconcile if the flag write fails
+            });
+          },
+          onCancel: function () {
+            el('mm-pay-msg').textContent = 'Payment cancelled. You can complete it whenever you’re ready.';
+          },
+          onError: function () {
+            el('mm-pay-msg').innerHTML = 'Something went wrong with PayPal. Please try again or call (808) 536-9684.';
+          }
+        }).render('#mm-paypal-buttons');
+      }
+
+      function showSuccess() {
+        el('mm-pay-step').style.display = 'none';
+        el('mm-success').style.display = '';
+        el('mm-success-msg').innerHTML = 'Mahalo, ' + (_mmName.split(' ')[0] || '') + '! Your <strong>' + _mmLevel + '</strong> membership is confirmed. A thank-you email is on its way.';
+      }
+
+      // Close on backdrop click / Esc
+      document.addEventListener('click', function (e) {
+        var m = document.getElementById('membership-modal');
+        if (m && e.target === m) closeMembershipModal();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeMembershipModal();
+      });
+    })();
+  </script>
+
+  <script src="analytics-tracker.js"></script>
+  <script src="accessibility.js"></script>
+</body>
+</html>
