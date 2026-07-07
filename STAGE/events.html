@@ -238,6 +238,20 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
+    // Signup source attribution: the registration email flow sets its own
+    // signupSource; for everything else derive it from the ?src= URL param
+    // (popup -> event-popup, home/home-hero -> home-hero) and default to
+    // 'direct' so no signup is left unattributed. Mirrors LDAH_W2 events.html.
+    function _resolveSignupSource() {
+      try {
+        var s = (new URLSearchParams(window.location.search).get('src') || '').trim().toLowerCase();
+        if (s === 'popup') return 'event-popup';
+        if (s === 'home' || s === 'home-hero') return 'home-hero';
+        if (s) return s.replace(/[^a-z0-9_-]/g, '').slice(0, 40) || 'direct';
+        return 'direct';
+      } catch (e) { return 'direct'; }
+    }
+
     auth.signInAnonymously().catch(error => {
       console.error('Anonymous auth failed:', error);
     });
@@ -711,6 +725,8 @@
               status: 'confirmed',
               registration: registration,
               registrantType: registration.role || '',
+              // Sibling draft was opened from a registration-token email link
+              signupSource: 'registration-email',
               registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp(),
               timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
@@ -1096,6 +1112,8 @@
               // reads it and skips re-asking "About You" (v47.11).
               role: recurringFormData.registrantType || '',
               status: 'pending',
+              // Attribute the signup origin from the ?src= URL param (defaults to 'direct')
+              signupSource: _resolveSignupSource(),
               timestamp: firebase.firestore.FieldValue.serverTimestamp(),
               programTitle: recurringSignupEvent.title
             });
@@ -1161,6 +1179,8 @@
             // it and skips re-asking "About You" (v47.11).
             role: formData.registrantType || '',
             status: signupStatus,
+            // Attribute the signup origin from the ?src= URL param (defaults to 'direct')
+            signupSource: _resolveSignupSource(),
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             eventTitle: signupEvent.title
           };
