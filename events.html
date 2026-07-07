@@ -727,6 +727,16 @@
           let effectiveToken = regToken;
           if (regSiblingDraft) {
             const draft = regSiblingDraft;
+            // Same-child guard (2026-07-07): if the "another child" is the one just
+            // registered, confirm before adding — stops accidental same-child
+            // duplicates from the "Register Another Child" button.
+            const _prevChild = ((regLastRegistration || {}).childName || '').trim().toLowerCase();
+            const _newChild = ((registration || {}).childName || '').trim().toLowerCase();
+            if (_prevChild && _newChild && _prevChild === _newChild) {
+              if (!window.confirm('It looks like ' + (registration.childName || 'this child') + ' is already registered for this event. Add them again anyway?')) {
+                return; // finally blocks below release submitting + the lock
+              }
+            }
             const newDocRef = await db.collection(collectionName).doc(regEventId).collection('signups').add({
               name: draft.name || '',
               email: draft.email || '',
@@ -829,8 +839,14 @@
           collectionName: collectionName
         };
         setRegSiblingDraft(draft);
+        // Start the "another child" form with the CHILD fields blank (keep the
+        // family info) — a pre-filled child was letting a careless submit create
+        // a duplicate of the same child. (2026-07-07)
+        const anotherChildPrefill = Object.assign({}, regLastRegistration || {}, {
+          childName: '', childAgeRange: '', childGender: '', ethnicity: '', disabilityCategories: []
+        });
         // Open the registration form in draft mode. The sentinel token matches W2's convention.
-        openRegistration('__SIBLING_DRAFT__', regEventId, regType, regLastRegistration, draft);
+        openRegistration('__SIBLING_DRAFT__', regEventId, regType, anotherChildPrefill, draft);
       };
 
       // Auto-open registration from URL params (email links)
