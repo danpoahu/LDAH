@@ -693,6 +693,16 @@
 
       const handleRegSubmit = async (e) => {
         e.preventDefault();
+        // Double-submit guard (2026-07-07): lock synchronously before any await
+        // (a rapid second tap during the async write was creating duplicate
+        // registrations); the finally below always releases it, with a 20s
+        // safety-net timer.
+        if (window.__ldahLock_appReg) return;
+        window.__ldahLock_appReg = true;
+        var __unlockTimer;
+        var __unlock = function () { clearTimeout(__unlockTimer); window.__ldahLock_appReg = false; };
+        __unlockTimer = setTimeout(__unlock, 20000);
+        try {
         // Validate disability checkboxes (Parent/Guardian only)
         if (regFormData.role === 'Parent/Guardian' && regFormData.disabilityCategories.length === 0) {
           setRegDisabilityError(true);
@@ -775,6 +785,7 @@
         } finally {
           setRegSubmitting(false);
         }
+        } finally { __unlock(); }
       };
 
       const handleApplySiblings = async () => {
@@ -1074,6 +1085,17 @@
       const handleRecurringSubmit = async (e) => {
         e.preventDefault();
 
+        // Double-submit guard (2026-07-07): lock synchronously before any await
+        // (a rapid second tap during the async write was creating duplicate
+        // signups); the finally below always releases it, with a 20s
+        // safety-net timer.
+        if (window.__ldahLock_appRecurring) return;
+        window.__ldahLock_appRecurring = true;
+        var __unlockTimer;
+        var __unlock = function () { clearTimeout(__unlockTimer); window.__ldahLock_appRecurring = false; };
+        __unlockTimer = setTimeout(__unlock, 20000);
+        try {
+
         // Validate phone is 10 digits
         const phoneDigits = recurringFormData.phone.replace(/\D/g, '');
         if (phoneDigits.length !== 10) {
@@ -1134,11 +1156,23 @@
         } finally {
           setRecurringSubmitting(false);
         }
+        } finally { __unlock(); }
       };
       // ──────────────────────────────────────────────────────────────────────
 
       const handleSubmitSignup = async (e) => {
         e.preventDefault();
+
+        // Double-submit guard (2026-07-07): the duplicate-check network call runs
+        // before the form locks, so a second tap during that window was creating
+        // duplicate signups. Lock synchronously now (before any await); the
+        // finally below always releases it, with a 20s safety-net timer.
+        if (window.__ldahLock_appSignup) return;
+        window.__ldahLock_appSignup = true;
+        var __unlockTimer;
+        var __unlock = function () { clearTimeout(__unlockTimer); window.__ldahLock_appSignup = false; };
+        __unlockTimer = setTimeout(__unlock, 20000);
+        try {
 
         // Validate phone is 10 digits
         const phoneDigits = formData.phone.replace(/\D/g, '');
@@ -1258,6 +1292,7 @@
         } finally {
           setSubmitting(false);
         }
+        } finally { __unlock(); }
       };
 
       // Reset index when switching between current and past events
