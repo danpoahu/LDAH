@@ -3277,6 +3277,9 @@
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Child's full name <span style={{ color: '#DC2626' }}>*</span></label>
                         <input type="text" required value={regFormData.childName} onChange={(e) => handleRegFormChange('childName', e.target.value)} disabled={regSubmitting}
                           style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: regSubmitting ? 0.6 : 1 }} />
+                        {/* Parents pushed back on being asked for their child's name.
+                            Saying plainly why we need it settled it. (2026-07-14) */}
+                        <div style={{ marginTop: '6px', fontSize: '12px', color: '#6B7280', lineHeight: 1.4 }}>We collect this information for grant purposes only.</div>
                       </div>
 
                       <div style={{ marginBottom: '14px' }}>
