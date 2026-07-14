@@ -3271,15 +3271,14 @@
                     {/* ── Child Information (Parent/Guardian only) ── */}
                     {regFormData.role === 'Parent/Guardian' && (
                     <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
-                      <h3 style={{ color: '#004E7C', fontSize: '16px', fontWeight: 'bold', marginBottom: '14px', marginTop: 0 }}>Child Information</h3>
+                      <h3 style={{ color: '#004E7C', fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', marginTop: 0 }}>Child Information</h3>
+                      {/* Why we ask. Under the header so it covers the whole section. (2026-07-14) */}
+                      <div style={{ marginBottom: '14px', fontSize: '13px', color: '#6B7280', lineHeight: 1.4 }}>* We collect this information for grant purposes only.</div>
 
                       <div style={{ marginBottom: '14px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Child's full name <span style={{ color: '#DC2626' }}>*</span></label>
                         <input type="text" required value={regFormData.childName} onChange={(e) => handleRegFormChange('childName', e.target.value)} disabled={regSubmitting}
                           style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: regSubmitting ? 0.6 : 1 }} />
-                        {/* Parents pushed back on being asked for their child's name.
-                            Saying plainly why we need it settled it. (2026-07-14) */}
-                        <div style={{ marginTop: '6px', fontSize: '12px', color: '#6B7280', lineHeight: 1.4 }}>We collect this information for grant purposes only.</div>
                       </div>
 
                       <div style={{ marginBottom: '14px' }}>
