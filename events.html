@@ -412,6 +412,16 @@
       const [lastSignupType, setLastSignupType] = useState(null); // 'event' or 'recurring'
       const [lastSignupWasInlineReg, setLastSignupWasInlineReg] = useState(false); // v48.0.0
 
+      // Second parent / guardian (optional). Shared across the one-time and
+      // recurring signup forms (only one modal is open at a time).
+      const [showSecondParent, setShowSecondParent] = useState(false);
+      const [secondParent, setSecondParent] = useState({ firstName: '', lastName: '', email: '' });
+      const collectSecondParent = () => {
+        const em = (secondParent.email || '').trim();
+        if (!em) return null;
+        return { firstName: (secondParent.firstName || '').trim(), lastName: (secondParent.lastName || '').trim(), email: em };
+      };
+
       // Email-blur prefill banner (v48.0.0)
       const [emailPrefillBanner, setEmailPrefillBanner] = useState(null); // null | {firstName}
       const [emailPrefillDismissed, setEmailPrefillDismissed] = useState(false);
@@ -723,6 +733,11 @@
             registration.disabilityCategories = [];
           }
 
+          // Second parent / guardian (optional): the signup-form inputs are no
+          // longer mounted at this registration step, so bridge via the draft.
+          const _sp = window._secondParentDraft || null;
+          if (_sp) registration.secondParent = _sp;
+
           // Sibling draft path — create a fully-formed confirmed signup now (no pending write, no email).
           let effectiveToken = regToken;
           if (regSiblingDraft) {
@@ -744,6 +759,7 @@
               selectedDates: Array.isArray(draft.selectedDates) ? draft.selectedDates : [],
               status: 'confirmed',
               registration: registration,
+              ...(_sp ? { secondParent: _sp } : {}),
               registrantType: registration.role || '',
               // Sibling draft was opened from a registration-token email link
               signupSource: 'registration-email',
@@ -764,6 +780,7 @@
           } else {
             await db.collection(collectionName).doc(regEventId).collection('signups').doc(regToken).update({
               registration: registration,
+              ...(_sp ? { secondParent: _sp } : {}),
               registrantType: registration.role || '',
               status: 'confirmed',
               registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -807,8 +824,10 @@
         try {
           const writes = indices.map(i => {
             const s = regSiblings[i];
+            const _sp = window._secondParentDraft || null;
             return db.collection(s.collection).doc(s.eventId).collection('signups').doc(s.signupId).update({
-              registration: reg,
+              registration: (_sp ? { ...reg, secondParent: _sp } : reg),
+              ...(_sp ? { secondParent: _sp } : {}),
               registrantType: reg.role || '',
               status: 'confirmed',
               registrationCompletedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1143,9 +1162,13 @@
           // Strip the DOB part fields (dobMonth/dobDay/dobYear) — they're UI
           // state only; the canonical value is `dob` (YYYY-MM-DD).
           const { dobMonth, dobDay, dobYear, ...recurringClean } = recurringFormData;
+          // Second parent / guardian (optional).
+          const _sp = collectSecondParent();
+          window._secondParentDraft = _sp;
           const docRef = await db.collection('recurringEvents').doc(recurringSignupEvent.id)
             .collection('signups').add({
               ...recurringClean,
+              ...(_sp ? { secondParent: _sp } : {}),
               // Mirror the signup role into `role` so the registration step
               // reads it and skips re-asking "About You" (v47.11).
               role: recurringFormData.registrantType || '',
@@ -1166,6 +1189,8 @@
           setLastSignupEventId(recurringSignupEvent.id);
           setLastSignupType('recurring');
           setRecurringSubmitSuccess(true);
+          setSecondParent({ firstName: '', lastName: '', email: '' });
+          setShowSecondParent(false);
         } catch (error) {
           console.error('Error submitting recurring signup:', error);
           alert('There was an error submitting your signup. Please try again.');
@@ -1235,6 +1260,12 @@
             eventTitle: signupEvent.title
           };
 
+          // Second parent / guardian (optional): top-level for immediate email
+          // sends; also stashed for the separate registration step (Parent/Guardian).
+          const _sp = collectSecondParent();
+          window._secondParentDraft = _sp;
+          if (_sp) signupDoc.secondParent = _sp;
+
           if (isInlineReg) {
             // Embed registration data directly (mirrors what handleRegSubmit writes for the
             // separate-step path). Backend CF reads `registration` to send confirmation email.
@@ -1257,6 +1288,7 @@
               howHeardOther: formData.howHeard === 'Other' ? (formData.howHeardOther || '') : '',
               accommodations: formData.accommodations || ''
             };
+            if (_sp) signupDoc.registration.secondParent = _sp;
             signupDoc.registrantType = formData.registrantType || '';
             signupDoc.registrationCompletedAt = firebase.firestore.FieldValue.serverTimestamp();
             signupDoc.registrationFlow = 'inline-at-signup';
@@ -1302,6 +1334,10 @@
           setLastSignupType('event');
           setLastSignupWasInlineReg(isInlineReg);
           setSubmitSuccess(true);
+          // Reset the second-parent fields (draft is retained for any same-session
+          // registration step and overwritten on the next signup).
+          setSecondParent({ firstName: '', lastName: '', email: '' });
+          setShowSecondParent(false);
         } catch (error) {
           console.error('Error submitting signup:', error);
           alert('There was an error submitting your signup. Please try again.');
@@ -2139,6 +2175,20 @@
                       />
                     </div>
 
+                    {/* Second parent / guardian (optional) */}
+                    <div style={{ marginBottom: '20px' }}>
+                      {!showSecondParent ? (
+                        <a href="#" onClick={(e) => { e.preventDefault(); setShowSecondParent(true); }} style={{ fontSize: '.9rem', color: '#0891B2', textDecoration: 'none', fontWeight: 600 }}>+ Add a second parent/guardian (optional)</a>
+                      ) : (
+                        <div>
+                          <div style={{ fontWeight: 600, marginBottom: '6px', color: '#004E7C' }}>Second parent / guardian</div>
+                          <input type="text" placeholder="First name" value={secondParent.firstName} onChange={(e) => setSecondParent(prev => ({ ...prev, firstName: e.target.value }))} style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', marginBottom: '8px' }} />
+                          <input type="text" placeholder="Last name" value={secondParent.lastName} onChange={(e) => setSecondParent(prev => ({ ...prev, lastName: e.target.value }))} style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', marginBottom: '8px' }} />
+                          <input type="email" placeholder="Email" value={secondParent.email} onChange={(e) => setSecondParent(prev => ({ ...prev, email: e.target.value }))} style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px' }} />
+                        </div>
+                      )}
+                    </div>
+
                     {/* Preferred Contact Method */}
                     <div style={{ marginBottom: '20px' }}>
                       <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
@@ -2570,6 +2620,20 @@
                         placeholder="(808) 555-1234"
                         style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
                       />
+                    </div>
+
+                    {/* Second parent / guardian (optional) */}
+                    <div style={{ marginBottom: '20px' }}>
+                      {!showSecondParent ? (
+                        <a href="#" onClick={(e) => { e.preventDefault(); setShowSecondParent(true); }} style={{ fontSize: '.9rem', color: '#0891B2', textDecoration: 'none', fontWeight: 600 }}>+ Add a second parent/guardian (optional)</a>
+                      ) : (
+                        <div>
+                          <div style={{ fontWeight: 600, marginBottom: '6px', color: '#004E7C' }}>Second parent / guardian</div>
+                          <input type="text" placeholder="First name" value={secondParent.firstName} onChange={(e) => setSecondParent(prev => ({ ...prev, firstName: e.target.value }))} style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', marginBottom: '8px' }} />
+                          <input type="text" placeholder="Last name" value={secondParent.lastName} onChange={(e) => setSecondParent(prev => ({ ...prev, lastName: e.target.value }))} style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', marginBottom: '8px' }} />
+                          <input type="email" placeholder="Email" value={secondParent.email} onChange={(e) => setSecondParent(prev => ({ ...prev, email: e.target.value }))} style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px' }} />
+                        </div>
+                      )}
                     </div>
 
                     {/* Preferred Contact */}
