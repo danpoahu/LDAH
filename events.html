@@ -1229,8 +1229,11 @@
         // fields are set together.
         // Computed here, applied to the document below — formData is React
         // state and must not be mutated in place.
+        // When showGroupField is false the question is never asked, so there is
+        // nothing to require — that signup is one person, same as the website.
         let _hcType = 'Individual', _hcSize = 1;
-        if ((formData.participationType || 'Group') === 'Group') {
+        const _hcAsked = signupEvent.showGroupField !== false;
+        if (_hcAsked && (formData.participationType || 'Group') === 'Group') {
           const _gs = parseInt(String(formData.groupSize || '').trim(), 10);
           if (!isFinite(_gs) || _gs < 1) {
             alert('Please enter how many people are attending.');
@@ -2234,51 +2237,6 @@
                       </div>
                     </div>
 
-                    {/* How many are attending. The website form has always asked this;
-                        the App never did, so every App signup counted as one person
-                        against an event's capacity no matter how many turned up.
-                        Group is the default because a family is the common case. */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                        Are you attending on your own, or with others? *
-                      </label>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {[['Group', 'Me and others'], ['Individual', 'Just me']].map(([val, label]) => (
-                          <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
-                            <input
-                              type="radio"
-                              name="participationType"
-                              value={val}
-                              checked={(formData.participationType || 'Group') === val}
-                              onChange={(e) => handleFormChange('participationType', e.target.value)}
-                              disabled={submitting}
-                              required
-                              style={{ width: '18px', height: '18px', cursor: submitting ? 'not-allowed' : 'pointer' }}
-                            />
-                            <span style={{ fontSize: '14px', color: '#374151' }}>{label}</span>
-                          </label>
-                        ))}
-                      </div>
-                      {(formData.participationType || 'Group') === 'Group' && (
-                        <div style={{ marginTop: '10px', paddingLeft: '26px' }}>
-                          <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '6px', fontSize: '14px' }}>
-                            How many people altogether? *
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            step="1"
-                            value={formData.groupSize}
-                            onChange={(e) => handleFormChange('groupSize', e.target.value)}
-                            disabled={submitting}
-                            required
-                            placeholder="# of people"
-                            style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px' }}
-                          />
-                        </div>
-                      )}
-                    </div>
-
                     {/* Select Dates — when only 1 non-expired date exists we auto-select
                         it in handleSignupClick and just display the date as a read-only
                         line so the user still sees what they signed up for. */}
@@ -2391,69 +2349,54 @@
                     {signupEvent.showGroupField !== false && (
                       <div style={{ marginBottom: '20px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                          Are you volunteering as an individual or with a group? *
+                          Are you attending on your own, or with others? *
                         </label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {['Individual', 'Group'].map(type => (
+                          {[['Individual', 'Just me'], ['Group', 'Me and others']].map(([type, optLabel]) => (
                             <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
                               <input
                                 type="radio"
                                 name="participationType"
                                 value={type}
-                                checked={formData.participationType === type}
+                                checked={(formData.participationType || 'Group') === type}
                                 onChange={(e) => handleFormChange('participationType', e.target.value)}
                                 disabled={submitting}
                                 required
                                 style={{ width: '18px', height: '18px', cursor: submitting ? 'not-allowed' : 'pointer' }}
                               />
-                              <span style={{ fontSize: '14px', color: '#374151' }}>{type}</span>
+                              <span style={{ fontSize: '14px', color: '#374151' }}>{optLabel}</span>
                             </label>
                           ))}
                         </div>
                       </div>
                     )}
 
-                    {/* Group Name & Size (conditional) */}
-                    {signupEvent.showGroupField !== false && formData.participationType === 'Group' && (
+                    {/* Participant count (conditional) — mirrors the website: the
+                        count only, no group name. Default to Group so this shows
+                        before the radios have been touched, same as W2. */}
+                    {signupEvent.showGroupField !== false && (formData.participationType || 'Group') === 'Group' && (
                       <div style={{ marginBottom: '20px', paddingLeft: '26px' }}>
                         <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                          What is the name of your group, and number of volunteers? *
+                          How many participants? *
                         </label>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                          <input
-                            type="text"
-                            required
-                            value={formData.groupName}
-                            onChange={(e) => handleFormChange('groupName', e.target.value)}
-                            disabled={submitting}
-                            placeholder="Group name"
-                            style={{
-                              flex: 2,
-                              padding: '12px',
-                              border: '1px solid #D1D5DB',
-                              borderRadius: '8px',
-                              fontSize: '14px',
-                              opacity: submitting ? 0.6 : 1
-                            }}
-                          />
-                          <input
-                            type="number"
-                            required
-                            min="1"
-                            value={formData.groupSize}
-                            onChange={(e) => handleFormChange('groupSize', e.target.value)}
-                            disabled={submitting}
-                            placeholder="# of volunteers"
-                            style={{
-                              flex: 1,
-                              padding: '12px',
-                              border: '1px solid #D1D5DB',
-                              borderRadius: '8px',
-                              fontSize: '14px',
-                              opacity: submitting ? 0.6 : 1
-                            }}
-                          />
-                        </div>
+                        <input
+                          type="number"
+                          required
+                          min="1"
+                          step="1"
+                          value={formData.groupSize}
+                          onChange={(e) => handleFormChange('groupSize', e.target.value)}
+                          disabled={submitting}
+                          placeholder="# of participants"
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            border: '1px solid #D1D5DB',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            opacity: submitting ? 0.6 : 1
+                          }}
+                        />
                       </div>
                     )}
 
@@ -2988,19 +2931,19 @@
                       <>
                         <div style={{ marginBottom: '20px' }}>
                           <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                            Are you signing up as an individual or with a group? *
+                            Are you attending on your own, or with others? *
                           </label>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {['Individual', 'Group'].map(type => (
+                            {[['Individual', 'Just me'], ['Group', 'Me and others']].map(([type, optLabel]) => (
                               <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
                                 <input
                                   type="radio" name="recurringParticipationType" value={type} required
-                                  checked={recurringFormData.participationType === type}
+                                  checked={(recurringFormData.participationType || 'Group') === type}
                                   onChange={(e) => handleRecurringFormChange('participationType', e.target.value)}
                                   disabled={recurringSubmitting}
                                   style={{ width: '18px', height: '18px' }}
                                 />
-                                <span style={{ fontSize: '14px', color: '#374151' }}>{type}</span>
+                                <span style={{ fontSize: '14px', color: '#374151' }}>{optLabel}</span>
                               </label>
                             ))}
                           </div>
