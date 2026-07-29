@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — STAGE
-const CACHE_NAME = 'ldah-stage-v11';
+const CACHE_NAME = 'ldah-stage-v12';
 const urlsToCache = [
   './',
   './index.html',
