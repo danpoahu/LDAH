@@ -951,6 +951,7 @@
       const _acceptsSignups = (ev) => {
         if (!ev) return false;
         if (ev._isFlyerOnly || ev.isFlyerOnly) return false;
+        if (ev.infoOnly === true) return false;   // one-time flyer — never takes signups
         if (ev._isRecurring || ev.isRecurring) return true;
         return !!(ev.signupDates && ev.signupDates.length > 0);
       };
@@ -1525,7 +1526,12 @@
                   let lastMonth = '';
                   const out = [];
                   activeEvents.forEach((event, _idx) => {
-                    const isFlyer = !!event._isFlyerOnly;
+                    // A one-time flyer is flagged infoOnly; a recurring one is
+                    // flyerOnly. Only the recurring flag was checked here, so a
+                    // one-time flyer that still carried stale signupDates (e.g.
+                    // Village Hui) fell through and rendered a Sign Up button.
+                    // The website gates on infoOnly — match it.
+                    const isFlyer = !!event._isFlyerOnly || event.infoOnly === true;
                     const isRecurring = !!event._isRecurring && !isFlyer;
                     const _accepts = !isFlyer && (isRecurring || (event.signupDates && event.signupDates.length > 0));
 
@@ -1771,7 +1777,8 @@
                   {/* Sign Up Button */}
                   {!isPastEvents && (
                     <>
-                      {selectedEvent._isRecurring && !selectedEvent._isFlyerOnly ? (
+                      {selectedEvent.infoOnly === true ? null
+                        : selectedEvent._isRecurring && !selectedEvent._isFlyerOnly ? (
                         /* Recurring program — teal sign-up button */
                         <button
                           onClick={(e) => {
