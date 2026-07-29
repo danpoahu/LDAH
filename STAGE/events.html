@@ -1222,6 +1222,23 @@
           return;
         }
 
+        // Headcount. Capacity, session sheets and the audit export all count
+        // PEOPLE, not signups, so a group must state a number and an individual
+        // is written as exactly 1. participationType is what the counting keys
+        // off — an Individual contributes 1 whatever groupSize says — so both
+        // fields are set together.
+        // Computed here, applied to the document below — formData is React
+        // state and must not be mutated in place.
+        let _hcType = 'Individual', _hcSize = 1;
+        if ((formData.participationType || 'Group') === 'Group') {
+          const _gs = parseInt(String(formData.groupSize || '').trim(), 10);
+          if (!isFinite(_gs) || _gs < 1) {
+            alert('Please enter how many people are attending.');
+            return;
+          }
+          _hcType = 'Group'; _hcSize = _gs;
+        }
+
         // Duplicate warning (warn but allow). Fails open — never blocks a signup.
         try {
           const _email = (formData.email || '').trim();
@@ -1250,6 +1267,10 @@
           // Build the signup doc. For inline-reg, fold registration fields in directly.
           const signupDoc = {
             ...formData,
+            // Normalised headcount (see the guard above) — overrides whatever
+            // the raw form state held.
+            participationType: _hcType,
+            groupSize: _hcSize,
             // Mirror the signup role into `role` so the registration step reads
             // it and skips re-asking "About You" (v47.11).
             role: formData.registrantType || '',
@@ -2215,6 +2236,51 @@
                           </label>
                         ))}
                       </div>
+                    </div>
+
+                    {/* How many are attending. The website form has always asked this;
+                        the App never did, so every App signup counted as one person
+                        against an event's capacity no matter how many turned up.
+                        Group is the default because a family is the common case. */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        Are you attending on your own, or with others? *
+                      </label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {[['Group', 'Me and others'], ['Individual', 'Just me']].map(([val, label]) => (
+                          <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
+                            <input
+                              type="radio"
+                              name="participationType"
+                              value={val}
+                              checked={(formData.participationType || 'Group') === val}
+                              onChange={(e) => handleFormChange('participationType', e.target.value)}
+                              disabled={submitting}
+                              required
+                              style={{ width: '18px', height: '18px', cursor: submitting ? 'not-allowed' : 'pointer' }}
+                            />
+                            <span style={{ fontSize: '14px', color: '#374151' }}>{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {(formData.participationType || 'Group') === 'Group' && (
+                        <div style={{ marginTop: '10px', paddingLeft: '26px' }}>
+                          <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '6px', fontSize: '14px' }}>
+                            How many people altogether? *
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={formData.groupSize}
+                            onChange={(e) => handleFormChange('groupSize', e.target.value)}
+                            disabled={submitting}
+                            required
+                            placeholder="# of people"
+                            style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px' }}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* Select Dates — when only 1 non-expired date exists we auto-select
