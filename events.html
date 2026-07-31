@@ -1132,6 +1132,20 @@
         __unlockTimer = setTimeout(__unlock, 20000);
         try {
 
+        // "Other" is the most-picked answer here (34% of all records) and over
+        // half of those left the box empty, so for a third of people the stored
+        // answer is the word "Other" and nothing else. The input carries
+        // `required`, but a single space satisfies that and so does "n/a" —
+        // read it the way a person would.
+        if (recurringFormData.howHeard === 'Other') {
+          const _hh = String(recurringFormData.howHeardOther || '').trim();
+          if (!_hh) { alert('Please tell us how you heard about us.'); return; }
+          if (_hh.length < 3) { alert('Please give us a little more detail about how you heard about us — a few words is plenty.'); return; }
+          if (/^(n\/?a|na|none|no|nope|nil|null|other|others|idk|dunno|test|\.|-|--|\?)$/i.test(_hh)) {
+            alert('Please tell us how you actually heard about us — even just "a friend" or "my doctor" helps.'); return;
+          }
+        }
+
         // Validate phone is 10 digits
         const phoneDigits = recurringFormData.phone.replace(/\D/g, '');
         if (phoneDigits.length !== 10) {
@@ -1215,6 +1229,20 @@
         var __unlock = function () { clearTimeout(__unlockTimer); window.__ldahLock_appSignup = false; };
         __unlockTimer = setTimeout(__unlock, 20000);
         try {
+
+        // "Other" is the most-picked answer here (34% of all records) and over
+        // half of those left the box empty, so for a third of people the stored
+        // answer is the word "Other" and nothing else. The input carries
+        // `required`, but a single space satisfies that and so does "n/a" —
+        // read it the way a person would.
+        if (formData.howHeard === 'Other') {
+          const _hh = String(formData.howHeardOther || '').trim();
+          if (!_hh) { alert('Please tell us how you heard about us.'); return; }
+          if (_hh.length < 3) { alert('Please give us a little more detail about how you heard about us — a few words is plenty.'); return; }
+          if (/^(n\/?a|na|none|no|nope|nil|null|other|others|idk|dunno|test|\.|-|--|\?)$/i.test(_hh)) {
+            alert('Please tell us how you actually heard about us — even just "a friend" or "my doctor" helps.'); return;
+          }
+        }
 
         // Validate phone is 10 digits
         const phoneDigits = formData.phone.replace(/\D/g, '');
@@ -2159,7 +2187,7 @@
                             disabled={submitting}
                             style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', background: 'white', opacity: submitting ? 0.6 : 1 }}>
                             <option value="">-- Select --</option>
-                            {['Agency', 'Newspaper', 'School', 'Radio', 'Website', 'Facebook', 'Other'].map(h => (
+                            {['Agency', 'Newspaper', 'School', 'Radio', 'Website', 'Facebook', 'Conference', 'Doctor or therapist', 'Email', 'Friend or family', 'Other'].map(h => (
                               <option key={h} value={h}>{h}</option>
                             ))}
                           </select>
@@ -3465,7 +3493,7 @@
                         }} disabled={regSubmitting}
                           style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', background: 'white', opacity: regSubmitting ? 0.6 : 1 }}>
                           <option value="">-- Select --</option>
-                          {['Agency', 'Newspaper', 'School', 'Radio', 'Website', 'Facebook', 'Other'].map(h => (
+                          {['Agency', 'Newspaper', 'School', 'Radio', 'Website', 'Facebook', 'Conference', 'Doctor or therapist', 'Email', 'Friend or family', 'Other'].map(h => (
                             <option key={h} value={h}>{h}</option>
                           ))}
                         </select>
