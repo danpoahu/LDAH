@@ -68,6 +68,11 @@
     .ev-aside{flex:0 0 auto;display:flex;align-items:center;padding:0 12px;}
     .ev-signup{border:0;background:linear-gradient(135deg,#004E7C,#0D7A7A);color:#fff;font-weight:800;font-size:12.5px;padding:10px 15px;border-radius:999px;cursor:pointer;box-shadow:0 2px 8px rgba(0,78,124,.25);font-family:inherit;}
     .ev-chevron{flex:0 0 auto;display:flex;align-items:center;padding-right:12px;color:#cbd5e1;cursor:pointer;}
+    /* Booth / screening rows take no advance signups. Deliberately NOT a button:
+       a pill that looks tappable but does nothing reads as a broken app on a
+       phone, so this is a plain muted label and the row keeps its usual tap. */
+    .ev-inperson{display:inline-block;text-align:right;font-size:10.5px;line-height:1.25;font-weight:800;
+                 letter-spacing:.03em;text-transform:uppercase;color:#94a3b8;margin-right:6px;}
     .ev-row.ev-expired{opacity:.55;}
     .ev-row.ev-expired .ev-title{text-decoration:line-through;}
   </style>
@@ -1561,7 +1566,12 @@
                     // The website gates on infoOnly — match it.
                     const isFlyer = !!event._isFlyerOnly || event.infoOnly === true;
                     const isRecurring = !!event._isRecurring && !isFlyer;
-                    const _accepts = !isFlyer && (isRecurring || (event.signupDates && event.signupDates.length > 0));
+                    // Screening / Outreach Booth (specialEvent) are staffed tables — you
+                    // sign up at the table on the day via the QR form, never in advance.
+                    // They can still carry signupDates for scheduling, which is why the
+                    // date check alone was offering a signup sheet nobody could use.
+                    const isSpecial = event.specialEvent === true;
+                    const _accepts = !isFlyer && !isSpecial && (isRecurring || (event.signupDates && event.signupDates.length > 0));
 
                     // Month-grouping anchor for this event
                     let anchorIso = null;
@@ -1676,10 +1686,12 @@
                                   Online <span className="ev-vpill">VIRTUAL</span>
                                 </div>
                               )}
-                              <button type="button" className="ev-flyerlink" onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M14 2v6h6"></path></svg>
-                                View Flyer
-                              </button>
+                              {event.imageUrl && (
+                                <button type="button" className="ev-flyerlink" onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M14 2v6h6"></path></svg>
+                                  View Flyer
+                                </button>
+                              )}
                             </div>
                             {(!isPastEvents && _accepts && r.signup && !r.expired) ? (
                               <div className="ev-aside">
@@ -1687,6 +1699,9 @@
                               </div>
                             ) : (
                               <div className="ev-chevron" onClick={() => setSelectedEvent(event)}>
+                                {isSpecial && !isPastEvents && !r.expired && (
+                                  <span className="ev-inperson">Sign up<br />in person</span>
+                                )}
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
                               </div>
                             )}
