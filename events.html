@@ -280,7 +280,7 @@
     // Mirror of LDAH_W2 parseSignupDateString — converts a free-form signup
     // date label (e.g. "October 11, 2025" or "October 11th") into YYYY-MM-DD,
     // so we can detect expired dates on the signup modal.
-    function parseSignupDateString(dateStr) {
+    function parseSignupDateString(dateStr, contextIso) {
       if (!dateStr) return null;
       const months = {
         january:0,february:1,march:2,april:3,may:4,june:5,
@@ -295,7 +295,29 @@
         const day = parseInt(monthDayMatch[2], 10);
         if (monthNum !== undefined && day >= 1 && day <= 31) {
           const yearMatch = dateStr.match(/\b(20\d{2})\b/);
-          let year = yearMatch ? parseInt(yearMatch[1],10) : (monthNum < currentMonth ? currentYear + 1 : currentYear);
+          let year;
+          if (yearMatch) {
+            year = parseInt(yearMatch[1], 10);
+          } else if (contextIso && /^\d{4}-\d{2}-\d{2}/.test(contextIso)) {
+            // A label with no year belongs to the event that owns it, so resolve
+            // it against that event's own date instead of guessing from today.
+            // Taking the nearest candidate year also keeps a series that runs
+            // across New Year right (a December event with a January session).
+            const _ctx = new Date(contextIso.slice(0, 10) + 'T00:00:00');
+            const _ctxY = _ctx.getFullYear();
+            let _best = _ctxY, _gap = Infinity;
+            [_ctxY - 1, _ctxY, _ctxY + 1].forEach(function (y) {
+              const g = Math.abs(new Date(y, monthNum, day) - _ctx);
+              if (g < _gap) { _gap = g; _best = y; }
+            });
+            year = _best;
+          } else {
+            // No context — assume the label is upcoming, so a month already gone
+            // this year means next year. That guess is wrong for anything in the
+            // past, which is why the agenda call sites pass event.eventDate: a
+            // July label read in August was landing in July of NEXT year.
+            year = monthNum < currentMonth ? currentYear + 1 : currentYear;
+          }
           return `${year}-${String(monthNum+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
         }
       }
@@ -317,9 +339,9 @@
 
     // Split a free-form signupDate string into a tidy { when, time, expired } row
     // for display on the events list card. Falls back to the raw string if parse fails.
-    const formatSignupDateRow = (dateStr) => {
+    const formatSignupDateRow = (dateStr, contextIso) => {
       if (!dateStr) return null;
-      const iso = parseSignupDateString(dateStr);
+      const iso = parseSignupDateString(dateStr, contextIso);
       let when = dateStr;
       let time = '';
       if (iso) {
@@ -341,14 +363,14 @@
     const DOW_ABBR = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     const ORDINAL_ABBR = { 1: '1ST', 2: '2ND', 3: '3RD', 4: '4TH', 5: '5TH' };
     const evLooksVirtual = (s) => !!(s && /\b(online|virtual|zoom|facebook|fb|webinar|teams|google meet|livestream|live stream)\b/i.test(s));
-    const evToIso = (v) => {
+    const evToIso = (v, contextIso) => {
       if (!v) return null;
       let d = null;
       if (v instanceof Date) d = v;
       else if (typeof v === 'object' && typeof v.toDate === 'function') d = v.toDate(); // Firestore Timestamp
       else if (typeof v === 'string') {
         if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
-        return parseSignupDateString(v);
+        return parseSignupDateString(v, contextIso);
       }
       if (d && !isNaN(d.getTime())) {
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -1576,7 +1598,7 @@
                     // Month-grouping anchor for this event
                     let anchorIso = null;
                     if (isRecurring) anchorIso = evToIso(event._nextDate);
-                    else if (event.signupDates && event.signupDates.length > 0) anchorIso = evToIso(event.signupDates[0]);
+                    else if (event.signupDates && event.signupDates.length > 0) anchorIso = evToIso(event.signupDates[0], event.eventDate);
                     else if (event.eventDate) anchorIso = evToIso(event.eventDate);
                     const monthLbl = evMonthLabel(anchorIso);
                     if (monthLbl && monthLbl !== lastMonth) {
@@ -1612,8 +1634,8 @@
                       });
                     } else if (!isFlyer && Array.isArray(event.signupDates) && event.signupDates.length > 0) {
                       event.signupDates.forEach((ds, _di) => {
-                        const row = formatSignupDateRow(ds);
-                        const tile = evTileFromIso(evToIso(ds));
+                        const row = formatSignupDateRow(ds, event.eventDate);
+                        const tile = evTileFromIso(evToIso(ds, event.eventDate));
                         const label = evSessionLabel(ds);
                         rows.push({
                           key: 'r' + _di,
@@ -1801,27 +1823,76 @@
                 <X size={24} />
               </button>
 
-              {/* Full-Screen Image */}
-              {selectedEvent.imageUrl && (
+              {/* Sheet body. This was gated on imageUrl, so an event with no
+                  flyer (a booth) opened a completely blank overlay. The gate now
+                  sits on the <img> alone and a details panel stands in for it. */}
+              {(
                 <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', position: 'relative', zIndex: 1001 }}>
-                  <img 
-                    src={selectedEvent.imageUrl}
-                    alt={selectedEvent.title}
-                    style={{
-                      maxWidth: '90%',
-                      maxHeight: '70vh',
-                      width: 'auto',
-                      height: 'auto',
-                      objectFit: 'contain',
-                      borderRadius: '8px'
-                    }}
-                  />
+                  {selectedEvent.imageUrl ? (
+                    <img 
+                      src={selectedEvent.imageUrl}
+                      alt={selectedEvent.title}
+                      style={{
+                        maxWidth: '90%',
+                        maxHeight: '70vh',
+                        width: 'auto',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        borderRadius: '8px'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: '14px',
+                      padding: '22px 24px', maxWidth: '420px', textAlign: 'center',
+                      boxShadow: '0 4px 16px rgba(0,0,0,.25)'
+                    }}>
+                      <div style={{ fontSize: '17px', fontWeight: 800, color: '#004E7C', lineHeight: 1.3 }}>
+                        {selectedEvent.title}
+                      </div>
+                      {evToIso(selectedEvent.eventDate) && (
+                        <div style={{ marginTop: '8px', fontSize: '14px', color: '#334155' }}>
+                          {new Date(evToIso(selectedEvent.eventDate) + 'T00:00:00')
+                            .toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                        </div>
+                      )}
+                      {selectedEvent.time && (
+                        <div style={{ marginTop: '3px', fontSize: '14px', color: '#334155' }}>{selectedEvent.time}</div>
+                      )}
+                      {selectedEvent.location && (
+                        <div style={{ marginTop: '3px', fontSize: '14px', color: '#334155' }}>{selectedEvent.location}</div>
+                      )}
+                      {selectedEvent.description && (
+                        <div style={{ marginTop: '10px', fontSize: '13.5px', color: '#475569', lineHeight: 1.45 }}>
+                          {selectedEvent.description}
+                        </div>
+                      )}
+                      <div style={{ marginTop: '12px', fontSize: '12px', color: '#94a3b8' }}>
+                        No flyer for this event.
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Sign Up Button */}
                   {!isPastEvents && (
                     <>
                       {selectedEvent.infoOnly === true ? null
-                        : selectedEvent._isRecurring && !selectedEvent._isFlyerOnly ? (
+                        : selectedEvent.specialEvent === true ? (
+                        /* Screening / Outreach Booth — signing up happens at the
+                           table on the day, so offer no form here either. */
+                        <div style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                          color: '#475569',
+                          border: '2px solid #D1D5DB',
+                          borderRadius: '12px',
+                          padding: '12px 24px',
+                          fontSize: '14px',
+                          textAlign: 'center',
+                          maxWidth: '400px'
+                        }}>
+                          Sign up in person — come see us at the table.
+                        </div>
+                      ) : selectedEvent._isRecurring && !selectedEvent._isFlyerOnly ? (
                         /* Recurring program — teal sign-up button */
                         <button
                           onClick={(e) => {
