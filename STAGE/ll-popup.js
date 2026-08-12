@@ -36,7 +36,7 @@
     var PTC_IMG = 'https://firebasestorage.googleapis.com/v0/b/ldah-932d5.firebasestorage.app/o/event-images%2F1780510227059_June%202026..jpg?alt=media&token=eedabbf6-206f-4493-b8af-376627649d43';
     var LL_JULY_IMG = 'https://firebasestorage.googleapis.com/v0/b/ldah-932d5.firebasestorage.app/o/event-images%2F1783039515710_July%20%20LL%202.jpg?alt=media&token=30236f21-a314-46bc-afa9-b5ed69f5149b';
     var LL_AUG_IMG = 'https://firebasestorage.googleapis.com/v0/b/ldah-932d5.firebasestorage.app/o/event-images%2F1784843405905_August.jpg?alt=media&token=07323c84-3b7d-4bd9-aee5-752e8dd2e43c';
-    var MEMBER_IMG = 'become-a-member.png';
+    var MEMBER_IMG = '/LDAH/become-a-member.png';
 
     // ── Schedule (edit here to add / change events) ───────────────────────────
     // label may contain "{month}" — replaced with the event's month name, so
@@ -281,7 +281,7 @@
                         if (v.archived === true) return;
                         if (v.homeRotation !== true) return;  // only what staff ticked
                         if (!v.imageUrl) return;              // nothing to show without a flyer
-                        out.push({ id: doc.id, title: v.title || 'LDAH', image: v.imageUrl });
+                        out.push({ id: doc.id, title: v.title || 'LDAH', image: v.imageUrl, pinned: v.homePinned === true });
                     });
                 });
                 // Sessions ticked individually count as separate items, so two
@@ -291,7 +291,8 @@
                         var v = doc.data() || {};
                         if (v.archived === true || !v.imageUrl) return;
                         (Array.isArray(v.homeRotationDates) ? v.homeRotationDates : []).forEach(function (lbl) {
-                            out.push({ id: doc.id + '::' + lbl, title: (v.title || 'LDAH') + ' — ' + lbl, image: v.imageUrl });
+                            out.push({ id: doc.id + '::' + lbl, title: (v.title || 'LDAH') + ' — ' + lbl, image: v.imageUrl,
+                                       pinned: String(v.homePinned || '') === lbl });
                         });
                     });
                 });
@@ -304,13 +305,19 @@
     // layout that already exists, rather than inventing a second one.
     function rotationCampaign(items) {
         if (!items.length) return null;
+        // A pinned item shows to everyone every time, ignoring the seen list.
+        var pin = items.filter(function (x) { return x.pinned; })[0];
+        if (pin) return promoFrom(pin);
         var seen = rotSeen();
         var unseen = items.filter(function (x) { return seen.indexOf(x.id) === -1; });
         if (!unseen.length) {                                  // full cycle — start again
             try { localStorage.removeItem(ROT_SEEN_KEY); } catch (e) {}
             unseen = items;
         }
-        var pick = unseen[0];
+        return promoFrom(unseen[0]);
+    }
+
+    function promoFrom(pick) {
         return {
             key: 'rotation-' + pick.id,
             date: '1970-01-01',
