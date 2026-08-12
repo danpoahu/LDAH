@@ -271,16 +271,28 @@
         try {
             var db = firebase.firestore();
             Promise.all([
-                db.collection('events').where('homeRotation', '==', true).get(),
-                db.collection('recurringEvents').where('homeRotation', '==', true).get()
+                db.collection('events').get(),
+                db.collection('recurringEvents').get()
             ]).then(function (snaps) {
                 var out = [];
                 snaps.forEach(function (snap) {
                     snap.forEach(function (doc) {
                         var v = doc.data() || {};
                         if (v.archived === true) return;
+                        if (v.homeRotation !== true) return;  // only what staff ticked
                         if (!v.imageUrl) return;              // nothing to show without a flyer
                         out.push({ id: doc.id, title: v.title || 'LDAH', image: v.imageUrl });
+                    });
+                });
+                // Sessions ticked individually count as separate items, so two
+                // sessions of one Learning Labs doc rotate independently.
+                snaps.forEach(function (snap) {
+                    snap.forEach(function (doc) {
+                        var v = doc.data() || {};
+                        if (v.archived === true || !v.imageUrl) return;
+                        (Array.isArray(v.homeRotationDates) ? v.homeRotationDates : []).forEach(function (lbl) {
+                            out.push({ id: doc.id + '::' + lbl, title: (v.title || 'LDAH') + ' — ' + lbl, image: v.imageUrl });
+                        });
                     });
                 });
                 cb(out);
