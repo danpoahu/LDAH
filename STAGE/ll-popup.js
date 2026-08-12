@@ -242,10 +242,88 @@
         });
     }
 
+    /* ── Home rotation ───────────────────────────────────────────────────────
+       Staff tick what they want shown in LDAH-Int (CMS > Home Rotation), which
+       sets homeRotation:true. Those flyers rotate through this splash so a
+       returning visitor is not shown the same one over and over.
+
+       Priority is deliberate: a real dated event campaign always wins — if
+       Learning Labs is on Tuesday, that is what should be on screen. Rotation
+       fills the gaps that the evergreen membership promo used to fill alone.
+
+       Seen-list lives in localStorage, not a cookie: a cookie would be sent to
+       the server on every request for nothing. Per-browser, so someone on a
+       phone and a laptop may see a repeat, which is fine. */
+    var ROT_SEEN_KEY = 'ldah_home_seen';
+
+    function rotSeen() {
+        try { return JSON.parse(localStorage.getItem(ROT_SEEN_KEY) || '[]'); } catch (e) { return []; }
+    }
+    function rotMarkSeen(id) {
+        try {
+            var s = rotSeen(); s.push(id);
+            localStorage.setItem(ROT_SEEN_KEY, JSON.stringify(s.slice(-60)));
+        } catch (e) {}
+    }
+
+    function fetchRotation(cb) {
+        if (typeof firebase === 'undefined' || !firebase.firestore) { cb([]); return; }
+        try {
+            var db = firebase.firestore();
+            Promise.all([
+                db.collection('events').where('homeRotation', '==', true).get(),
+                db.collection('recurringEvents').where('homeRotation', '==', true).get()
+            ]).then(function (snaps) {
+                var out = [];
+                snaps.forEach(function (snap) {
+                    snap.forEach(function (doc) {
+                        var v = doc.data() || {};
+                        if (v.archived === true) return;
+                        if (!v.imageUrl) return;              // nothing to show without a flyer
+                        out.push({ id: doc.id, title: v.title || 'LDAH', image: v.imageUrl });
+                    });
+                });
+                cb(out);
+            }).catch(function () { cb([]); });
+        } catch (e) { cb([]); }
+    }
+
+    // Build a promo-shaped campaign from a rotation item so it reuses the flyer
+    // layout that already exists, rather than inventing a second one.
+    function rotationCampaign(items) {
+        if (!items.length) return null;
+        var seen = rotSeen();
+        var unseen = items.filter(function (x) { return seen.indexOf(x.id) === -1; });
+        if (!unseen.length) {                                  // full cycle — start again
+            try { localStorage.removeItem(ROT_SEEN_KEY); } catch (e) {}
+            unseen = items;
+        }
+        var pick = unseen[0];
+        return {
+            key: 'rotation-' + pick.id,
+            date: '1970-01-01',
+            always: true,
+            promo: true,
+            rotationId: pick.id,
+            image: pick.image,
+            alt: pick.title,
+            ctaText: 'See our events',
+            ctaHref: 'events.html'
+        };
+    }
+
     function init() {
         var c = pickCampaign();
-        if (!c) return;
-        setTimeout(function () { show(c); }, SHOW_DELAY_MS);
+        // A dated event campaign outranks everything. Only look at the rotation
+        // when the alternative would be the evergreen promo or nothing at all.
+        if (c && !c.always) { setTimeout(function () { show(c); }, SHOW_DELAY_MS); return; }
+        fetchRotation(function (items) {
+            var rot = rotationCampaign(items);
+            var chosen = rot || c;
+            if (!chosen) return;
+            if (chosen.rotationId) rotMarkSeen(chosen.rotationId);
+            setTimeout(function () { show(chosen); }, SHOW_DELAY_MS);
+        });
     }
 
     window.LLEventPopup = {
