@@ -471,6 +471,12 @@
           // Pre-fill only empty/untouched fields; never override role
           setFormData(prev => ({
             ...prev,
+            // The contact's `type` is the person's role on file and the endpoint
+            // returns it as `role`. It was never applied, so the required
+            // Parent/Guardian field stayed blank even though we had it. Only set
+            // when the field is still empty — an existing choice is never
+            // overwritten, which is what "never override role" above intends.
+            registrantType: prev.registrantType ? prev.registrantType : (c.role || prev.registrantType),
             name: prev.name.trim() ? prev.name : ((c.displayName || [c.firstName, c.lastName].filter(Boolean).join(' ') || '').trim() || prev.name),
             phone: prev.phone.trim() ? prev.phone : (c.phone || prev.phone),
             streetAddress: prev.streetAddress.trim() ? prev.streetAddress : (c.streetAddress || prev.streetAddress),
