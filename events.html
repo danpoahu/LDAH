@@ -83,6 +83,10 @@
   <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="js/cms-donate.js" defer></script>
   <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <!-- Needed for the getEventCapacity callable. Signups hold PII and the public
+       app cannot read the subcollection, so capacity is counted server-side —
+       exactly as LDAH_W2 does it. (2026-08-19) -->
+  <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
   <script src="./formatters.js"></script>
 </head>
 <body>
@@ -409,6 +413,12 @@
       const [menuOpen, setMenuOpen] = useState(false);
       const [showSignupModal, setShowSignupModal] = useState(false);
       const [signupEvent, setSignupEvent] = useState(null);
+      // Capacity gate — parity with LDAH_W2 events.html. Until 2026-08-19 the app
+      // had no capacity check at all, so a family could register for an event the
+      // website had already closed. Molokai 'Ohana Movie Night was 49 people
+      // against a cap of 45 and the app still took signups.
+      const [capFull, setCapFull] = useState(false);
+      const [capChecking, setCapChecking] = useState(false);
       const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -1012,6 +1022,43 @@
         setCurrentIndex(index);
       };
 
+      // maxCapacity is counted as PEOPLE, not signups: a group signup of five
+      // counts five. The callable does that sum server-side and returns numbers
+      // only, so the public app never reads the signups subcollection.
+      const _checkCapacity = async (event) => {
+        setCapFull(false);
+        const cap = Number(event && event.maxCapacity);
+        if (!Number.isFinite(cap) || cap <= 0) return;   // no cap declared: unchanged behaviour
+        setCapChecking(true);
+        try {
+          const coll = event.__collection === 'recurringEvents' ? 'recurringEvents' : 'events';
+          const res = await firebase.functions().httpsCallable('getEventCapacity')({
+            eventId: event.id, collection: coll
+          });
+          const d = (res && res.data) || {};
+          const counts = d.sessionCounts || {};
+
+          // The cap is PER DATE. A booth running three shifts with a cap of 12
+          // seats 12 at each shift, not 12 across the event. The callable's own
+          // `full` flag is a whole-event headcount, so it only means anything
+          // when there is at most one live date left to attend.
+          const live = (Array.isArray(event.signupDates) ? event.signupDates : [])
+            .filter(function (s) { return !isSignupDateExpired(s); });
+          if (live.length > 1) {
+            setCapFull(live.every(function (s) { return (counts[s] || 0) >= cap; }));
+          } else {
+            setCapFull(d.full === true);
+          }
+        } catch (err) {
+          // Fail open, same as the website: a capacity-call failure must never
+          // block a family from registering for an event that has room.
+          console.error('getEventCapacity failed; allowing signup:', err);
+          setCapFull(false);
+        } finally {
+          setCapChecking(false);
+        }
+      };
+
       const handleSignupClick = (event) => {
         // Auto-select when there's exactly one non-expired signup date so
         // we don't force the user to tick a single box.
@@ -1021,6 +1068,7 @@
 
         setSignupEvent(event);
         setShowSignupModal(true);
+        _checkCapacity(event);
         setFormData({
           name: '',
           email: '',
@@ -1257,6 +1305,11 @@
         // duplicate signups. Lock synchronously now (before any await); the
         // finally below always releases it, with a 20s safety-net timer.
         if (window.__ldahLock_appSignup) return;
+        // Second gate: the modal may have been open while the last seats went.
+        if (capFull) {
+          alert('Sorry — this event filled up while the form was open.');
+          return;
+        }
         window.__ldahLock_appSignup = true;
         var __unlockTimer;
         var __unlock = function () { clearTimeout(__unlockTimer); window.__ldahLock_appSignup = false; };
@@ -2096,6 +2149,35 @@
                       }}
                     >
                       Done
+                    </button>
+                  </div>
+                ) : capChecking ? (
+                  <div style={{ padding: '30px 6px', textAlign: 'center' }}>
+                    <h2 style={{ color: '#004E7C', fontSize: '22px', fontWeight: 'bold', marginBottom: '10px', paddingRight: '40px' }}>
+                      {signupEvent.title}
+                    </h2>
+                    <p style={{ color: '#666', fontSize: '15px', margin: 0 }}>Checking availability&hellip;</p>
+                  </div>
+                ) : capFull ? (
+                  /* Full: show the same notice the website shows, and no form.
+                     Until 2026-08-19 the app had no capacity check at all. */
+                  <div style={{ padding: '10px 6px 6px' }}>
+                    <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', paddingRight: '40px' }}>
+                      {signupEvent.title}
+                    </h2>
+                    <p style={{ color: '#374151', fontSize: '16px', lineHeight: 1.6, margin: '0 0 18px' }}>
+                      This event is full.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowSignupModal(false)}
+                      style={{
+                        padding: '10px 24px', backgroundColor: 'transparent',
+                        color: '#666', border: '1px solid #D1D5DB', borderRadius: '8px',
+                        fontSize: '14px', cursor: 'pointer'
+                      }}
+                    >
+                      Close
                     </button>
                   </div>
                 ) : (
