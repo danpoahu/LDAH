@@ -210,6 +210,7 @@
     function show(c) {
         if (root) { root.remove(); root = null; }
         activeCampaign = c;
+        trackFlyer('seen', c._flyerKey || c.key);
         root = buildMarkup(c);
         wire();
         root.classList.add('active');
@@ -232,10 +233,10 @@
         root.querySelector('.ll-pop-later').addEventListener('click', close);
         // Sign Up Now: mark seen, then let the link navigate.
         root.querySelector('.ll-pop-cta').addEventListener('click', function () {
-            if (activeCampaign) setFlag(activeCampaign);
+            if (activeCampaign) { setFlag(activeCampaign); trackFlyer('click', activeCampaign._flyerKey || activeCampaign.key); }
         });
         var promoLink = root.querySelector('.ll-pop-promo-link');
-        if (promoLink) promoLink.addEventListener('click', function () { if (activeCampaign) setFlag(activeCampaign); });
+        if (promoLink) promoLink.addEventListener('click', function () { if (activeCampaign) { setFlag(activeCampaign); trackFlyer('click', activeCampaign._flyerKey || activeCampaign.key); } });
         root.addEventListener('click', function (ev) { if (ev.target === root) close(); });
         document.addEventListener('keydown', function (ev) {
             if (ev.key === 'Escape' && root && root.classList.contains('active')) close();
@@ -263,6 +264,24 @@
     function _views() { try { return JSON.parse(localStorage.getItem(VIEWS_KEY) || '{}'); } catch (e) { return {}; } }
     function viewCount(k) { return +(_views()[k] || 0); }
     function bumpView(k) { try { var v = _views(); v[k] = viewCount(k) + 1; localStorage.setItem(VIEWS_KEY, JSON.stringify(v)); } catch (e) {} }
+    // Popup analytics — one write per show / per click into the same
+    // siteAnalytics/<date> doc the site tracker uses, surfaced in CMS Web
+    // Analytics. set(merge)+increment creates or bumps the day doc. (2026-08-23)
+    function trackFlyer(action, key) {
+        try {
+            if (typeof firebase === 'undefined' || !firebase.firestore) return;
+            var db = firebase.firestore();
+            var d = new Date();
+            var dateKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            var inc = firebase.firestore.FieldValue.increment(1);
+            var field = action === 'click' ? 'flyer_click' : 'flyer_seen';
+            var safe = String(key || 'unknown').replace(/[.#$/\[\]]/g, '_');
+            var payload = { events: {} };
+            payload.events[field] = {}; payload.events[field][safe] = inc;
+            payload.events[field + '_total'] = inc;
+            db.collection('siteAnalytics').doc(dateKey).set(payload, { merge: true }).catch(function () {});
+        } catch (e) {}
+    }
 
     function fetchRotation(cb) {
         if (typeof firebase === 'undefined' || !firebase.firestore) { cb([]); return; }
@@ -336,6 +355,7 @@
             always: true,
             promo: true,
             rotationId: pick.id,
+            _flyerKey: String(pick.id).split('::')[0],   // analytics: aggregate per event
             image: pick.image,
             alt: pick.title,
             ctaText: 'See our events',
