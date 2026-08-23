@@ -281,6 +281,8 @@
                         if (v.archived === true) return;
                         if (v.homeRotation !== true) return;  // only what staff ticked
                         if (!v.imageUrl) return;              // nothing to show without a flyer
+                        var _b = v.moveToPastDate || v.eventDate;
+                        if (_b && !_rotNotPast(new Date(_b + 'T00:00:00'))) return;  // event has moved to Past
                         out.push({ id: doc.id, title: v.title || 'LDAH', image: v.imageUrl, pinned: v.homePinned === true });
                     });
                 });
@@ -291,6 +293,7 @@
                         var v = doc.data() || {};
                         if (v.archived === true || !v.imageUrl) return;
                         (Array.isArray(v.homeRotationDates) ? v.homeRotationDates : []).forEach(function (lbl) {
+                            if (!_rotNotPast(_rotDateFromLabel(lbl))) return;   // skip a past ticked session
                             out.push({ id: doc.id + '::' + lbl, title: (v.title || 'LDAH') + ' — ' + lbl, image: v.imageUrl,
                                        pinned: String(v.homePinned || '') === lbl });
                         });
@@ -299,6 +302,20 @@
                 cb(out);
             }).catch(function () { cb([]); });
         } catch (e) { cb([]); }
+    }
+
+    // A homeRotation flag left on a PAST event (the CMS doesn't clear it when the
+    // event moves to Past) must not resurface in the splash popup. (2026-08-23)
+    function _rotDateFromLabel(lbl) {
+        var m = String(lbl || '').match(/([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})/);
+        if (!m) return null;
+        var d = new Date(m[1] + ' ' + m[2] + ', ' + m[3]);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    function _rotNotPast(d) {
+        if (!d) return true;
+        var n = new Date();
+        return d >= new Date(n.getFullYear(), n.getMonth(), n.getDate());
     }
 
     // Build a promo-shaped campaign from a rotation item so it reuses the flyer
