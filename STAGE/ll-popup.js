@@ -254,17 +254,15 @@
        Seen-list lives in localStorage, not a cookie: a cookie would be sent to
        the server on every request for nothing. Per-browser, so someone on a
        phone and a laptop may see a repeat, which is fine. */
-    var ROT_SEEN_KEY = 'ldah_home_seen';
-
-    function rotSeen() {
-        try { return JSON.parse(localStorage.getItem(ROT_SEEN_KEY) || '[]'); } catch (e) { return []; }
-    }
-    function rotMarkSeen(id) {
-        try {
-            var s = rotSeen(); s.push(id);
-            localStorage.setItem(ROT_SEEN_KEY, JSON.stringify(s.slice(-60)));
-        } catch (e) {}
-    }
+    // Show each rotation flyer up to POPUP_VIEW_CAP times per browser, then stop
+    // (matches the W2 popup). Fewest-views-first so flyers ALTERNATE rather than
+    // repeat back-to-back; pinned breaks ties. Counts live in one localStorage
+    // map. (2026-08-23 — replaced the old "pinned shows every visit" behaviour.)
+    var POPUP_VIEW_CAP = 2;
+    var VIEWS_KEY = 'll_popup_views';
+    function _views() { try { return JSON.parse(localStorage.getItem(VIEWS_KEY) || '{}'); } catch (e) { return {}; } }
+    function viewCount(k) { return +(_views()[k] || 0); }
+    function bumpView(k) { try { var v = _views(); v[k] = viewCount(k) + 1; localStorage.setItem(VIEWS_KEY, JSON.stringify(v)); } catch (e) {} }
 
     function fetchRotation(cb) {
         if (typeof firebase === 'undefined' || !firebase.firestore) { cb([]); return; }
@@ -322,16 +320,13 @@
     // layout that already exists, rather than inventing a second one.
     function rotationCampaign(items) {
         if (!items.length) return null;
-        // A pinned item shows to everyone every time, ignoring the seen list.
-        var pin = items.filter(function (x) { return x.pinned; })[0];
-        if (pin) return promoFrom(pin);
-        var seen = rotSeen();
-        var unseen = items.filter(function (x) { return seen.indexOf(x.id) === -1; });
-        if (!unseen.length) {                                  // full cycle — start again
-            try { localStorage.removeItem(ROT_SEEN_KEY); } catch (e) {}
-            unseen = items;
-        }
-        return promoFrom(unseen[0]);
+        var avail = items.filter(function (x) { return viewCount(x.id) < POPUP_VIEW_CAP; });
+        if (!avail.length) return null;                       // every flyer hit its cap → no popup
+        avail.sort(function (a, b) {
+            var d = viewCount(a.id) - viewCount(b.id);
+            return d !== 0 ? d : (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+        });
+        return promoFrom(avail[0]);
     }
 
     function promoFrom(pick) {
@@ -349,16 +344,16 @@
     }
 
     function init() {
-        var c = pickCampaign();
-        // A dated event campaign outranks everything. Only look at the rotation
-        // when the alternative would be the evergreen promo or nothing at all.
-        if (c && !c.always) { setTimeout(function () { show(c); }, SHOW_DELAY_MS); return; }
         fetchRotation(function (items) {
-            var rot = rotationCampaign(items);
-            var chosen = rot || c;
-            if (!chosen) return;
-            if (chosen.rotationId) rotMarkSeen(chosen.rotationId);
-            setTimeout(function () { show(chosen); }, SHOW_DELAY_MS);
+            if (items && items.length) {
+                var rot = rotationCampaign(items);   // null once every flyer hit its cap
+                if (!rot) return;                     // rotation active but exhausted → no popup
+                bumpView(rot.rotationId);             // count this display
+                setTimeout(function () { show(rot); }, SHOW_DELAY_MS);
+            } else {
+                var c = pickCampaign();               // no ticks → hardcoded fallback (membership promo)
+                if (c) setTimeout(function () { show(c); }, SHOW_DELAY_MS);
+            }
         });
     }
 
@@ -369,7 +364,8 @@
             CAMPAIGNS.forEach(function (c) {
                 try { localStorage.removeItem(flagKey(c)); } catch (e) {}
             });
-            console.log('[LLEventPopup] all event flags cleared. Reload to retrigger.');
+            try { localStorage.removeItem(VIEWS_KEY); } catch (e) {}
+            console.log('[LLEventPopup] all event flags + view counts cleared. Reload to retrigger.');
         },
         // Force-show a specific campaign by key, ignoring window + flag (testing only).
         preview: function (key) {
