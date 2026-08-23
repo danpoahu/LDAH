@@ -232,11 +232,19 @@
         root.querySelector('.ll-pop-close').addEventListener('click', close);
         root.querySelector('.ll-pop-later').addEventListener('click', close);
         // Sign Up Now: mark seen, then let the link navigate.
-        root.querySelector('.ll-pop-cta').addEventListener('click', function () {
-            if (activeCampaign) { setFlag(activeCampaign); trackFlyer('click', activeCampaign._flyerKey || activeCampaign.key); }
-        });
+        function _ctaClick(ev) {
+            if (!activeCampaign) return;
+            setFlag(activeCampaign);
+            trackFlyer('click', activeCampaign._flyerKey || activeCampaign.key);
+            if (activeCampaign._poster) {
+                // Flyer-only: show the poster. The app has no lightbox, so let the
+                // href open the full image; if a lightbox exists, use it.
+                if (typeof openFlyerView === 'function') { ev.preventDefault(); close(); openFlyerView(activeCampaign._posterUrl, activeCampaign.alt); }
+            }
+        }
+        root.querySelector('.ll-pop-cta').addEventListener('click', _ctaClick);
         var promoLink = root.querySelector('.ll-pop-promo-link');
-        if (promoLink) promoLink.addEventListener('click', function () { if (activeCampaign) { setFlag(activeCampaign); trackFlyer('click', activeCampaign._flyerKey || activeCampaign.key); } });
+        if (promoLink) promoLink.addEventListener('click', _ctaClick);
         root.addEventListener('click', function (ev) { if (ev.target === root) close(); });
         document.addEventListener('keydown', function (ev) {
             if (ev.key === 'Escape' && root && root.classList.contains('active')) close();
@@ -300,7 +308,7 @@
                         if (!v.imageUrl) return;              // nothing to show without a flyer
                         var _b = v.moveToPastDate || v.eventDate;
                         if (_b && !_rotNotPast(new Date(_b + 'T00:00:00'))) return;  // event has moved to Past
-                        out.push({ id: doc.id, title: v.title || 'LDAH', image: v.imageUrl, pinned: v.homePinned === true });
+                        out.push({ id: doc.id, title: v.title || 'LDAH', image: v.imageUrl, pinned: v.homePinned === true, flyer: (v.infoOnly === true || v.flyerOnly === true || v.isFlyerOnly === true) });
                     });
                 });
                 // Sessions ticked individually count as separate items, so two
@@ -312,7 +320,7 @@
                         (Array.isArray(v.homeRotationDates) ? v.homeRotationDates : []).forEach(function (lbl) {
                             if (!_rotNotPast(_rotDateFromLabel(lbl))) return;   // skip a past ticked session
                             out.push({ id: doc.id + '::' + lbl, title: (v.title || 'LDAH') + ' — ' + lbl, image: v.imageUrl,
-                                       pinned: String(v.homePinned || '') === lbl });
+                                       pinned: String(v.homePinned || '') === lbl, flyer: (v.infoOnly === true || v.flyerOnly === true || v.isFlyerOnly === true) });
                         });
                     });
                 });
@@ -356,10 +364,12 @@
             promo: true,
             rotationId: pick.id,
             _flyerKey: String(pick.id).split('::')[0],   // analytics: aggregate per event
+            _poster: pick.flyer === true,                // flyer-only: click shows the poster
+            _posterUrl: pick.image,
             image: pick.image,
             alt: pick.title,
-            ctaText: 'See our events',
-            ctaHref: 'events.html'
+            ctaText: pick.flyer ? 'View Flyer' : 'See our events',
+            ctaHref: pick.flyer ? pick.image : 'events.html'
         };
     }
 
