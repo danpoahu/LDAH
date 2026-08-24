@@ -36,7 +36,7 @@
     var PTC_IMG = 'https://firebasestorage.googleapis.com/v0/b/ldah-932d5.firebasestorage.app/o/event-images%2F1780510227059_June%202026..jpg?alt=media&token=eedabbf6-206f-4493-b8af-376627649d43';
     var LL_JULY_IMG = 'https://firebasestorage.googleapis.com/v0/b/ldah-932d5.firebasestorage.app/o/event-images%2F1783039515710_July%20%20LL%202.jpg?alt=media&token=30236f21-a314-46bc-afa9-b5ed69f5149b';
     var LL_AUG_IMG = 'https://firebasestorage.googleapis.com/v0/b/ldah-932d5.firebasestorage.app/o/event-images%2F1784843405905_August.jpg?alt=media&token=07323c84-3b7d-4bd9-aee5-752e8dd2e43c';
-    var MEMBER_IMG = 'become-a-member.png';
+    var MEMBER_IMG = '/LDAH/become-a-member.png';
 
     // ── Schedule (edit here to add / change events) ───────────────────────────
     // label may contain "{month}" — replaced with the event's month name, so
@@ -210,6 +210,7 @@
     function show(c) {
         if (root) { root.remove(); root = null; }
         activeCampaign = c;
+        trackFlyer('seen', c._flyerKey || c.key);
         root = buildMarkup(c);
         wire();
         root.classList.add('active');
@@ -231,21 +232,159 @@
         root.querySelector('.ll-pop-close').addEventListener('click', close);
         root.querySelector('.ll-pop-later').addEventListener('click', close);
         // Sign Up Now: mark seen, then let the link navigate.
-        root.querySelector('.ll-pop-cta').addEventListener('click', function () {
-            if (activeCampaign) setFlag(activeCampaign);
-        });
+        function _ctaClick(ev) {
+            if (!activeCampaign) return;
+            setFlag(activeCampaign);
+            trackFlyer('click', activeCampaign._flyerKey || activeCampaign.key);
+            if (activeCampaign._poster) {
+                // Flyer-only: show the poster. The app has no lightbox, so let the
+                // href open the full image; if a lightbox exists, use it.
+                if (typeof openFlyerView === 'function') { ev.preventDefault(); close(); openFlyerView(activeCampaign._posterUrl, activeCampaign.alt); }
+            }
+        }
+        root.querySelector('.ll-pop-cta').addEventListener('click', _ctaClick);
         var promoLink = root.querySelector('.ll-pop-promo-link');
-        if (promoLink) promoLink.addEventListener('click', function () { if (activeCampaign) setFlag(activeCampaign); });
+        if (promoLink) promoLink.addEventListener('click', _ctaClick);
         root.addEventListener('click', function (ev) { if (ev.target === root) close(); });
         document.addEventListener('keydown', function (ev) {
             if (ev.key === 'Escape' && root && root.classList.contains('active')) close();
         });
     }
 
+    /* ── Home rotation ───────────────────────────────────────────────────────
+       Staff tick what they want shown in LDAH-Int (CMS > Home Rotation), which
+       sets homeRotation:true. Those flyers rotate through this splash so a
+       returning visitor is not shown the same one over and over.
+
+       Priority is deliberate: a real dated event campaign always wins — if
+       Learning Labs is on Tuesday, that is what should be on screen. Rotation
+       fills the gaps that the evergreen membership promo used to fill alone.
+
+       Seen-list lives in localStorage, not a cookie: a cookie would be sent to
+       the server on every request for nothing. Per-browser, so someone on a
+       phone and a laptop may see a repeat, which is fine. */
+    // Show each rotation flyer up to POPUP_VIEW_CAP times per browser, then stop
+    // (matches the W2 popup). Fewest-views-first so flyers ALTERNATE rather than
+    // repeat back-to-back; pinned breaks ties. Counts live in one localStorage
+    // map. (2026-08-23 — replaced the old "pinned shows every visit" behaviour.)
+    var POPUP_VIEW_CAP = 2;
+    var VIEWS_KEY = 'll_popup_views';
+    function _views() { try { return JSON.parse(localStorage.getItem(VIEWS_KEY) || '{}'); } catch (e) { return {}; } }
+    function viewCount(k) { return +(_views()[k] || 0); }
+    function bumpView(k) { try { var v = _views(); v[k] = viewCount(k) + 1; localStorage.setItem(VIEWS_KEY, JSON.stringify(v)); } catch (e) {} }
+    // Popup analytics — one write per show / per click into the same
+    // siteAnalytics/<date> doc the site tracker uses, surfaced in CMS Web
+    // Analytics. set(merge)+increment creates or bumps the day doc. (2026-08-23)
+    function trackFlyer(action, key) {
+        try {
+            if (typeof firebase === 'undefined' || !firebase.firestore) return;
+            var db = firebase.firestore();
+            var d = new Date();
+            var dateKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            var inc = firebase.firestore.FieldValue.increment(1);
+            var field = action === 'click' ? 'flyer_click' : 'flyer_seen';
+            var safe = String(key || 'unknown').replace(/[.#$/\[\]]/g, '_');
+            var payload = { events: {} };
+            payload.events[field] = {}; payload.events[field][safe] = inc;
+            payload.events[field + '_total'] = inc;
+            db.collection('siteAnalytics').doc(dateKey).set(payload, { merge: true }).catch(function () {});
+        } catch (e) {}
+    }
+
+    function fetchRotation(cb) {
+        if (typeof firebase === 'undefined' || !firebase.firestore) { cb([]); return; }
+        try {
+            var db = firebase.firestore();
+            Promise.all([
+                db.collection('events').get(),
+                db.collection('recurringEvents').get()
+            ]).then(function (snaps) {
+                var out = [];
+                snaps.forEach(function (snap) {
+                    snap.forEach(function (doc) {
+                        var v = doc.data() || {};
+                        if (v.archived === true) return;
+                        if (v.homeRotation !== true) return;  // only what staff ticked
+                        if (!v.imageUrl) return;              // nothing to show without a flyer
+                        var _b = v.moveToPastDate || v.eventDate;
+                        if (_b && !_rotNotPast(new Date(_b + 'T00:00:00'))) return;  // event has moved to Past
+                        out.push({ id: doc.id, title: v.title || 'LDAH', image: v.imageUrl, pinned: v.homePinned === true, flyer: (v.infoOnly === true || v.flyerOnly === true || v.isFlyerOnly === true) });
+                    });
+                });
+                // Sessions ticked individually count as separate items, so two
+                // sessions of one Learning Labs doc rotate independently.
+                snaps.forEach(function (snap) {
+                    snap.forEach(function (doc) {
+                        var v = doc.data() || {};
+                        if (v.archived === true || !v.imageUrl) return;
+                        (Array.isArray(v.homeRotationDates) ? v.homeRotationDates : []).forEach(function (lbl) {
+                            if (!_rotNotPast(_rotDateFromLabel(lbl))) return;   // skip a past ticked session
+                            out.push({ id: doc.id + '::' + lbl, title: (v.title || 'LDAH') + ' — ' + lbl, image: v.imageUrl,
+                                       pinned: String(v.homePinned || '') === lbl, flyer: (v.infoOnly === true || v.flyerOnly === true || v.isFlyerOnly === true) });
+                        });
+                    });
+                });
+                cb(out);
+            }).catch(function () { cb([]); });
+        } catch (e) { cb([]); }
+    }
+
+    // A homeRotation flag left on a PAST event (the CMS doesn't clear it when the
+    // event moves to Past) must not resurface in the splash popup. (2026-08-23)
+    function _rotDateFromLabel(lbl) {
+        var m = String(lbl || '').match(/([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})/);
+        if (!m) return null;
+        var d = new Date(m[1] + ' ' + m[2] + ', ' + m[3]);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    function _rotNotPast(d) {
+        if (!d) return true;
+        var n = new Date();
+        return d >= new Date(n.getFullYear(), n.getMonth(), n.getDate());
+    }
+
+    // Build a promo-shaped campaign from a rotation item so it reuses the flyer
+    // layout that already exists, rather than inventing a second one.
+    function rotationCampaign(items) {
+        if (!items.length) return null;
+        var avail = items.filter(function (x) { return viewCount(x.id) < POPUP_VIEW_CAP; });
+        if (!avail.length) return null;                       // every flyer hit its cap → no popup
+        avail.sort(function (a, b) {
+            var d = viewCount(a.id) - viewCount(b.id);
+            return d !== 0 ? d : (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+        });
+        return promoFrom(avail[0]);
+    }
+
+    function promoFrom(pick) {
+        return {
+            key: 'rotation-' + pick.id,
+            date: '1970-01-01',
+            always: true,
+            promo: true,
+            rotationId: pick.id,
+            _flyerKey: String(pick.id).split('::')[0],   // analytics: aggregate per event
+            _poster: pick.flyer === true,                // flyer-only: click shows the poster
+            _posterUrl: pick.image,
+            image: pick.image,
+            alt: pick.title,
+            ctaText: pick.flyer ? 'View Flyer' : 'See our events',
+            ctaHref: pick.flyer ? pick.image : 'events.html'
+        };
+    }
+
     function init() {
-        var c = pickCampaign();
-        if (!c) return;
-        setTimeout(function () { show(c); }, SHOW_DELAY_MS);
+        fetchRotation(function (items) {
+            if (items && items.length) {
+                var rot = rotationCampaign(items);   // null once every flyer hit its cap
+                if (!rot) return;                     // rotation active but exhausted → no popup
+                bumpView(rot.rotationId);             // count this display
+                setTimeout(function () { show(rot); }, SHOW_DELAY_MS);
+            } else {
+                var c = pickCampaign();               // no ticks → hardcoded fallback (membership promo)
+                if (c) setTimeout(function () { show(c); }, SHOW_DELAY_MS);
+            }
+        });
     }
 
     window.LLEventPopup = {
@@ -255,7 +394,8 @@
             CAMPAIGNS.forEach(function (c) {
                 try { localStorage.removeItem(flagKey(c)); } catch (e) {}
             });
-            console.log('[LLEventPopup] all event flags cleared. Reload to retrigger.');
+            try { localStorage.removeItem(VIEWS_KEY); } catch (e) {}
+            console.log('[LLEventPopup] all event flags + view counts cleared. Reload to retrigger.');
         },
         // Force-show a specific campaign by key, ignoring window + flag (testing only).
         preview: function (key) {
