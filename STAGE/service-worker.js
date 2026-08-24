@@ -11,8 +11,6 @@ const urlsToCache = [
   './contact.html',
   './resources.html',
   './install.html',
-  './letter-video.css',
-  './letter-video.js',
   './styles.css',
   './analytics-tracker.js',
   './logo_transparent.png',
