@@ -36,7 +36,6 @@
     var PTC_IMG = 'https://firebasestorage.googleapis.com/v0/b/ldah-932d5.firebasestorage.app/o/event-images%2F1780510227059_June%202026..jpg?alt=media&token=eedabbf6-206f-4493-b8af-376627649d43';
     var LL_JULY_IMG = 'https://firebasestorage.googleapis.com/v0/b/ldah-932d5.firebasestorage.app/o/event-images%2F1783039515710_July%20%20LL%202.jpg?alt=media&token=30236f21-a314-46bc-afa9-b5ed69f5149b';
     var LL_AUG_IMG = 'https://firebasestorage.googleapis.com/v0/b/ldah-932d5.firebasestorage.app/o/event-images%2F1784843405905_August.jpg?alt=media&token=07323c84-3b7d-4bd9-aee5-752e8dd2e43c';
-    var MEMBER_IMG = '/LDAH/become-a-member.png';
 
     // ── Schedule (edit here to add / change events) ───────────────────────────
     // label may contain "{month}" — replaced with the event's month name, so
@@ -89,20 +88,6 @@
             eventId: 'IqTwpWFPtpONhThQZmzs',
             image: LL_AUG_IMG
         },
-        {
-            // Evergreen membership promo — replaces the event popup. Shows the
-            // full flyer; the flyer AND the button link to the How to Help page.
-            // NOTE: on the app, "How to Help" is its OWN page (howtohelp.html),
-            // separate from Volunteer — unlike the W2 site where it is volunteer.html.
-            key: 'become-member-2026-07',
-            date: '2026-07-21',
-            always: true,      // not date-windowed — shows whenever no event is active
-            promo: true,
-            image: MEMBER_IMG,
-            alt: 'Become an LDAH Member',
-            ctaText: 'Become a Member',
-            ctaHref: 'howtohelp.html'
-        }
     ];
     // ──────────────────────────────────────────────────────────────────────────
 
@@ -172,7 +157,7 @@
         // Promo layout: the flyer IS the popup. Whole flyer + button link out.
         if (c.promo) {
             backdrop.innerHTML =
-                '<div class="ll-pop ll-pop-promo" role="dialog" aria-modal="true" aria-label="' + (c.alt || 'Become a Member') + '">' +
+                '<div class="ll-pop ll-pop-promo" role="dialog" aria-modal="true" aria-label="' + (c.alt || 'LDAH') + '">' +
                     '<button class="ll-pop-close" type="button" aria-label="Close">&times;</button>' +
                     '<a class="ll-pop-promo-link" href="' + c.ctaHref + '">' +
                         '<img class="ll-pop-promo-img" src="' + c.image + '" alt="' + (c.alt || '') + '">' +
