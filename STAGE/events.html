@@ -166,6 +166,46 @@
       return `${hour}:${String(m).padStart(2,'0')} ${ampm}`;
     };
 
+    /* 24-hour registration cut-off ----------------------------------------
+       A family must not be able to join a session that starts in less than a
+       day: signing up the day before is fine, the morning of is not. Sessions
+       inside the window still render (disabled, with a "Closed" badge) the
+       same way a full session does - a family who can see why is better
+       served than one whose date silently disappeared.
+       Mirrors the same cut-off on the website's events page. */
+    const RECURRING_SIGNUP_CUTOFF_HOURS = 24;
+
+    // The instant a session actually starts, anchored to Hawaii.
+    //
+    // Do NOT "simplify" the -10:00 back to a local-time parse. Everything else
+    // on this page does its date maths in the visitor's own timezone, which is
+    // harmless for a label but wrong for a deadline: a family on the mainland
+    // would get a cut-off hours away from the one an island family gets for
+    // the very same session. Hawaii does not observe DST, so the fixed -10:00
+    // offset is correct all year round.
+    //
+    // occ.date is pinned to local midnight, so the date parts are read locally
+    // (getFullYear/getMonth/getDate) to match the label the family is shown -
+    // toISOString() would slide to the previous day for visitors east of UTC.
+    const recurringSessionStart = (occ) => {
+      const sch = (occ && occ.schedule) || {};
+      if (!occ || !occ.date || !sch.startTime) return null;
+      const d = occ.date;
+      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const start = new Date(`${dateKey}T${sch.startTime}:00-10:00`);
+      return isNaN(start.getTime()) ? null : start;
+    };
+
+    // Fail open: a schedule with no (or an unparseable) startTime keeps its
+    // sessions selectable rather than locking a family out of the whole
+    // programme over a CMS omission. The server-side checks catch a genuinely
+    // late signup.
+    const isRecurringSessionClosed = (occ) => {
+      const start = recurringSessionStart(occ);
+      if (!start) return false;
+      return (start.getTime() - Date.now()) < RECURRING_SIGNUP_CUTOFF_HOURS * 60 * 60 * 1000;
+    };
+
     const getOccurrencesInNext30Days = (schedules, cancelledDates) => {
       const today = new Date(); today.setHours(0,0,0,0);
       const end = new Date(today); end.setDate(end.getDate() + 30);
@@ -206,7 +246,7 @@
       const timeRange = `${fmt12(occ.schedule.startTime)} \u2013 ${fmt12(occ.schedule.endTime)}`;
       const key = `${d.toISOString().slice(0,10)}|${occ.schedule.location}${venue}|${timeRange}`;
       const display = `${label} \u00b7 ${occ.schedule.location}${venue} \u00b7 ${timeRange}`;
-      return { key, display };
+      return { key, display, closed: isRecurringSessionClosed(occ) };
     };
 
     // Render the recurring pattern of a single schedule entry — used on the
@@ -981,8 +1021,16 @@
           }
           const occ = getOccurrencesInNext30Days(prog.schedules || [], prog.cancelledDates);
           if (!occ.length) return null;
-          const { display } = formatOccurrence(occ[0]);
-          return { ...prog, _isRecurring: true, _nextDate: occ[0].date,
+          // Advertise the next session a family can actually still join, so the
+          // card stops promoting one that is already inside the 24-hour
+          // cut-off. Rolls forward rather than dropping the card; if every
+          // remaining occurrence is closed it falls back to the first one so
+          // the programme still appears in the list at all.
+          const nextOpen = occ.find(o => !isRecurringSessionClosed(o)) || occ[0];
+          const { display } = formatOccurrence(nextOpen);
+          // _occurrences keeps the FULL list - the modal renders closed rows
+          // disabled with a badge rather than hiding them.
+          return { ...prog, _isRecurring: true, _nextDate: nextOpen.date,
                    _nextLabel: display, _occurrences: occ };
         })
         .filter(Boolean)
@@ -1238,6 +1286,25 @@
         // session needs a written reason (e.g. signing up multiple kids).
         if (recurringFormData.selectedSessions.length === 0) {
           alert('Please pick the session you will attend.');
+          return;
+        }
+
+        // Re-check the 24-hour cut-off here: a modal left open overnight still
+        // holds an _occurrences list (and rows) that were selectable when it
+        // was drawn. Recomputed through formatOccurrence so the keys match the
+        // values held in recurringFormData.selectedSessions exactly.
+        //
+        // Deliberately an allow-list, not a "reject the closed ones" list: a
+        // session that has slid into the past is no longer produced by the
+        // expander at all, so it would never appear in a closed list and would
+        // sail straight through. Anything not currently open is refused.
+        const _openSessionKeys = getOccurrencesInNext30Days(
+            (recurringSignupEvent && recurringSignupEvent.schedules) || [],
+            recurringSignupEvent && recurringSignupEvent.cancelledDates)
+          .filter(o => !isRecurringSessionClosed(o))
+          .map(o => formatOccurrence(o).key);
+        if (recurringFormData.selectedSessions.some(k => _openSessionKeys.indexOf(k) === -1)) {
+          alert('Sign-ups close 24 hours before a session starts, and that session is no longer open. Please close and reopen this form, then pick a later date.');
           return;
         }
         if (recurringFormData.selectedSessions.length > 1 &&
@@ -3068,16 +3135,20 @@
                           return !occ.date || occ.date.getDay() !== 1;
                         });
                         return visibleOccurrences.map((occ, i) => {
-                        const { key, display } = formatOccurrence(occ);
+                        const { key, display, closed } = formatOccurrence(occ);
                         const isFull = (sessionConfirmedCounts[key] || 0) >= RECURRING_SESSION_CAPACITY;
+                        // Inside the 24-hour cut-off (see isRecurringSessionClosed).
+                        // FULL wins the badge when a session is both.
+                        const isClosed = !isFull && closed === true;
+                        const isBlocked = isFull || isClosed;
                         return (
                           <label key={i} style={{
                             display: 'flex', alignItems: 'flex-start', gap: '8px',
                             padding: '10px 12px', marginBottom: '8px', borderRadius: '8px',
-                            background: isFull ? '#fee2e2' : '#f0f9ff',
-                            border: `1px solid ${isFull ? '#fecaca' : '#e0f2fe'}`,
-                            cursor: isFull || recurringSubmitting ? 'not-allowed' : 'pointer',
-                            opacity: isFull ? 0.6 : 1
+                            background: isFull ? '#fee2e2' : (isClosed ? '#f3f4f6' : '#f0f9ff'),
+                            border: `1px solid ${isFull ? '#fecaca' : (isClosed ? '#e5e7eb' : '#e0f2fe')}`,
+                            cursor: isBlocked || recurringSubmitting ? 'not-allowed' : 'pointer',
+                            opacity: isBlocked ? 0.6 : 1
                           }}>
                             <input
                               type={isConnectGen ? 'radio' : 'checkbox'}
@@ -3091,13 +3162,16 @@
                                   handleSessionToggle(key);
                                 }
                               }}
-                              disabled={recurringSubmitting || isFull}
-                              style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0, cursor: isFull ? 'not-allowed' : 'pointer' }}
+                              disabled={recurringSubmitting || isBlocked}
+                              style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0, cursor: isBlocked ? 'not-allowed' : 'pointer' }}
                             />
-                            <span style={{ fontSize: '14px', color: isFull ? '#991b1b' : '#374151', lineHeight: '1.5' }}>
+                            <span style={{ fontSize: '14px', color: isFull ? '#991b1b' : (isClosed ? '#6B7280' : '#374151'), lineHeight: '1.5' }}>
                               {display}
                               {isFull && (
                                 <span style={{ background: '#DC2626', color: 'white', padding: '1px 8px', borderRadius: '50px', fontSize: '11px', fontWeight: 700, marginLeft: '6px' }}>FULL</span>
+                              )}
+                              {isClosed && (
+                                <span style={{ background: '#6B7280', color: 'white', padding: '1px 8px', borderRadius: '50px', fontSize: '11px', fontWeight: 700, marginLeft: '6px' }}>Closed</span>
                               )}
                             </span>
                           </label>
