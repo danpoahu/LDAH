@@ -4,3 +4,8 @@
 .DS_Store
 .DS_Store
 .claude/
+
+# 51MB asset bundle that lives in the working tree but must never be committed.
+# This repo is PUBLIC and serves the App; a stray `git add -A` would publish it.
+all-assets-march-2026.zip
+*.zip
