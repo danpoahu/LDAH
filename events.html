@@ -444,6 +444,35 @@
       return parts.slice(1).join(' · ').replace(/[,\s]+$/, '').trim();
     };
 
+    // ── Public listing gate ───────────────────────────────────────────────
+    // Single place that decides whether an event may appear on ANY public
+    // surface of the app: the Current and Past event carousels and the counts
+    // derived from them. Mirrors isPubliclyListable in LDAH_W2 events.html —
+    // keep the two in step. Every clause only ever HIDES, and every test is
+    // strict, so an event missing the field is always still listed.
+    //
+    //   archived      Staff archived it in LDAH-Int. Until now the app filtered
+    //                 nothing at all, so archiving hid an event on the website
+    //                 but left it showing here. Archiving has to hide an event
+    //                 everywhere.
+    //   isOneOff      One-off entries are retrospective attendance records
+    //                 logged AFTER the activity already happened (IEP meetings,
+    //                 outreach, screenings). They exist to credit participation,
+    //                 never to advertise anything. They do carry startDate /
+    //                 moveToPastDate, so isEventCurrent / isEventPast alone will
+    //                 not stop them.
+    //   partnerIsland A Pacific Basin partner's own event, scoped to their
+    //                 island. It is their work, not LDAH's public programme.
+    const isPubliclyListable = (ev) => {
+      if (!ev) return false;
+      if (ev.archived === true) return false;
+      if (ev.isOneOff === true) return false;
+      const pi = ev.partnerIsland;
+      if (typeof pi === 'string' && pi.trim() !== '') return false;
+      if (Array.isArray(pi) && pi.length > 0) return false;
+      return true;
+    };
+
     const EventsApp = () => {
       const [events, setEvents] = useState([]);
       const [loading, setLoading] = useState(true);
@@ -1036,7 +1065,7 @@
         .filter(Boolean)
         .sort((a, b) => a._nextDate - b._nextDate);
 
-      const regularCurrent = events.filter(isEventCurrent)
+      const regularCurrent = events.filter(e => isPubliclyListable(e) && isEventCurrent(e))
         .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
       const _acceptsSignups = (ev) => {
@@ -1052,7 +1081,7 @@
       const _infoFlyers = [...regularCurrent, ...recurringVirtualEvents].filter(e => !_acceptsSignups(e));
       const currentEvents = [..._oneTimeSignup, ..._recurringSignup, ..._infoFlyers];
 
-      const pastEvents = events.filter(isEventPast).sort((a, b) =>
+      const pastEvents = events.filter(e => isPubliclyListable(e) && isEventPast(e)).sort((a, b) =>
         new Date(b.moveToPastDate) - new Date(a.moveToPastDate)
       );
 
