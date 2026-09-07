@@ -1079,7 +1079,35 @@
       const _oneTimeSignup = regularCurrent.filter(_acceptsSignups);
       const _recurringSignup = recurringVirtualEvents.filter(_acceptsSignups);
       const _infoFlyers = [...regularCurrent, ...recurringVirtualEvents].filter(e => !_acceptsSignups(e));
-      const currentEvents = [..._oneTimeSignup, ..._recurringSignup, ..._infoFlyers];
+      /* The month header only prints when the label changes, so the list has to
+         be in month order or a month reappears further down (Sept, Nov, Sept).
+         The three buckets below are ordered by CATEGORY on purpose — signup
+         events before flyers — which is what broke it. So: sort by month first,
+         then keep the category order inside each month. Both intents survive.
+         Anchor mirrors the render loop exactly; change one, change the other. */
+      const evAnchorIso = (ev) => {
+        if (!ev) return null;
+        const isFlyer = !!ev._isFlyerOnly || ev.infoOnly === true;
+        if (!!ev._isRecurring && !isFlyer) return evToIso(ev._nextDate);
+        if (ev.signupDates && ev.signupDates.length > 0) return evToIso(ev.signupDates[0], ev.eventDate);
+        if (ev.eventDate) return evToIso(ev.eventDate);
+        return null;
+      };
+      const _evMonthKey = (ev) => {
+        const iso = evAnchorIso(ev);
+        // No usable date sorts last rather than jumping to the top.
+        return (iso && /^\d{4}-\d{2}/.test(iso)) ? iso.slice(0, 7) : '9999-99';
+      };
+      const _evRank = (ev) => (_acceptsSignups(ev) ? (ev._isRecurring ? 1 : 0) : 2);
+      const _byMonthThenCategory = (a, b) => {
+        const ma = _evMonthKey(a), mb = _evMonthKey(b);
+        if (ma !== mb) return ma < mb ? -1 : 1;
+        const ra = _evRank(a), rb = _evRank(b);
+        if (ra !== rb) return ra - rb;
+        return String(evAnchorIso(a) || '').localeCompare(String(evAnchorIso(b) || ''));
+      };
+      const currentEvents = [..._oneTimeSignup, ..._recurringSignup, ..._infoFlyers]
+        .sort(_byMonthThenCategory);
 
       const pastEvents = events.filter(e => isPubliclyListable(e) && isEventPast(e)).sort((a, b) =>
         new Date(b.moveToPastDate) - new Date(a.moveToPastDate)
