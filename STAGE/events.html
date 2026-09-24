@@ -1332,6 +1332,12 @@
           }
         }
 
+        // Name and a real email, checked in code (2026-09-24). `required` only runs
+        // on a real button press; on the website a scripted submit wrote 11 blank
+        // Connect-Gen signups in a minute. Same rule here so the two agree.
+        if (String(recurringFormData.name || '').trim().length < 2) { alert('Please enter your name.'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(recurringFormData.email || '').trim())) { alert('Please enter a valid email address.'); return; }
+
         // Validate phone is 10 digits
         const phoneDigits = recurringFormData.phone.replace(/\D/g, '');
         if (phoneDigits.length !== 10) {
@@ -1453,6 +1459,12 @@
             alert('Please tell us how you actually heard about us — even just "a friend" or "my doctor" helps.'); return;
           }
         }
+
+        // Name and a real email, checked in code (2026-09-24). `required` only runs
+        // on a real button press; on the website a scripted submit wrote 11 blank
+        // Connect-Gen signups in a minute. Same rule here so the two agree.
+        if (String(formData.name || '').trim().length < 2) { alert('Please enter your name.'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(formData.email || '').trim())) { alert('Please enter a valid email address.'); return; }
 
         // Validate phone is 10 digits
         const phoneDigits = formData.phone.replace(/\D/g, '');
