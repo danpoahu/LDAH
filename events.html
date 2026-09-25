@@ -1007,7 +1007,8 @@
             console.log('📊 Events:', eventsSnap.size, '| Recurring docs:', recurringSnap.size, allRecurring);
             setEvents(eventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
             // filter active client-side so a missing/false field doesn't silently hide programs
-            setRecurringPrograms(allRecurring.filter(p => p.active !== false));
+            // PIP programs are never public (Daniel 2026-09-25), nor archived ones.
+            setRecurringPrograms(allRecurring.filter(p => p.active !== false && isPubliclyListable(p)));
           } catch (error) {
             console.error('Error loading events:', error);
           } finally {

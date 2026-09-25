@@ -294,6 +294,9 @@
                     snap.forEach(function (doc) {
                         var v = doc.data() || {};
                         if (v.archived === true) return;
+                        // One-offs and Pacific partner (PIP) items are never public (2026-09-25).
+                        if (v.isOneOff === true) return;
+                        if (typeof v.partnerIsland === 'string' && v.partnerIsland.trim() !== '') return;
                         if (v.homeRotation !== true) return;  // only what staff ticked
                         if (!v.imageUrl) return;              // nothing to show without a flyer
                         var _b = v.moveToPastDate || v.eventDate;
