@@ -1175,7 +1175,7 @@
         /* SPEED — DO NOT REMOVE (Daniel 2026-09-25). Wakes the duplicate-signup
            check while the family fills in the form; cold it takes ~4 s, and
            Submit waits on it. "4 seconds after hitting submit is a lifetime." */
-        try { if (!window._ldahDupWarm) { window._ldahDupWarm = 1; fetch('https://us-central1-ldah-932d5.cloudfunctions.net/checkDuplicateEventSignups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(function(){}); } } catch (_) {}
+        try { if (!window._ldahDupWarm) { window._ldahDupWarm = 1; fetch('https://us-central1-ldah-932d5.cloudfunctions.net/checkDuplicateEventSignups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ warm: true, collection: 'events', eventId: event && event.id }) }).catch(function(){}); } } catch (_) {}
         setSignupEvent(event);
         setShowSignupModal(true);
         _checkCapacity(event);
