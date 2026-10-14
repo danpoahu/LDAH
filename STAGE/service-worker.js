@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — STAGE
-const CACHE_NAME = 'ldah-stage-v19';   // 2026-10-14 home: Our Offices card removed
+const CACHE_NAME = 'ldah-stage-v20';   // 2026-10-14 home: Welcome / Aloha Packet download button
 const urlsToCache = [
   './',
   './index.html',

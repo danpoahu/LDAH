@@ -144,6 +144,29 @@
 
       <!-- Menu Buttons -->
       <div class="grid grid-cols-2 gap-2 mb-3" role="navigation" aria-label="Main sections">
+        <!-- Aloha Packet (2026-10-14): full-width welcome button; the download attribute saves the PDF instead of opening it -->
+        <a href="../LDAH-Aloha-Packet.pdf" download="LDAH-Aloha-Packet.pdf" type="application/pdf" style="text-decoration: none; grid-column: 1 / -1;" aria-label="Welcome to LDAH. Download our Aloha Packet (PDF)">
+          <div style="
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid #004E7C;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <div style="text-align: left;">
+              <h3 class="font-bold text-sm text-[#004E7C]" style="margin: 0;">Welcome to LDAH</h3>
+              <p style="margin: 0; font-size: 11px; color: #4B5563;">Download our Aloha Packet</p>
+            </div>
+          </div>
+        </a>
         <!-- Events Button -->
         <a href="events.html?src=home" style="text-decoration: none;" aria-label="Events">
           <div style="
@@ -346,7 +369,7 @@
 
       <!-- Our Offices card (phones + office locations) removed 2026-10-14: families use Contact Us -->
       <!-- Native Hawaiian Survey footer link removed 2026-05-31 per Rosie's request to stop survey -->
-      <p style="text-align: center; margin: 4px 0 4px 0;"><span style="color: rgba(0,78,124,0.35); font-size: 0.7rem;">v48.6.2-STAGE</span></p>
+      <p style="text-align: center; margin: 4px 0 4px 0;"><span style="color: rgba(0,78,124,0.35); font-size: 0.7rem;">v48.7.0-STAGE</span></p>
       </main>
     </div>
   </div>
