@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — LIVE
-const CACHE_NAME = 'ldah-v12';   // bumped 2026-07-31 — purge stale members-preview.html (old relative logo path)
+const CACHE_NAME = 'ldah-v13';   // bumped 2026-07-31 — purge stale members-preview.html (old relative logo path)
 const urlsToCache = [
   './',
   './index.html',

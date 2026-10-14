@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — STAGE
-const CACHE_NAME = 'ldah-stage-v18';   // 2026-10-14 resources: green Last updated date
+const CACHE_NAME = 'ldah-stage-v19';   // 2026-10-14 home: Our Offices card removed
 const urlsToCache = [
   './',
   './index.html',
