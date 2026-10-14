@@ -1066,7 +1066,8 @@
         .filter(Boolean)
         .sort((a, b) => a._nextDate - b._nextDate);
 
-      const regularCurrent = events.filter(e => isPubliclyListable(e) && isEventCurrent(e))
+      // homeOnly (2026-10-14): a flyer meant for the home rotation alone (e.g. the app promo) stays off this list.
+      const regularCurrent = events.filter(e => isPubliclyListable(e) && e.homeOnly !== true && isEventCurrent(e))
         .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
       const _acceptsSignups = (ev) => {
@@ -1110,7 +1111,7 @@
       const currentEvents = [..._oneTimeSignup, ..._recurringSignup, ..._infoFlyers]
         .sort(_byMonthThenCategory);
 
-      const pastEvents = events.filter(e => isPubliclyListable(e) && isEventPast(e)).sort((a, b) =>
+      const pastEvents = events.filter(e => isPubliclyListable(e) && e.homeOnly !== true && isEventPast(e)).sort((a, b) =>
         new Date(b.moveToPastDate) - new Date(a.moveToPastDate)
       );
 
