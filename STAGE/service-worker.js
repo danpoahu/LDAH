@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — STAGE
-const CACHE_NAME = 'ldah-stage-v17';   // 2026-10-03 volunteer Step 2: Email me a link to finish on another device
+const CACHE_NAME = 'ldah-stage-v18';   // 2026-10-14 resources: green Last updated date
 const urlsToCache = [
   './',
   './index.html',

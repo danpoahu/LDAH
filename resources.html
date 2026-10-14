@@ -741,8 +741,20 @@
       }
     }
 
+    // "Last updated Mon D, YYYY" from lastUpdateAt (Timestamp, {seconds} or ISO string); '' when absent.
+    function ldahResourceUpdatedLabel(r) {
+      const v = r && r.lastUpdateAt;
+      let ms = 0;
+      if (v && typeof v.toMillis === 'function') ms = v.toMillis();
+      else if (v && typeof v.seconds === 'number') ms = v.seconds * 1000;
+      else if (typeof v === 'string') ms = Date.parse(v) || 0;
+      if (!ms) return '';
+      return 'Last updated ' + new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
     // Render resource card
     function renderResourceCard(resource) {
+      const updatedLabel = ldahResourceUpdatedLabel(resource);
       const logoHtml = resource.logo 
         ? `<img src="${resource.logo}" alt="${resource.name}" class="resource-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
            <div class="resource-logo-placeholder" style="display:none;"></div>`
@@ -762,6 +774,7 @@
                 <span>📍 ${displayIsland}</span>
                 ${resource.phone ? `<span>${(window.ldahFormatPhone ? window.ldahFormatPhone(resource.phone) : resource.phone)}</span>` : ''}
               </div>
+              ${updatedLabel ? `<div class="resource-updated" style="color:#16A34A;font-size:.72rem;font-weight:600;margin-top:2px;">${updatedLabel}</div>` : ''}
             </div>
             <div class="expand-icon">▼</div>
           </div>
