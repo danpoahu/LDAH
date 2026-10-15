@@ -145,7 +145,7 @@
       <!-- Menu Buttons -->
       <div class="grid grid-cols-2 gap-2 mb-3" role="navigation" aria-label="Main sections">
         <!-- Aloha Packet (2026-10-14): full-width welcome button; the download attribute saves the PDF instead of opening it -->
-        <a href="LDAH-Aloha-Packet.pdf" download="LDAH-Aloha-Packet.pdf" type="application/pdf" style="text-decoration: none; grid-column: 1 / -1;" aria-label="Welcome to LDAH. Download our Aloha Packet (PDF)">
+        <a href="LDAH-Aloha-Packet.pdf" download="LDAH-Aloha-Packet.pdf" type="application/pdf" onclick="try{window.ldahAnalytics&&window.ldahAnalytics.trackDocumentView('aloha_packet_pdf');}catch(e){}" style="text-decoration: none; grid-column: 1 / -1;" aria-label="Welcome to LDAH. Download our Aloha Packet (PDF)">
           <div style="
             background-color: rgba(255, 255, 255, 0.1);
             border-radius: 20px;
@@ -369,7 +369,7 @@
 
       <!-- Our Offices card (phones + office locations) removed 2026-10-14: families use Contact Us -->
       <!-- Native Hawaiian Survey footer link removed 2026-05-31 per Rosie's request to stop survey -->
-      <p style="text-align: center; margin: 4px 0 4px 0;"><span style="color: rgba(0,78,124,0.35); font-size: 0.7rem;">v48.7.1</span></p>
+      <p style="text-align: center; margin: 4px 0 4px 0;"><span style="color: rgba(0,78,124,0.35); font-size: 0.7rem;">v48.7.2</span></p>
       </main>
     </div>
   </div>

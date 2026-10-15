@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — STAGE
-const CACHE_NAME = 'ldah-stage-v21';   // 2026-10-14 events: homeOnly flyers stay off the list
+const CACHE_NAME = 'ldah-stage-v22';   // 2026-10-14 Aloha Packet download counted
 const urlsToCache = [
   './',
   './index.html',
