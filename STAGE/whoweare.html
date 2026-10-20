@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LDAH">
+  <meta name="theme-color" content="#0891B2">
+  <title>LDAH - Who We Are</title>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-32PRRS0W85"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-32PRRS0W85');
+  </script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/cms-donate.js" defer></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAU3CQ07bCVKlJ1qGak-150kaJEyPKldLk",
+      authDomain: "ldah-932d5.firebaseapp.com",
+      projectId: "ldah-932d5",
+      storageBucket: "ldah-932d5.firebasestorage.app",
+      messagingSenderId: "662130454003",
+      appId: "1:662130454003:web:437576d5a5811ecd8df686",
+      measurementId: "G-32PRRS0W85"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS Icons -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="site-theme.css?v=1">
+  <script src="js/app-shell.js?v=1" defer></script>
+  <style>
+
+    [hidden] { display: none !important; }
+    .pg-center { text-align: center; }
+    .pg-mt { margin-top: 14px; }
+    body.st-app .st-sec a:not(.st-btn):not(.pg-card-link) { color: var(--ocean-deep); }
+    .st-btn:focus-visible, .pg-tap:focus-visible, .pg-x:focus-visible { outline: 3px solid var(--ocean-light); outline-offset: 2px; }
+    .st-btn { min-height: 46px; display: flex; align-items: center; justify-content: center; }
+    .st-coral .st-btn { max-width: 420px; margin-left: auto; margin-right: auto; }
+    .st-coral .st-btn + .st-btn { margin-top: 10px; }
+    .st-band .st-btn { max-width: 320px; margin-top: 14px; }
+
+    /* Photo frame: sand box with an icon; the CMS photo covers it once it loads */
+    .pg-ph { position: relative; overflow: hidden; background: var(--sand); display: flex; align-items: center; justify-content: center; flex: none; }
+    .pg-ph > svg { width: 26px; height: 26px; stroke: var(--ocean-deep); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .7; }
+    .pg-ph > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pg-av { width: 56px; height: 56px; border-radius: 50%; border: 3px solid var(--ocean-light); }
+    .pg-sq { width: 84px; height: 84px; border-radius: 12px; }
+
+    /* Card with a photo on the left */
+    .pg-row { display: flex; gap: 12px; align-items: flex-start; }
+    .pg-row > div { min-width: 0; flex: 1; }
+    .pg-row h3 { margin: 0 0 4px; font: 600 1rem var(--st-font-head); line-height: 1.3; }
+    .pg-row p { margin: 0; }
+    .pg-card .st-btn { margin-top: 12px; }
+    .pg-grid { display: grid; grid-template-columns: 1fr; gap: 0 12px; }
+    @media (min-width: 600px) { .pg-grid { grid-template-columns: 1fr 1fr; } .pg-grid > .st-card { display: flex; flex-direction: column; } .pg-grid > .st-card > .st-btn { margin-top: auto; } .pg-grid > .st-card > .pg-row { margin-bottom: 12px; } }
+
+    /* Modal: white, radius 16, teal header strip */
+    .pg-modal { position: fixed; inset: 0; z-index: 1100; background: rgba(15,23,42,.55); display: flex; align-items: flex-end; justify-content: center; padding: env(safe-area-inset-top, 0px) 0 0; }
+    .pg-modal-card { background: #fff; width: 100%; max-width: 640px; max-height: 92vh; max-height: 92dvh; border-radius: 16px 16px 0 0; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 40px rgba(0,0,0,.2); }
+    @media (min-width: 640px) { .pg-modal { align-items: center; padding: 20px; } .pg-modal-card { border-radius: 16px; max-height: 88vh; } }
+    .pg-modal-head { background: linear-gradient(135deg, #0891B2, #06B6D4); color: #fff; padding: 12px 10px 12px 18px; display: flex; align-items: center; gap: 10px; flex: none; }
+    .pg-modal-head h2 { color: #fff !important; margin: 0; font: 600 1.12rem var(--st-font-head); flex: 1; line-height: 1.3; }
+    .pg-modal-head p { margin: 2px 0 0; font-size: .85rem; color: #fff; opacity: .92; line-height: 1.35; }
+    .pg-modal-head > div { flex: 1; min-width: 0; }
+    .pg-x { width: 44px; height: 44px; border: 0; border-radius: 12px; background: rgba(255,255,255,.18); color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; flex: none; }
+    .pg-modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
+    .pg-note { text-align: center; background: var(--sand-light); border-radius: 12px; padding: 14px; margin-top: 14px; font-size: .9rem; color: var(--text-soft); }
+    .pg-note p { margin: 4px 0; }
+    .pg-msg { text-align: center; color: var(--text-soft); padding: 18px 8px; font-size: .92rem; }
+
+    /* Video modal */
+    .pg-video { position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 12px; overflow: hidden; }
+    .pg-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+    .ww-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .ww-card-head h3 { margin: 0; font: 600 1.05rem var(--st-font-head); }
+    .ww-pti p + p { margin-top: 10px; }
+    .ww-people { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .ww-pcard { display: flex; flex-direction: column; align-items: center; text-align: center; background: #fff; border: 0; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.06); padding: 16px 10px 14px; cursor: pointer; font: inherit; color: var(--text-dark); width: 100%; min-height: 44px; }
+    .ww-pcard h3 { margin: 10px 0 2px; font: 600 1rem var(--st-font-head); }
+    .ww-pcard p { margin: 4px 0 0; font-size: .85rem; color: var(--text-soft); line-height: 1.45; }
+    .ww-pcard .ww-view { margin-top: 8px; font: 600 .85rem var(--st-font-head); color: var(--ocean-deep); }
+    .ww-pcard .pg-av { width: 64px; height: 64px; }
+    .ww-wide { display: none; }
+    @media (min-width: 600px) { .ww-wide { display: block; } }
+    .ww-gal { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 2px 16px 10px; margin: 0 -16px; scrollbar-width: none; }
+    .ww-gal::-webkit-scrollbar { display: none; }
+    .ww-gal button { flex: none; width: 72%; max-width: 300px; aspect-ratio: 4 / 3; border: 0; padding: 0; border-radius: 14px; overflow: hidden; scroll-snap-align: center; background: var(--sand); cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+    .ww-gal img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    @media (min-width: 700px) { .ww-gal { margin: 0 -22px; padding-left: 22px; padding-right: 22px; } .ww-gal button { width: 40%; } }
+    .ww-hint { font-size: .8rem; color: var(--text-soft); margin: 2px 0 0; }
+    .ww-list { display: grid; gap: 10px; }
+    .ww-person { display: flex; gap: 12px; align-items: center; background: var(--bg-warm); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+    .ww-person img, .ww-person .ww-init { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex: none; border: 3px solid var(--ocean-light); background: var(--sand); }
+    .ww-init { display: flex; align-items: center; justify-content: center; font: 600 1.3rem var(--st-font-head); color: var(--ocean-deep); }
+    .ww-person h3 { margin: 0; font: 600 1rem var(--st-font-head); }
+    .ww-person .ww-role { font-size: .86rem; color: var(--text-soft); line-height: 1.35; margin-top: 2px; }
+    .ww-links { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .ww-links a { display: inline-flex; align-items: center; min-height: 36px; padding: 4px 14px; border-radius: 99px; background: var(--sand-light); border: 1px solid #FDE68A; color: var(--ocean-deep) !important; font: 600 .82rem var(--st-font-head); text-decoration: none; }
+    @media (min-width: 600px) { .ww-list { grid-template-columns: 1fr 1fr; } }
+    /* Lightbox */
+    .ww-lb { position: fixed; inset: 0; z-index: 1150; background: rgba(0,0,0,.92); display: flex; align-items: center; justify-content: center; }
+    .ww-lb img { max-width: 100%; max-height: 80vh; object-fit: contain; display: block; }
+    .ww-lb .pg-x { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px); right: 12px; }
+    .ww-lb-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 56px; border: 0; border-radius: 12px; background: rgba(255,255,255,.18); color: #fff; font-size: 1.8rem; cursor: pointer; }
+    .ww-lb-prev { left: 8px; } .ww-lb-next { right: 8px; }
+    .ww-lb-count { position: absolute; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); left: 0; right: 0; text-align: center; color: #fff; font: 500 .9rem var(--st-font-head); }
+
+  </style>
+</head>
+<body class="st-app" data-tab="more" data-title="Who We Are">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <main id="main-content">
+    <header class="st-band">
+      <div class="st-wrap">
+        <h1 id="whoweare-heroTitle">Who We Are</h1>
+        <p id="whoweare-heroSubtitle">Leadership in Disabilities and Achievement of Hawaiʻi is a 501(c)(3) non-profit founded in 1968 by parents of children with learning disabilities.</p>
+      </div>
+    </header>
+
+    <section class="st-sec" aria-labelledby="whoweare-foundationTitle">
+      <div class="st-wrap">
+        <span class="st-tag">Our Foundation</span>
+        <h2 class="st-h" id="whoweare-foundationTitle">Mission, Vision &amp; Values</h2>
+        <p class="st-sub" id="whoweare-foundationSubtitle">Guiding principles that drive our commitment to families and children with disabilities</p>
+        <article class="st-card">
+          <div class="ww-card-head"><div class="pg-ph pg-av"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg><img id="whoweare-missionPhoto" alt="" hidden></div><h3 id="whoweare-missionTitle">Our Mission</h3></div>
+          <p id="whoweare-missionText">To enhance educational, work and life opportunities for children and youth with or at risk of disabilities by empowering them and their families through screening, identification, information, training, and mentoring, and by public outreach and advocacy.</p>
+        </article>
+        <article class="st-card">
+          <div class="ww-card-head"><div class="pg-ph pg-av"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12"/></svg><img id="whoweare-visionPhoto" alt="" hidden></div><h3 id="whoweare-visionTitle">Our Vision</h3></div>
+          <p id="whoweare-visionText">Individuals have choice and access to educational, work and life opportunities to be successful regardless of their disabilities.</p>
+        </article>
+        <article class="st-card">
+          <div class="ww-card-head"><div class="pg-ph pg-av"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg><img id="whoweare-valuesPhoto" alt="" hidden></div><h3 id="whoweare-valuesTitle">Core Values</h3></div>
+          <ul class="st-check" id="whoweare-valuesList" data-cms="list">
+            <li>Advocating for the Rights of Children with Disabilities</li>
+            <li>Putting Families First</li>
+            <li>Creating Partnerships</li>
+            <li>Improving Communication</li>
+            <li>Implementing Best-Practices &amp; Innovation</li>
+            <li>Ensuring Accountability</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="st-sec st-alt" aria-labelledby="whoweare-ptiTitle">
+      <div class="st-wrap">
+        <article class="st-card ww-pti">
+          <div class="ww-card-head"><div class="pg-ph pg-av"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg><img id="whoweare-ptiPhoto" alt="" hidden></div><h3 id="whoweare-ptiTitle">Parent Training &amp; Information Center</h3></div>
+          <p id="whoweare-ptiText1">Through a contract with the United States Department of Education, Office of Special Education Programs (OSEP), LDAH has operated and served as The Parent Training and Information Center (PTI) for the State of Hawaiʻi since 1990. As the PTI, LDAH provides education and training to parents, children, professionals and community members.</p>
+          <p id="whoweare-ptiText2">The majority of Parent Center staff and board are parents of children with disabilities, bringing personal experience and expertise when working with families.</p>
+        </article>
+
+        <span class="st-tag pg-mt">Meet Our People</span>
+        <h2 class="st-h" id="whoweare-teamTitle">The Team Behind LDAH</h2>
+        <p class="st-sub" id="whoweare-teamSubtitle">Dedicated professionals and volunteers committed to supporting families</p>
+        <div class="ww-people">
+          <button type="button" class="ww-pcard pg-tap" id="teamCardBtn" aria-haspopup="dialog" aria-controls="teamModal">
+            <div class="pg-ph pg-av"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><img id="whoweare-teamPhoto" alt="" hidden></div>
+            <h3 id="whoweare-teamCardTitle">Our Team</h3>
+            <p class="ww-wide" id="whoweare-teamCardText">Meet the dedicated staff members who work directly with families every day to provide support, training, and advocacy services.</p>
+            <span class="ww-view">View Team &rarr;</span>
+          </button>
+          <button type="button" class="ww-pcard pg-tap" id="boardCardBtn" aria-haspopup="dialog" aria-controls="boardModal">
+            <div class="pg-ph pg-av"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg><img id="whoweare-boardPhoto" alt="" hidden></div>
+            <h3 id="whoweare-boardCardTitle">Board of Directors</h3>
+            <p class="ww-wide" id="whoweare-boardCardText">Our volunteer board provides leadership and governance to ensure LDAH fulfills its mission to serve Hawaiʻi's families.</p>
+            <span class="ww-view">View Board &rarr;</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="st-sec" aria-labelledby="whoweare-galleryTitle" id="gallerySection">
+      <div class="st-wrap">
+        <span class="st-tag">Our Community</span>
+        <h2 class="st-h" id="whoweare-galleryTitle">LDAH in Action</h2>
+        <p class="st-sub" id="whoweare-gallerySubtitle">Moments from our events, workshops, and community outreach</p>
+        <div class="ww-gal" id="galleryGrid" aria-label="Photo gallery"><p class="pg-msg">Loading photos&hellip;</p></div>
+        <p class="ww-hint" id="galleryHint" hidden>Swipe for more photos. Tap a photo to enlarge it.</p>
+      </div>
+    </section>
+
+    <section class="st-coral" aria-labelledby="whoweare-ctaTitle">
+      <div class="st-wrap">
+        <h2 id="whoweare-ctaTitle">Have Questions? We're Here to Help</h2>
+        <p id="whoweare-ctaSubtitle">Our team is ready to assist you with information about special education, advocacy support, and navigating services for your child.</p>
+        <a class="st-btn st-btn-white" href="contact.html">Contact Us</a>
+        <a class="st-btn st-btn-outline-white" href="volunteer.html">Join Our Team</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Team modal: list comes from Firestore teamMembers, as on the website -->
+  <div class="pg-modal" id="teamModal" role="dialog" aria-modal="true" aria-labelledby="teamModalTitle" hidden>
+    <div class="pg-modal-card">
+      <div class="pg-modal-head"><h2 id="teamModalTitle">Our Team</h2><button type="button" class="pg-x" data-close aria-label="Close">&times;</button></div>
+      <div class="pg-modal-body">
+        <div id="teamMembersGrid" class="ww-list"><p class="pg-msg">Loading team members&hellip;</p></div>
+        <div class="pg-note">
+          <p>Main Office: <a href="tel:8085369684"><strong>(808) 536-9684</strong></a></p>
+          <p>Interested in joining our team? <a href="https://hrsymphony.com/hrs/careers/ldah" target="_blank" rel="noopener"><strong>View Career Opportunities &rarr;</strong></a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Board modal: list comes from Firestore boardMembers, as on the website -->
+  <div class="pg-modal" id="boardModal" role="dialog" aria-modal="true" aria-labelledby="boardModalTitle" hidden>
+    <div class="pg-modal-card">
+      <div class="pg-modal-head"><h2 id="boardModalTitle">Board of Directors</h2><button type="button" class="pg-x" data-close aria-label="Close">&times;</button></div>
+      <div class="pg-modal-body">
+        <div id="boardMembersGrid" class="ww-list"><p class="pg-msg">Loading board members&hellip;</p></div>
+        <div class="pg-note"><p>Our board members volunteer their time and expertise to guide LDAH's mission of serving families across Hawaiʻi and the Pacific Islands.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gallery lightbox -->
+  <div class="pg-modal ww-lb" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo" hidden>
+    <button type="button" class="pg-x" data-close aria-label="Close">&times;</button>
+    <button type="button" class="ww-lb-nav ww-lb-prev" id="lbPrev" aria-label="Previous photo">&lsaquo;</button>
+    <img id="lightboxImg" src="" alt="">
+    <button type="button" class="ww-lb-nav ww-lb-next" id="lbNext" aria-label="Next photo">&rsaquo;</button>
+    <div class="ww-lb-count" id="lightboxCounter"></div>
+  </div>
+
+  <script>
+  /* Website content loader (STAGE, 2026-10-20). Reads the same Firestore
+     pageContent/{page} documents the main website reads, and fills any element
+     whose id is "{page}-{field}", exactly like the website's loader. The HTML
+     in the page is the website's own text and stays if the read fails.
+     data-cms on an element picks how a field is shown:
+       text (default) plain text, as whoweare/specialed/military/community do
+       html  cleaned HTML (bold, links, lists kept; colours/fonts dropped)
+       list  <li> items only (Core Values)
+       phones cleaned HTML with 7-digit Hawaiʻi numbers turned into tel: links */
+  window.STC = (function () {
+    'use strict';
+    var SITE = 'https://www.ldahawaii.org/';
+    var db = null;
+    try { db = firebase.firestore(); } catch (e) { console.error('Firestore unavailable', e); }
+
+    var EMOJI = /[\u{1F300}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FEFF}]|[\u{1F1E0}-\u{1F1FF}]{2}/gu;
+    var WORDS = [
+      [/Hawai['’‘`]i/g, 'Hawaiʻi'], [/O['’‘`]ahu/g, 'Oʻahu'],
+      [/Moloka['’‘`]i/g, 'Molokaʻi'], [/Ma['’‘`]ili/g, 'Maʻili'],
+      [/Wai['’‘`]anae/g, 'Waiʻanae'], [/Kaua['’‘`]i/g, 'Kauaʻi'],
+      [/\bHawaii\b/g, 'Hawai\u02BBi'],
+      [/Disabilities (?:&|of) Achievement/g, 'Disabilities and Achievement']
+    ];
+    function norm(t) {
+      t = String(t == null ? '' : t).replace(EMOJI, '');
+      WORDS.forEach(function (w) { t = t.replace(w[0], w[1]); });
+      return t;
+    }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function abs(u) {
+      if (!u || typeof u !== 'string' || !u.trim()) return '';
+      try { var x = new URL(u.trim(), SITE); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch (e) { return ''; }
+    }
+    function parse(html) { return new DOMParser().parseFromString('<!doctype html><body>' + String(html || ''), 'text/html').body; }
+    function toText(html) {
+      var b = parse(html);
+      b.querySelectorAll('br,p,div,li,h1,h2,h3,h4').forEach(function (n) { n.insertAdjacentText('beforebegin', ' '); });
+      return norm(b.textContent || '').replace(/\s+/g, ' ').trim();
+    }
+
+    var DROP = /^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|FORM|INPUT|TEXTAREA|SELECT|OPTION|LINK|META|SVG|TEMPLATE|NOSCRIPT|VIDEO|AUDIO|CANVAS)$/;
+    var KEEP = /^(P|BR|STRONG|B|EM|I|U|A|UL|OL|LI|H3|H4|H5|DIV|IMG)$/;
+    var PHONE = /\b(\d{3})-(\d{4})\b/g;
+    function linkPhones(text, parent) {
+      var last = 0, m; PHONE.lastIndex = 0;
+      while ((m = PHONE.exec(text))) {
+        if (m.index > last) parent.appendChild(document.createTextNode(text.slice(last, m.index)));
+        var a = document.createElement('a'); a.href = 'tel:+1808' + m[1] + m[2]; a.textContent = m[0];
+        parent.appendChild(a); last = m.index + m[0].length;
+      }
+      if (last < text.length) parent.appendChild(document.createTextNode(text.slice(last)));
+    }
+    /* Rebuilds the HTML from a whitelist: only safe tags, only href/src/alt
+       (plus id/class when keepAttrs), links open outside the app. */
+    function clean(html, opts) {
+      opts = opts || {};
+      var src = typeof html === 'string' ? parse(html) : html;
+      var out = document.createDocumentFragment();
+      (function walk(from, to, inA) {
+        Array.prototype.forEach.call(from.childNodes, function (n) {
+          if (n.nodeType === 3) {
+            var t = norm(n.nodeValue);
+            if (opts.phones && !inA) linkPhones(t, to); else to.appendChild(document.createTextNode(t));
+            return;
+          }
+          if (n.nodeType !== 1) return;
+          var tag = n.tagName.toUpperCase();
+          if (DROP.test(tag)) return;
+          if (!KEEP.test(tag)) { walk(n, to, inA); return; }
+          var el = document.createElement(tag.toLowerCase());
+          if (opts.keepAttrs) {
+            if (n.id) el.id = n.id;
+            if (n.getAttribute('class')) el.setAttribute('class', n.getAttribute('class'));
+          }
+          if (tag === 'A') {
+            var h = (n.getAttribute('href') || '').trim(), lt = (n.textContent || '').trim();
+            /* CMS slips: an email or phone typed as a web link (https://name@mail.com) */
+            if (/^https?:/i.test(h) && /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(lt) && h.indexOf(lt) !== -1) h = 'mailto:' + lt;
+            else if (/^https?:\/\/[\d\s().+-]+\/?$/i.test(h)) h = 'tel:' + h.replace(/^https?:\/\//i, '').replace(/[^\d+]/g, '');
+            if (/^(mailto:|tel:)/i.test(h)) el.setAttribute('href', h);
+            else if (abs(h) && !/^javascript:/i.test(h)) { el.setAttribute('href', abs(h)); el.target = '_blank'; el.rel = 'noopener'; }
+            if (n.classList && n.classList.contains('pg-ext')) el.className = (el.className ? el.className + ' ' : '') + 'pg-ext';
+          }
+          if (tag === 'IMG') {
+            var s = abs(n.getAttribute('src'));
+            if (!s) return;
+            el.src = s; el.alt = n.getAttribute('alt') || ''; el.loading = 'lazy';
+            el.onerror = function () { this.remove(); };
+          }
+          to.appendChild(el);
+          walk(n, el, inA || tag === 'A');
+        });
+      })(src, out, false);
+      return out;
+    }
+
+    function setImg(el, url) {
+      var s = abs(url);
+      if (!el || !s) return;
+      el.onerror = function () { this.hidden = true; };
+      el.onload = function () { this.hidden = false; };
+      el.src = s;
+    }
+    function apply(page, data, root) {
+      root = root || document;
+      Object.keys(data || {}).forEach(function (k) {
+        var v = data[k];
+        if (typeof v !== 'string' || !v.trim()) return;
+        var el = root.querySelector('#' + page + '-' + k.replace(/[^\w-]/g, ''));
+        if (!el) return;
+        if (el.tagName === 'IMG') { if (/Photo|Hero|Flag|Logo/.test(k)) setImg(el, v); return; }
+        var mode = el.getAttribute('data-cms') || 'text';
+        if (mode === 'text') { var t = toText(v); if (t) el.textContent = t; return; }
+        if (mode === 'list') {
+          var items = Array.prototype.map.call(parse(v).querySelectorAll('li'), function (li) { return toText(li.innerHTML); }).filter(Boolean);
+          if (!items.length) return;
+          el.innerHTML = items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
+          return;
+        }
+        var frag = clean(v, { phones: mode === 'phones' });
+        if (!(frag.textContent || '').trim() && !frag.querySelector('img')) return;
+        el.innerHTML = ''; el.appendChild(frag);
+      });
+    }
+    function getDoc(page) {
+      if (!db) return Promise.reject(new Error('no db'));
+      return db.collection('pageContent').doc(page).get().then(function (d) { return d.exists ? d.data() : {}; });
+    }
+    function load(page) {
+      return getDoc(page).then(function (data) { apply(page, data); return data; })
+        .catch(function (err) { console.error('Error loading page content:', err); return {}; });
+    }
+
+    /* Modals */
+    var lastFocus = null;
+    function openModal(id) {
+      var m = document.getElementById(id); if (!m) return;
+      lastFocus = document.activeElement;
+      m.hidden = false; document.body.style.overflow = 'hidden';
+      var x = m.querySelector('.pg-x'); if (x) x.focus();
+    }
+    function closeModal(id) {
+      var m = document.getElementById(id); if (!m || m.hidden) return;
+      m.hidden = true;
+      if (!document.querySelector('.pg-modal:not([hidden])')) document.body.style.overflow = '';
+      m.dispatchEvent(new CustomEvent('pg-close'));
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+    document.addEventListener('click', function (e) {
+      var x = e.target.closest('[data-close]');
+      if (x) { closeModal(x.closest('.pg-modal').id); return; }
+      if (e.target.classList && e.target.classList.contains('pg-modal')) closeModal(e.target.id);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      var open = document.querySelectorAll('.pg-modal:not([hidden])');
+      if (open.length) closeModal(open[open.length - 1].id);
+    });
+
+    /* YouTube player in a modal (same embed the website uses) */
+    function openVideo(title, videoId) {
+      var t = document.getElementById('videoTitle'), f = document.getElementById('videoFrame');
+      if (!t || !f) return;
+      t.textContent = title;
+      f.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(videoId) + '?rel=0&modestbranding=1&autoplay=1&playsinline=1';
+      openModal('videoModal');
+    }
+    var vm = document.getElementById('videoModal');
+    if (vm) vm.addEventListener('pg-close', function () { var f = document.getElementById('videoFrame'); if (f) f.src = ''; });
+
+    return { SITE: SITE, db: db, esc: esc, abs: abs, norm: norm, toText: toText, clean: clean, parse: parse,
+             apply: apply, getDoc: getDoc, load: load, setImg: setImg, openModal: openModal, closeModal: closeModal, openVideo: openVideo };
+  })();
+  </script>
+
+  <script>
+  (function () {
+    'use strict';
+    var S = window.STC, esc = S.esc;
+    var WEB = 'https://www.ldahawaii.org/whoweare.html';
+    S.load('whoweare');
+
+    /* Team and Board: same Firestore collections, order and archived filter as
+       the website. Nothing is hard-coded here: when the read fails or is empty
+       the modal links to the website instead. */
+    function fetchPeople(col) {
+      if (!S.db) return Promise.reject(new Error('no db'));
+      return S.db.collection(col).orderBy('order').get()
+        .catch(function () { return S.db.collection(col).get(); })
+        .then(function (snap) {
+          return snap.docs.map(function (d) { var o = d.data(); o.id = d.id; return o; })
+            .filter(function (m) { return m.archived !== true; })
+            .sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+        });
+    }
+    function initials(n) { return String(n || '').split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w.charAt(0); }).join('').toUpperCase(); }
+    function renderPeople(gridId, list, withContact) {
+      var grid = document.getElementById(gridId);
+      if (!list.length) { grid.innerHTML = fallback(); return; }
+      grid.innerHTML = list.map(function (m) {
+        var photo = S.abs(m.photoUrl);
+        var pic = photo ? '<img src="' + esc(photo) + '" alt="' + esc(m.name) + '" loading="lazy">' : '<div class="ww-init" aria-hidden="true">' + esc(initials(m.name)) + '</div>';
+        var links = '';
+        if (withContact) {
+          var tel = m.phone ? String(m.phone).replace(/[^+\d]/g, '') : '';
+          var mail = m.email && /^[^\s@<>"]+@[^\s@<>"]+$/.test(String(m.email).trim()) ? String(m.email).trim() : '';
+          if (tel) links += '<a href="tel:' + esc(tel) + '">Call</a>';
+          if (mail) links += '<a href="mailto:' + esc(mail) + '">Email</a>';
+        }
+        return '<div class="ww-person">' + pic + '<div><h3>' + esc(S.norm(m.name)) + '</h3>' +
+          (m.role ? '<div class="ww-role">' + esc(S.norm(m.role)) + '</div>' : '') +
+          (links ? '<div class="ww-links">' + links + '</div>' : '') + '</div></div>';
+      }).join('');
+      grid.querySelectorAll('img').forEach(function (img) {
+        img.onerror = function () { var d = document.createElement('div'); d.className = 'ww-init'; d.setAttribute('aria-hidden', 'true'); d.textContent = initials(img.alt); img.replaceWith(d); };
+      });
+    }
+    function fallback() {
+      return '<p class="pg-msg">We couldn\'t load this list right now.</p><a class="st-btn st-btn-primary" href="' + WEB + '" target="_blank" rel="noopener">See it on ldahawaii.org</a>';
+    }
+    var cache = {};
+    function openPeople(col, modalId, gridId, withContact) {
+      S.openModal(modalId);
+      if (cache[col]) return;
+      cache[col] = fetchPeople(col).then(function (list) { renderPeople(gridId, list, withContact); })
+        .catch(function (err) { console.error('Error loading ' + col, err); cache[col] = null; document.getElementById(gridId).innerHTML = fallback(); });
+    }
+    document.getElementById('teamCardBtn').addEventListener('click', function () { openPeople('teamMembers', 'teamModal', 'teamMembersGrid', true); });
+    document.getElementById('boardCardBtn').addEventListener('click', function () { openPeople('boardMembers', 'boardModal', 'boardMembersGrid', false); });
+
+    /* Gallery: Firestore gallery collection, ordered, as on the website */
+    var photos = [], idx = 0;
+    function renderGallery() {
+      var grid = document.getElementById('galleryGrid');
+      if (!photos.length) {
+        grid.innerHTML = '<p class="pg-msg">See our photos on <a href="' + WEB + '" target="_blank" rel="noopener">ldahawaii.org</a>.</p>';
+        return;
+      }
+      grid.innerHTML = photos.map(function (p, i) {
+        return '<button type="button" data-i="' + i + '" aria-label="Open photo ' + (i + 1) + ' of ' + photos.length + '"><img src="' + esc(p.url) + '" alt="' + esc(p.caption) + '" loading="lazy"></button>';
+      }).join('');
+      grid.querySelectorAll('img').forEach(function (img) { img.onerror = function () { img.parentNode.hidden = true; }; });
+      document.getElementById('galleryHint').hidden = false;
+    }
+    if (S.db) {
+      S.db.collection('gallery').orderBy('order').get().then(function (snap) {
+        photos = snap.docs.map(function (d) { var o = d.data(); return { url: S.abs(o.imageUrl), caption: S.norm(o.caption || 'LDAH Gallery Photo') }; })
+          .filter(function (p) { return p.url; });
+        renderGallery();
+      }).catch(function (err) { console.error('Error loading gallery:', err); renderGallery(); });
+    } else { renderGallery(); }
+    function showPhoto() {
+      var p = photos[idx]; if (!p) return;
+      var img = document.getElementById('lightboxImg');
+      img.src = p.url; img.alt = p.caption;
+      document.getElementById('lightboxCounter').textContent = (idx + 1) + ' / ' + photos.length;
+    }
+    document.getElementById('galleryGrid').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-i]'); if (!b) return;
+      idx = +b.getAttribute('data-i'); showPhoto(); S.openModal('lightbox');
+    });
+    document.getElementById('lbPrev').addEventListener('click', function () { idx = (idx - 1 + photos.length) % photos.length; showPhoto(); });
+    document.getElementById('lbNext').addEventListener('click', function () { idx = (idx + 1) % photos.length; showPhoto(); });
+    document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target.id === 'lightboxImg') e.stopPropagation(); });
+    var tx = null;
+    document.getElementById('lightbox').addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
+    document.getElementById('lightbox').addEventListener('touchend', function (e) {
+      if (tx === null || photos.length < 2) return;
+      var dx = e.changedTouches[0].clientX - tx; tx = null;
+      if (Math.abs(dx) > 40) { idx = (idx + (dx < 0 ? 1 : -1) + photos.length) % photos.length; showPhoto(); }
+    });
+  })();
+  </script>
+
+  <script src="analytics-tracker.js"></script>
+  <script src="accessibility.js"></script>
+</body>
+</html>

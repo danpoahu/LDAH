@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LDAH">
+  <meta name="theme-color" content="#0891B2">
+  <title>LDAH - Pacific Islands</title>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-32PRRS0W85"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-32PRRS0W85');
+  </script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/cms-donate.js" defer></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAU3CQ07bCVKlJ1qGak-150kaJEyPKldLk",
+      authDomain: "ldah-932d5.firebaseapp.com",
+      projectId: "ldah-932d5",
+      storageBucket: "ldah-932d5.firebasestorage.app",
+      messagingSenderId: "662130454003",
+      appId: "1:662130454003:web:437576d5a5811ecd8df686",
+      measurementId: "G-32PRRS0W85"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS Icons -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="site-theme.css?v=1">
+  <script src="js/app-shell.js?v=1" defer></script>
+  <style>
+
+    [hidden] { display: none !important; }
+    .pg-center { text-align: center; }
+    .pg-mt { margin-top: 14px; }
+    body.st-app .st-sec a:not(.st-btn):not(.pg-card-link) { color: var(--ocean-deep); }
+    .st-btn:focus-visible, .pg-tap:focus-visible, .pg-x:focus-visible { outline: 3px solid var(--ocean-light); outline-offset: 2px; }
+    .st-btn { min-height: 46px; display: flex; align-items: center; justify-content: center; }
+    .st-coral .st-btn { max-width: 420px; margin-left: auto; margin-right: auto; }
+    .st-coral .st-btn + .st-btn { margin-top: 10px; }
+    .st-band .st-btn { max-width: 320px; margin-top: 14px; }
+
+    /* Photo frame: sand box with an icon; the CMS photo covers it once it loads */
+    .pg-ph { position: relative; overflow: hidden; background: var(--sand); display: flex; align-items: center; justify-content: center; flex: none; }
+    .pg-ph > svg { width: 26px; height: 26px; stroke: var(--ocean-deep); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .7; }
+    .pg-ph > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pg-av { width: 56px; height: 56px; border-radius: 50%; border: 3px solid var(--ocean-light); }
+    .pg-sq { width: 84px; height: 84px; border-radius: 12px; }
+
+    /* Card with a photo on the left */
+    .pg-row { display: flex; gap: 12px; align-items: flex-start; }
+    .pg-row > div { min-width: 0; flex: 1; }
+    .pg-row h3 { margin: 0 0 4px; font: 600 1rem var(--st-font-head); line-height: 1.3; }
+    .pg-row p { margin: 0; }
+    .pg-card .st-btn { margin-top: 12px; }
+    .pg-grid { display: grid; grid-template-columns: 1fr; gap: 0 12px; }
+    @media (min-width: 600px) { .pg-grid { grid-template-columns: 1fr 1fr; } .pg-grid > .st-card { display: flex; flex-direction: column; } .pg-grid > .st-card > .st-btn { margin-top: auto; } .pg-grid > .st-card > .pg-row { margin-bottom: 12px; } }
+
+    /* Modal: white, radius 16, teal header strip */
+    .pg-modal { position: fixed; inset: 0; z-index: 1100; background: rgba(15,23,42,.55); display: flex; align-items: flex-end; justify-content: center; padding: env(safe-area-inset-top, 0px) 0 0; }
+    .pg-modal-card { background: #fff; width: 100%; max-width: 640px; max-height: 92vh; max-height: 92dvh; border-radius: 16px 16px 0 0; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 40px rgba(0,0,0,.2); }
+    @media (min-width: 640px) { .pg-modal { align-items: center; padding: 20px; } .pg-modal-card { border-radius: 16px; max-height: 88vh; } }
+    .pg-modal-head { background: linear-gradient(135deg, #0891B2, #06B6D4); color: #fff; padding: 12px 10px 12px 18px; display: flex; align-items: center; gap: 10px; flex: none; }
+    .pg-modal-head h2 { color: #fff !important; margin: 0; font: 600 1.12rem var(--st-font-head); flex: 1; line-height: 1.3; }
+    .pg-modal-head p { margin: 2px 0 0; font-size: .85rem; color: #fff; opacity: .92; line-height: 1.35; }
+    .pg-modal-head > div { flex: 1; min-width: 0; }
+    .pg-x { width: 44px; height: 44px; border: 0; border-radius: 12px; background: rgba(255,255,255,.18); color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; flex: none; }
+    .pg-modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
+    .pg-note { text-align: center; background: var(--sand-light); border-radius: 12px; padding: 14px; margin-top: 14px; font-size: .9rem; color: var(--text-soft); }
+    .pg-note p { margin: 4px 0; }
+    .pg-msg { text-align: center; color: var(--text-soft); padding: 18px 8px; font-size: .92rem; }
+
+    /* Video modal */
+    .pg-video { position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 12px; overflow: hidden; }
+    .pg-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+    .pc-hero { width: 100%; height: 170px; object-fit: cover; display: block; background: var(--sand); }
+    @media (min-width: 600px) { .pc-hero { height: 240px; } }
+    .pc-logo { display: block; max-width: 200px; width: 60%; margin: 0 auto 12px; }
+    .pc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    @media (min-width: 600px) { .pc-grid { grid-template-columns: 1fr 1fr 1fr; } }
+    .pc-isl { display: flex; flex-direction: column; text-align: left; border: 0; padding: 0; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,.06); cursor: pointer; font: inherit; color: var(--text-dark); min-height: 44px; }
+    .pc-isl:focus-visible { outline: 3px solid var(--ocean-light); outline-offset: 2px; }
+    .pc-isl img { width: 100%; height: 96px; object-fit: cover; display: block; background: var(--sand); }
+    .pc-txt { display: block; padding: 8px 10px 10px; font: 600 .85rem var(--st-font-head); line-height: 1.25; }
+    .pc-lm { display: block; color: var(--ocean-deep); font-size: .78rem; margin-top: 4px; }
+    .pc-more { display: grid; gap: 0; }
+    /* Partner details (built from the website's own partner template + CMS) */
+    #islandModal .pg-modal-body { padding: 0 0 calc(18px + env(safe-area-inset-bottom, 0px)); }
+    #islandModalBody > div { padding: 14px 16px 0 !important; }
+    #islandModalBody .modal-hero-image { width: 100%; height: 190px; object-fit: cover; display: block; }
+    #islandModalBody .island-map-section { text-align: center; margin: 0 0 10px; }
+    #islandModalBody .island-map { max-width: 150px; width: 50%; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+    #islandModalBody h3 { font: 600 1.05rem var(--st-font-head); color: var(--text-dark); margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--sand); }
+    #islandModalBody h4 { font: 600 .98rem var(--st-font-head); margin: 0 0 4px; color: var(--text-dark); }
+    #islandModalBody p { margin: 0 0 6px; font-size: .9rem; color: var(--text-soft); line-height: 1.5; }
+    #islandModalBody strong { color: var(--text-dark); }
+    #islandModalBody a { color: var(--ocean-deep); font-weight: 600; word-break: break-word; }
+    #islandModalBody .social-links { display: grid; gap: 8px; margin: 6px 0 4px; }
+    #islandModalBody .social-links a { display: flex; align-items: center; justify-content: center; min-height: 46px; border-radius: 10px; background: var(--ocean-deep); color: #fff !important; text-decoration: none; font: 600 .95rem var(--st-font-head); }
+    #islandModalBody .contact-card, #islandModalBody .support-person, #islandModalBody .state-card { background: var(--sand-light); border: 1px solid #FDE68A; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
+    #islandModalBody .contact-with-photo { display: flex; gap: 12px; align-items: flex-start; }
+    #islandModalBody .contact-with-photo .contact-card { flex: 1; min-width: 0; }
+    #islandModalBody .contact-photo { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; border: 3px solid var(--ocean-light); flex: none; }
+    #islandModalBody .support-grid, #islandModalBody .states-grid { display: grid; gap: 0; }
+    @media (min-width: 560px) { #islandModalBody .support-grid, #islandModalBody .states-grid { grid-template-columns: 1fr 1fr; gap: 0 8px; } }
+    #islandModalBody .partner-logo-section { text-align: center; margin: 10px 0; }
+    #islandModalBody .partner-logo-img { max-width: 160px; width: 50%; }
+    #islandModalBody .photo-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    #islandModalBody .photo-gallery img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; display: block; background: var(--sand); }
+    @media (min-width: 560px) { #islandModalBody .photo-gallery { grid-template-columns: 1fr 1fr 1fr; } }
+    #islandModalBody .pc-fallback { padding: 16px; }
+
+  </style>
+</head>
+<body class="st-app" data-tab="more" data-back="whatwedo.html" data-back-label="What We Do" data-title="Pacific Islands">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <main id="main-content">
+    <img class="pc-hero" src="https://www.ldahawaii.org/assets/images/wp/Kosrae-Sunrise-3_1600.jpg" alt="Sunrise over Kosrae, Federated States of Micronesia">
+    <header class="st-band">
+      <div class="st-wrap">
+        <h1 id="pacific-heroTitle">Pacific Islands Partnership</h1>
+        <p id="pacific-heroSubtitle" data-cms="html">Supporting families across the Pacific Islands with resources for children with disabilities.</p>
+      </div>
+    </header>
+
+    <section class="st-sec" aria-labelledby="pacific-partnersTitle">
+      <div class="st-wrap">
+        <img class="pc-logo" id="pacific-partnerLogo" src="https://www.ldahawaii.org/assets/images/wp/Pacific-Island-Partners-Logo.png" alt="Pacific Island Partners">
+        <span class="st-tag">Partners</span>
+        <h2 class="st-h" id="pacific-partnersTitle">Our Island Partners</h2>
+        <p class="st-sub" id="pacific-partnersSubtitle" data-cms="html">Tap each island to learn more about our partnerships and the resources available for families in these communities.</p>
+        <div class="pc-grid">
+          <button type="button" class="pc-isl" data-island="samoa" aria-haspopup="dialog"><img id="pcCard-samoa" src="https://www.ldahawaii.org/assets/images/wp/LDAH-American-Samoa-31.jpg" alt="" loading="lazy"><span class="pc-txt"><span id="pacific-samoaTitle">American Samoa</span><span class="pc-lm">Learn More &rarr;</span></span></button>
+          <button type="button" class="pc-isl" data-island="guam" aria-haspopup="dialog"><img id="pcCard-guam" src="https://www.ldahawaii.org/assets/images/wp/LDAH-Guam-35.jpg" alt="" loading="lazy"><span class="pc-txt"><span id="pacific-guamTitle">Guam</span><span class="pc-lm">Learn More &rarr;</span></span></button>
+          <button type="button" class="pc-isl" data-island="fsm" aria-haspopup="dialog"><img id="pcCard-fsm" src="https://www.ldahawaii.org/assets/images/wp/Kosrae-Sunrise-3_1600.jpg" alt="" loading="lazy"><span class="pc-txt"><span id="pacific-fsmTitle">Federated States of Micronesia</span><span class="pc-lm">Learn More &rarr;</span></span></button>
+          <button type="button" class="pc-isl" data-island="palau" aria-haspopup="dialog"><img id="pcCard-palau" src="https://www.ldahawaii.org/assets/images/wp/LDAH-Palau-33.jpg" alt="" loading="lazy"><span class="pc-txt"><span id="pacific-palauTitle">Republic of Palau</span><span class="pc-lm">Learn More &rarr;</span></span></button>
+          <button type="button" class="pc-isl" data-island="marshall" aria-haspopup="dialog"><img id="pcCard-marshall" src="https://www.ldahawaii.org/assets/images/wp/Marshall-Islands-1875x1406-1-e1654118989430.jpg" alt="" loading="lazy"><span class="pc-txt"><span id="pacific-marshallTitle">Republic of the Marshall Islands</span><span class="pc-lm">Learn More &rarr;</span></span></button>
+          <button type="button" class="pc-isl" data-island="cnmi" aria-haspopup="dialog"><img id="pcCard-cnmi" src="https://www.ldahawaii.org/assets/images/wp/LDAHI-Commonwealth-of-the-Northern-Mariana-Islands-1.webp" alt="" loading="lazy"><span class="pc-txt"><span id="pacific-cnmiTitle">Northern Mariana Islands</span><span class="pc-lm">Learn More &rarr;</span></span></button>
+        </div>
+        <a class="st-btn st-btn-primary pg-mt" href="https://www.facebook.com/groups/333501733848880" target="_blank" rel="noopener">Join PI Partners on Facebook</a>
+      </div>
+    </section>
+
+    <section class="st-sec st-alt" aria-labelledby="pcMoreTitle">
+      <div class="st-wrap">
+        <h2 class="st-h" id="pcMoreTitle">More from What We Do</h2>
+        <div class="pc-more pg-mt">
+          <a class="st-list" href="specialed.html"><div class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></div><div><h3>Special Education Advocacy</h3><p>Resource documents on IDEA, Chapter 60 and more</p></div><span class="st-chev" aria-hidden="true">&rsaquo;</span></a>
+          <a class="st-list" href="readiness.html"><div class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12"/></svg></div><div><h3>School Readiness Project</h3><p>Vision, hearing and developmental screenings</p></div><span class="st-chev" aria-hidden="true">&rsaquo;</span></a>
+          <a class="st-list" href="military.html"><div class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg></div><div><h3>Military Family Support</h3><p>Relocating with an IEP and base contacts</p></div><span class="st-chev" aria-hidden="true">&rsaquo;</span></a>
+          <a class="st-list" href="community.html"><div class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg></div><div><h3>Stand Up to Bullying</h3><p>Take the Pledge and the Bullying Response Kit</p></div><span class="st-chev" aria-hidden="true">&rsaquo;</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="st-coral" aria-labelledby="pacific-ctaTitle">
+      <div class="st-wrap">
+        <h2 id="pacific-ctaTitle">Looking for Pacific Islands Support?</h2>
+        <p id="pacific-ctaSubtitle" data-cms="html">Connect with us to find resources and support for your family.</p>
+        <a class="st-btn st-btn-white" href="contact.html">Contact Us Today</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Partner details -->
+  <div class="pg-modal" id="islandModal" role="dialog" aria-modal="true" aria-labelledby="islandName" hidden>
+    <div class="pg-modal-card">
+      <div class="pg-modal-head"><div><h2 id="islandName">Island Partner</h2><p id="islandPartner"></p></div><button type="button" class="pg-x" data-close aria-label="Close">&times;</button></div>
+      <div class="pg-modal-body" id="islandModalBody"></div>
+    </div>
+  </div>
+
+  <script>
+  /* Website content loader (STAGE, 2026-10-20). Reads the same Firestore
+     pageContent/{page} documents the main website reads, and fills any element
+     whose id is "{page}-{field}", exactly like the website's loader. The HTML
+     in the page is the website's own text and stays if the read fails.
+     data-cms on an element picks how a field is shown:
+       text (default) plain text, as whoweare/specialed/military/community do
+       html  cleaned HTML (bold, links, lists kept; colours/fonts dropped)
+       list  <li> items only (Core Values)
+       phones cleaned HTML with 7-digit Hawaiʻi numbers turned into tel: links */
+  window.STC = (function () {
+    'use strict';
+    var SITE = 'https://www.ldahawaii.org/';
+    var db = null;
+    try { db = firebase.firestore(); } catch (e) { console.error('Firestore unavailable', e); }
+
+    var EMOJI = /[\u{1F300}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FEFF}]|[\u{1F1E0}-\u{1F1FF}]{2}/gu;
+    var WORDS = [
+      [/Hawai['’‘`]i/g, 'Hawaiʻi'], [/O['’‘`]ahu/g, 'Oʻahu'],
+      [/Moloka['’‘`]i/g, 'Molokaʻi'], [/Ma['’‘`]ili/g, 'Maʻili'],
+      [/Wai['’‘`]anae/g, 'Waiʻanae'], [/Kaua['’‘`]i/g, 'Kauaʻi'],
+      [/\bHawaii\b/g, 'Hawai\u02BBi'],
+      [/Disabilities (?:&|of) Achievement/g, 'Disabilities and Achievement']
+    ];
+    function norm(t) {
+      t = String(t == null ? '' : t).replace(EMOJI, '');
+      WORDS.forEach(function (w) { t = t.replace(w[0], w[1]); });
+      return t;
+    }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function abs(u) {
+      if (!u || typeof u !== 'string' || !u.trim()) return '';
+      try { var x = new URL(u.trim(), SITE); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch (e) { return ''; }
+    }
+    function parse(html) { return new DOMParser().parseFromString('<!doctype html><body>' + String(html || ''), 'text/html').body; }
+    function toText(html) {
+      var b = parse(html);
+      b.querySelectorAll('br,p,div,li,h1,h2,h3,h4').forEach(function (n) { n.insertAdjacentText('beforebegin', ' '); });
+      return norm(b.textContent || '').replace(/\s+/g, ' ').trim();
+    }
+
+    var DROP = /^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|FORM|INPUT|TEXTAREA|SELECT|OPTION|LINK|META|SVG|TEMPLATE|NOSCRIPT|VIDEO|AUDIO|CANVAS)$/;
+    var KEEP = /^(P|BR|STRONG|B|EM|I|U|A|UL|OL|LI|H3|H4|H5|DIV|IMG)$/;
+    var PHONE = /\b(\d{3})-(\d{4})\b/g;
+    function linkPhones(text, parent) {
+      var last = 0, m; PHONE.lastIndex = 0;
+      while ((m = PHONE.exec(text))) {
+        if (m.index > last) parent.appendChild(document.createTextNode(text.slice(last, m.index)));
+        var a = document.createElement('a'); a.href = 'tel:+1808' + m[1] + m[2]; a.textContent = m[0];
+        parent.appendChild(a); last = m.index + m[0].length;
+      }
+      if (last < text.length) parent.appendChild(document.createTextNode(text.slice(last)));
+    }
+    /* Rebuilds the HTML from a whitelist: only safe tags, only href/src/alt
+       (plus id/class when keepAttrs), links open outside the app. */
+    function clean(html, opts) {
+      opts = opts || {};
+      var src = typeof html === 'string' ? parse(html) : html;
+      var out = document.createDocumentFragment();
+      (function walk(from, to, inA) {
+        Array.prototype.forEach.call(from.childNodes, function (n) {
+          if (n.nodeType === 3) {
+            var t = norm(n.nodeValue);
+            if (opts.phones && !inA) linkPhones(t, to); else to.appendChild(document.createTextNode(t));
+            return;
+          }
+          if (n.nodeType !== 1) return;
+          var tag = n.tagName.toUpperCase();
+          if (DROP.test(tag)) return;
+          if (!KEEP.test(tag)) { walk(n, to, inA); return; }
+          var el = document.createElement(tag.toLowerCase());
+          if (opts.keepAttrs) {
+            if (n.id) el.id = n.id;
+            if (n.getAttribute('class')) el.setAttribute('class', n.getAttribute('class'));
+          }
+          if (tag === 'A') {
+            var h = (n.getAttribute('href') || '').trim(), lt = (n.textContent || '').trim();
+            /* CMS slips: an email or phone typed as a web link (https://name@mail.com) */
+            if (/^https?:/i.test(h) && /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(lt) && h.indexOf(lt) !== -1) h = 'mailto:' + lt;
+            else if (/^https?:\/\/[\d\s().+-]+\/?$/i.test(h)) h = 'tel:' + h.replace(/^https?:\/\//i, '').replace(/[^\d+]/g, '');
+            if (/^(mailto:|tel:)/i.test(h)) el.setAttribute('href', h);
+            else if (abs(h) && !/^javascript:/i.test(h)) { el.setAttribute('href', abs(h)); el.target = '_blank'; el.rel = 'noopener'; }
+            if (n.classList && n.classList.contains('pg-ext')) el.className = (el.className ? el.className + ' ' : '') + 'pg-ext';
+          }
+          if (tag === 'IMG') {
+            var s = abs(n.getAttribute('src'));
+            if (!s) return;
+            el.src = s; el.alt = n.getAttribute('alt') || ''; el.loading = 'lazy';
+            el.onerror = function () { this.remove(); };
+          }
+          to.appendChild(el);
+          walk(n, el, inA || tag === 'A');
+        });
+      })(src, out, false);
+      return out;
+    }
+
+    function setImg(el, url) {
+      var s = abs(url);
+      if (!el || !s) return;
+      el.onerror = function () { this.hidden = true; };
+      el.onload = function () { this.hidden = false; };
+      el.src = s;
+    }
+    function apply(page, data, root) {
+      root = root || document;
+      Object.keys(data || {}).forEach(function (k) {
+        var v = data[k];
+        if (typeof v !== 'string' || !v.trim()) return;
+        var el = root.querySelector('#' + page + '-' + k.replace(/[^\w-]/g, ''));
+        if (!el) return;
+        if (el.tagName === 'IMG') { if (/Photo|Hero|Flag|Logo/.test(k)) setImg(el, v); return; }
+        var mode = el.getAttribute('data-cms') || 'text';
+        if (mode === 'text') { var t = toText(v); if (t) el.textContent = t; return; }
+        if (mode === 'list') {
+          var items = Array.prototype.map.call(parse(v).querySelectorAll('li'), function (li) { return toText(li.innerHTML); }).filter(Boolean);
+          if (!items.length) return;
+          el.innerHTML = items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
+          return;
+        }
+        var frag = clean(v, { phones: mode === 'phones' });
+        if (!(frag.textContent || '').trim() && !frag.querySelector('img')) return;
+        el.innerHTML = ''; el.appendChild(frag);
+      });
+    }
+    function getDoc(page) {
+      if (!db) return Promise.reject(new Error('no db'));
+      return db.collection('pageContent').doc(page).get().then(function (d) { return d.exists ? d.data() : {}; });
+    }
+    function load(page) {
+      return getDoc(page).then(function (data) { apply(page, data); return data; })
+        .catch(function (err) { console.error('Error loading page content:', err); return {}; });
+    }
+
+    /* Modals */
+    var lastFocus = null;
+    function openModal(id) {
+      var m = document.getElementById(id); if (!m) return;
+      lastFocus = document.activeElement;
+      m.hidden = false; document.body.style.overflow = 'hidden';
+      var x = m.querySelector('.pg-x'); if (x) x.focus();
+    }
+    function closeModal(id) {
+      var m = document.getElementById(id); if (!m || m.hidden) return;
+      m.hidden = true;
+      if (!document.querySelector('.pg-modal:not([hidden])')) document.body.style.overflow = '';
+      m.dispatchEvent(new CustomEvent('pg-close'));
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+    document.addEventListener('click', function (e) {
+      var x = e.target.closest('[data-close]');
+      if (x) { closeModal(x.closest('.pg-modal').id); return; }
+      if (e.target.classList && e.target.classList.contains('pg-modal')) closeModal(e.target.id);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      var open = document.querySelectorAll('.pg-modal:not([hidden])');
+      if (open.length) closeModal(open[open.length - 1].id);
+    });
+
+    /* YouTube player in a modal (same embed the website uses) */
+    function openVideo(title, videoId) {
+      var t = document.getElementById('videoTitle'), f = document.getElementById('videoFrame');
+      if (!t || !f) return;
+      t.textContent = title;
+      f.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(videoId) + '?rel=0&modestbranding=1&autoplay=1&playsinline=1';
+      openModal('videoModal');
+    }
+    var vm = document.getElementById('videoModal');
+    if (vm) vm.addEventListener('pg-close', function () { var f = document.getElementById('videoFrame'); if (f) f.src = ''; });
+
+    return { SITE: SITE, db: db, esc: esc, abs: abs, norm: norm, toText: toText, clean: clean, parse: parse,
+             apply: apply, getDoc: getDoc, load: load, setImg: setImg, openModal: openModal, closeModal: closeModal, openVideo: openVideo };
+  })();
+  </script>
+
+  <script>
+  (function () {
+    'use strict';
+    var S = window.STC, esc = S.esc;
+    var WEB = 'https://www.ldahawaii.org/pacific.html';
+    var KEYS = ['samoa', 'guam', 'fsm', 'palau', 'marshall', 'cnmi'];
+    var cms = {};
+
+    /* Page text from pageContent/pacific, as on the website */
+    var cmsReady = S.getDoc('pacific').then(function (data) {
+      cms = data || {};
+      S.apply('pacific', cms);
+      KEYS.forEach(function (k) { S.setImg(document.getElementById('pcCard-' + k), cms[k + 'Hero']); });
+      return cms;
+    }).catch(function (err) { console.error('Error loading page content:', err); return cms; });
+
+    /* Partner details: the same source the website uses. The website keeps each
+       partner's layout (hero, flag, links, about, contacts, gallery) in the
+       islandData object of www.ldahawaii.org/pacific.html, and pageContent/pacific
+       fills it by element id. We read that page live (it allows cross-origin
+       reads) so nothing about partner contacts is copied into this repo. */
+    var tplPromise = null;
+    function unq(s) { return String(s).replace(/\\(.)/g, '$1'); }
+    function loadTemplates() {
+      if (tplPromise) return tplPromise;
+      var timeout = new Promise(function (_, rej) { setTimeout(function () { rej(new Error('timeout')); }, 9000); });
+      tplPromise = Promise.race([fetch(WEB, { cache: 'no-cache' }), timeout])
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(function (src) {
+          var out = {}, m;
+          var re = /(\w+):\s*\{\s*name:\s*'((?:[^'\\]|\\.)*)',[\s\S]*?partner:\s*'((?:[^'\\]|\\.)*)',\s*content:\s*`([\s\S]*?)`\s*\}/g;
+          while ((m = re.exec(src))) out[m[1]] = { name: unq(m[2]), partner: unq(m[3]), content: m[4] };
+          if (!Object.keys(out).length) throw new Error('no partner data found');
+          return out;
+        })
+        .catch(function (err) { console.warn('Partner template unavailable:', err); tplPromise = null; return null; });
+      return tplPromise;
+    }
+
+    /* Website buttons call openIframeModal('Title', 'url'); in the app they become plain links. */
+    function buttonsToLinks(root) {
+      root.querySelectorAll('button[onclick]').forEach(function (b) {
+        var m = /openIframeModal\(\s*'((?:[^'\\]|\\.)*)'\s*,\s*'((?:[^'\\]|\\.)*)'\s*\)/.exec(b.getAttribute('onclick') || '');
+        if (!m) { b.remove(); return; }
+        var a = root.ownerDocument.createElement('a');
+        a.setAttribute('href', unq(m[2])); a.textContent = b.textContent;
+        b.replaceWith(a);
+      });
+    }
+
+    function fromTemplate(k, tpl) {
+      var body = S.parse(tpl.content);
+      buttonsToLinks(body);
+      /* CMS overrides by id, exactly like the website's applyCmsToElements */
+      Object.keys(cms).forEach(function (key) {
+        if (key === 'updatedAt') return;
+        var v = cms[key];
+        if (typeof v !== 'string' || !v.trim()) return;
+        var el = body.querySelector('#pacific-' + key.replace(/[^\w-]/g, ''));
+        if (!el) return;
+        if (/Photo|Hero|Flag|Logo/.test(key) && el.tagName === 'IMG') { el.setAttribute('src', v); el.removeAttribute('style'); }
+        else el.innerHTML = v;
+      });
+      body.querySelectorAll('img').forEach(function (img) { if (!(img.getAttribute('src') || '').trim()) img.remove(); });
+      return S.clean(body, { keepAttrs: true });
+    }
+
+    /* If the website page can't be read, build the same sections from the CMS fields alone. */
+    function fromCms(k) {
+      var d = document.createElement('div'), h = '';
+      function v(f) { var x = cms[k + f]; return typeof x === 'string' && x.trim() ? x : ''; }
+      function img(f, cls, alt) { var u = S.abs(v(f)); return u ? '<img class="' + cls + '" src="' + esc(u) + '" alt="' + esc(alt || '') + '">' : ''; }
+      function blocks(prefix, cls) {
+        var out = '';
+        for (var i = 1; i <= 9; i++) { var x = v(prefix + i); if (x) out += '<div class="' + cls + '">' + x + '</div>'; }
+        return out;
+      }
+      h += img('Hero', 'modal-hero-image', '');
+      h += '<div>';
+      if (v('Flag')) h += '<div class="island-map-section">' + img('Flag', 'island-map', 'Flag') + '</div>';
+      if (v('About')) h += '<h3>About Our Partner</h3><div>' + v('About') + '</div>';
+      if (v('Logo')) h += '<div class="partner-logo-section">' + img('Logo', 'partner-logo-img', 'Partner logo') + '</div>';
+      if (v('Contact')) {
+        h += '<h3>Primary Contact</h3><div class="contact-with-photo">' + img('ContactPhoto', 'contact-photo', '') + '<div class="contact-card">' + v('Contact') + '</div></div>';
+        if (v('Contact2')) h += '<div class="contact-card">' + v('Contact2') + '</div>';
+      }
+      var states = ['Yap', 'Chuuk', 'Pohnpei', 'Kosrae'].map(function (s) { return v(s) ? '<div class="state-card">' + v(s) + '</div>' : ''; }).join('');
+      if (states) h += '<h3>State Contacts</h3><div class="states-grid">' + states + '</div>';
+      var sup = blocks('Support', 'support-person');
+      if (sup) h += '<h3>Support Personnel</h3><div class="support-grid">' + sup + '</div>';
+      if (v('PSSContact') || v('PSSLogo')) {
+        h += '<h3>Public School System (PSS)</h3>';
+        if (v('PSSLogo')) h += '<div class="partner-logo-section">' + img('PSSLogo', 'partner-logo-img', 'PSS logo') + '</div>';
+        if (v('PSSContact')) h += '<div class="contact-card">' + v('PSSContact') + '</div>';
+        var pss = blocks('PSSSupport', 'support-person');
+        if (pss) h += '<h3>PSS Support Personnel</h3><div class="support-grid">' + pss + '</div>';
+      }
+      var pics = '';
+      for (var i = 1; i <= 9; i++) pics += img('Photo' + i, 'gallery-photo', '');
+      if (pics) h += '<h3>Photo Gallery</h3><div class="photo-gallery">' + pics + '</div>';
+      h += '</div>';
+      d.innerHTML = h;
+      return S.clean(d, { keepAttrs: true });
+    }
+
+    function openIsland(k) {
+      var title = document.getElementById('pacific-' + k + 'Title');
+      var cardName = title ? title.textContent.trim() : '';
+      var body = document.getElementById('islandModalBody');
+      document.getElementById('islandName').textContent = cardName || 'Island Partner';
+      document.getElementById('islandPartner').textContent = cms[k + 'Partner'] ? S.toText(cms[k + 'Partner']) : '';
+      body.innerHTML = '<p class="pg-msg">Loading&hellip;</p>';
+      S.openModal('islandModal');
+      Promise.all([cmsReady, loadTemplates()]).then(function (r) {
+        var tpls = r[1], tpl = tpls && tpls[k], frag = null;
+        if (tpl) {
+          document.getElementById('islandName').textContent = S.norm(tpl.name);
+          document.getElementById('islandPartner').textContent = S.norm(tpl.partner);
+          frag = fromTemplate(k, tpl);
+        } else if (Object.keys(cms).length) {
+          frag = fromCms(k);
+        }
+        body.innerHTML = '';
+        if (frag && (frag.textContent || '').trim()) {
+          body.appendChild(frag);
+          body.querySelectorAll('img').forEach(function (img) { img.loading = 'lazy'; });
+        } else {
+          body.innerHTML = '<div class="pc-fallback"><p class="pg-msg">We couldn\'t load this partner\'s details right now.</p><a class="st-btn st-btn-primary" href="' + WEB + '" target="_blank" rel="noopener">See it on ldahawaii.org</a></div>';
+        }
+        body.scrollTop = 0;
+      });
+    }
+    document.querySelector('.pc-grid').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-island]'); if (b) openIsland(b.getAttribute('data-island'));
+    });
+    /* Warm the partner template so the first tap is quick */
+    if ('requestIdleCallback' in window) requestIdleCallback(loadTemplates); else setTimeout(loadTemplates, 1500);
+  })();
+  </script>
+
+  <script src="analytics-tracker.js"></script>
+  <script src="accessibility.js"></script>
+</body>
+</html>

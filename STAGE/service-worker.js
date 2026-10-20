@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — STAGE
-const CACHE_NAME = 'ldah-stage-v22';   // 2026-10-14 Aloha Packet download counted
+const CACHE_NAME = 'ldah-stage-v23';   // 2026-10-20 website look (site-theme.css, app shell, new pages)
 const urlsToCache = [
   './',
   './index.html',
@@ -11,6 +11,17 @@ const urlsToCache = [
   './contact.html',
   './resources.html',
   './install.html',
+  './whoweare.html',
+  './whatwedo.html',
+  './readiness.html',
+  './specialed.html',
+  './military.html',
+  './pacific.html',
+  './community.html',
+  './site-theme.css',
+  './js/app-shell.js',
+  './accessibility.js',
+  './logo_blue.png',
   './styles.css',
   './analytics-tracker.js',
   './logo_transparent.png',

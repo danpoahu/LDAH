@@ -14,7 +14,7 @@
 
     function waitForLogo(cb) {
         var check = setInterval(function () {
-            var logo = document.querySelector('img[src*="logo_transparent"]');
+            var logo = document.querySelector('.st-appbar-logo img') || document.querySelector('img[src*="logo_transparent"]');  // app shell logo (2026-10-20), old header logo as fallback
             if (logo) { clearInterval(check); cb(logo); }
         }, 200);
         setTimeout(function () { clearInterval(check); }, 10000);

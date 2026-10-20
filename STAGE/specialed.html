@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LDAH">
+  <meta name="theme-color" content="#0891B2">
+  <title>LDAH - Special Education Advocacy</title>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-32PRRS0W85"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-32PRRS0W85');
+  </script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/cms-donate.js" defer></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAU3CQ07bCVKlJ1qGak-150kaJEyPKldLk",
+      authDomain: "ldah-932d5.firebaseapp.com",
+      projectId: "ldah-932d5",
+      storageBucket: "ldah-932d5.firebasestorage.app",
+      messagingSenderId: "662130454003",
+      appId: "1:662130454003:web:437576d5a5811ecd8df686",
+      measurementId: "G-32PRRS0W85"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS Icons -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="site-theme.css?v=1">
+  <script src="js/app-shell.js?v=1" defer></script>
+  <style>
+
+    [hidden] { display: none !important; }
+    .pg-center { text-align: center; }
+    .pg-mt { margin-top: 14px; }
+    body.st-app .st-sec a:not(.st-btn):not(.pg-card-link) { color: var(--ocean-deep); }
+    .st-btn:focus-visible, .pg-tap:focus-visible, .pg-x:focus-visible { outline: 3px solid var(--ocean-light); outline-offset: 2px; }
+    .st-btn { min-height: 46px; display: flex; align-items: center; justify-content: center; }
+    .st-coral .st-btn { max-width: 420px; margin-left: auto; margin-right: auto; }
+    .st-coral .st-btn + .st-btn { margin-top: 10px; }
+    .st-band .st-btn { max-width: 320px; margin-top: 14px; }
+
+    /* Photo frame: sand box with an icon; the CMS photo covers it once it loads */
+    .pg-ph { position: relative; overflow: hidden; background: var(--sand); display: flex; align-items: center; justify-content: center; flex: none; }
+    .pg-ph > svg { width: 26px; height: 26px; stroke: var(--ocean-deep); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .7; }
+    .pg-ph > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pg-av { width: 56px; height: 56px; border-radius: 50%; border: 3px solid var(--ocean-light); }
+    .pg-sq { width: 84px; height: 84px; border-radius: 12px; }
+
+    /* Card with a photo on the left */
+    .pg-row { display: flex; gap: 12px; align-items: flex-start; }
+    .pg-row > div { min-width: 0; flex: 1; }
+    .pg-row h3 { margin: 0 0 4px; font: 600 1rem var(--st-font-head); line-height: 1.3; }
+    .pg-row p { margin: 0; }
+    .pg-card .st-btn { margin-top: 12px; }
+    .pg-grid { display: grid; grid-template-columns: 1fr; gap: 0 12px; }
+    @media (min-width: 600px) { .pg-grid { grid-template-columns: 1fr 1fr; } .pg-grid > .st-card { display: flex; flex-direction: column; } .pg-grid > .st-card > .st-btn { margin-top: auto; } .pg-grid > .st-card > .pg-row { margin-bottom: 12px; } }
+
+    /* Modal: white, radius 16, teal header strip */
+    .pg-modal { position: fixed; inset: 0; z-index: 1100; background: rgba(15,23,42,.55); display: flex; align-items: flex-end; justify-content: center; padding: env(safe-area-inset-top, 0px) 0 0; }
+    .pg-modal-card { background: #fff; width: 100%; max-width: 640px; max-height: 92vh; max-height: 92dvh; border-radius: 16px 16px 0 0; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 40px rgba(0,0,0,.2); }
+    @media (min-width: 640px) { .pg-modal { align-items: center; padding: 20px; } .pg-modal-card { border-radius: 16px; max-height: 88vh; } }
+    .pg-modal-head { background: linear-gradient(135deg, #0891B2, #06B6D4); color: #fff; padding: 12px 10px 12px 18px; display: flex; align-items: center; gap: 10px; flex: none; }
+    .pg-modal-head h2 { color: #fff !important; margin: 0; font: 600 1.12rem var(--st-font-head); flex: 1; line-height: 1.3; }
+    .pg-modal-head p { margin: 2px 0 0; font-size: .85rem; color: #fff; opacity: .92; line-height: 1.35; }
+    .pg-modal-head > div { flex: 1; min-width: 0; }
+    .pg-x { width: 44px; height: 44px; border: 0; border-radius: 12px; background: rgba(255,255,255,.18); color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; flex: none; }
+    .pg-modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
+    .pg-note { text-align: center; background: var(--sand-light); border-radius: 12px; padding: 14px; margin-top: 14px; font-size: .9rem; color: var(--text-soft); }
+    .pg-note p { margin: 4px 0; }
+    .pg-msg { text-align: center; color: var(--text-soft); padding: 18px 8px; font-size: .92rem; }
+
+    /* Video modal */
+    .pg-video { position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 12px; overflow: hidden; }
+    .pg-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+  </style>
+</head>
+<body class="st-app" data-tab="more" data-back="whatwedo.html" data-back-label="What We Do" data-title="Special Education">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <main id="main-content">
+    <header class="st-band">
+      <div class="st-wrap">
+        <h1 id="specialed-heroTitle">Special Education Advocacy</h1>
+        <p id="specialed-heroSubtitle">Expert guidance on IEPs, IDEA, and education laws to ensure your child receives appropriate services.</p>
+      </div>
+    </header>
+
+    <section class="st-sec" aria-labelledby="specialed-resourcesTitle">
+      <div class="st-wrap">
+        <span class="st-tag">Know Your Rights</span>
+        <h2 class="st-h" id="specialed-resourcesTitle">Resource Documents</h2>
+        <p class="st-sub" id="specialed-resourcesSubtitle">Essential guides and regulations for understanding special education rights in Hawaiʻi</p>
+        <div class="pg-grid">
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg><img id="specialed-res1Photo" alt="" hidden></div>
+            <div><h3 id="specialed-res1Title">Laws Regarding Education – General Overview</h3>
+            <p id="specialed-res1Desc">Learn about FERPA, IDEA and more in our general overview of laws regarding education. Updated July 2023.</p></div>
+          </div>
+          <a class="st-btn st-btn-primary" href="https://www.ldahawaii.org/assets/docs/wp/Laws-Regarding-Education.pdf" target="_blank" rel="noopener">Read Document</a>
+        </article>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg><img id="specialed-res2Photo" alt="" hidden></div>
+            <div><h3 id="specialed-res2Title">CADRE — Dispute Resolution in Special Education</h3>
+            <p id="specialed-res2Desc">CADRE is a national center that helps families and schools prevent and resolve disagreements related to special education services. Find free guidance, resources, and information about your options.</p></div>
+          </div>
+          <a class="st-btn st-btn-primary" href="https://cadreworks.org/" target="_blank" rel="noopener">Visit CADRE</a>
+        </article>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg><img id="specialed-res3Photo" alt="" hidden></div>
+            <div><h3 id="specialed-res3Title">Chapter 60 Information</h3>
+            <p id="specialed-res3Desc">A complete view of the Hawaiʻi Administrative Rules, Chapter 60 Guidelines for special education.</p></div>
+          </div>
+          <a class="st-btn st-btn-primary" href="https://www.ldahawaii.org/assets/docs/wp/Ch60Guidelines.pdf" target="_blank" rel="noopener">Read Document</a>
+        </article>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg><img id="specialed-res4Photo" alt="" hidden></div>
+            <div><h3 id="specialed-res4Title">IDEA — Individuals with Disabilities Education Act</h3>
+            <p id="specialed-res4Desc">The federal law that ensures children with disabilities receive a free appropriate public education and access to special education services. Learn about your rights and protections.</p></div>
+          </div>
+          <a class="st-btn st-btn-primary" href="https://sites.ed.gov/idea/about-idea/" target="_blank" rel="noopener">Learn More</a>
+        </article>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg><img id="specialed-res5Photo" alt="" hidden></div>
+            <div><h3 id="specialed-res5Title">Transportation for Students – HAR 27 Title 8</h3>
+            <p id="specialed-res5Desc">Learn about Hawaiʻi Administrative Rule 27, Title 8 regarding transportation services for students.</p></div>
+          </div>
+          <a class="st-btn st-btn-primary" href="https://www.ldahawaii.org/assets/docs/wp/HAR27-Title-8-Transportation-of-Students.pdf" target="_blank" rel="noopener">Read Document</a>
+        </article>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg><img id="specialed-res6Photo" alt="" hidden></div>
+            <div><h3 id="specialed-res6Title">Public Charter School IDEA Guidelines</h3>
+            <p id="specialed-res6Desc">Hawaiʻi State Public Charter Schools guidelines for the implementation of IDEA 2004. Parents may enroll their child in any charter school regardless of special needs.</p></div>
+          </div>
+          <a class="st-btn st-btn-primary" href="https://www.ldahawaii.org/assets/docs/wp/Final-PCS-Guidelines-12.02.2020-3.pdf" target="_blank" rel="noopener">Read Document</a>
+        </article>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg><img id="specialed-res7Photo" alt="" hidden></div>
+            <div><h3 id="specialed-res7Title">Restraint &amp; Seclusion Webinar</h3>
+            <p id="specialed-res7Desc">U.S. Department of Education webinar presentation on restraint and seclusion policies and best practices in schools.</p></div>
+          </div>
+          <button type="button" class="st-btn st-btn-primary" data-video="EZ9Yx0LC8TI" data-video-title="Restraint &amp; Seclusion Webinar">Watch Webinar</button>
+        </article>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg><img id="specialed-res8Photo" alt="" hidden></div>
+            <div><h3 id="specialed-res8Title">Restraint &amp; Seclusion Resource Document</h3>
+            <p id="specialed-res8Desc">U.S. Department of Education guidance on 15 principles for policies and procedures regarding restraint and seclusion in schools.</p></div>
+          </div>
+          <a class="st-btn st-btn-primary" href="https://www2.ed.gov/policy/seclusion/restraints-and-seclusion-resources.pdf" target="_blank" rel="noopener">Read Document</a>
+        </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="st-coral" aria-labelledby="specialed-ctaTitle">
+      <div class="st-wrap">
+        <h2 id="specialed-ctaTitle">Need Advocacy Support?</h2>
+        <p id="specialed-ctaSubtitle">Our team can help you navigate the special education system.</p>
+        <a class="st-btn st-btn-white" href="contact.html">Contact Us Today</a>
+      </div>
+    </section>
+  </main>
+
+  <div class="pg-modal" id="videoModal" role="dialog" aria-modal="true" aria-labelledby="videoTitle" hidden>
+    <div class="pg-modal-card">
+      <div class="pg-modal-head"><h2 id="videoTitle">Video</h2><button type="button" class="pg-x" data-close aria-label="Close">&times;</button></div>
+      <div class="pg-modal-body">
+        <div class="pg-video"><iframe id="videoFrame" title="Video" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  /* Website content loader (STAGE, 2026-10-20). Reads the same Firestore
+     pageContent/{page} documents the main website reads, and fills any element
+     whose id is "{page}-{field}", exactly like the website's loader. The HTML
+     in the page is the website's own text and stays if the read fails.
+     data-cms on an element picks how a field is shown:
+       text (default) plain text, as whoweare/specialed/military/community do
+       html  cleaned HTML (bold, links, lists kept; colours/fonts dropped)
+       list  <li> items only (Core Values)
+       phones cleaned HTML with 7-digit Hawaiʻi numbers turned into tel: links */
+  window.STC = (function () {
+    'use strict';
+    var SITE = 'https://www.ldahawaii.org/';
+    var db = null;
+    try { db = firebase.firestore(); } catch (e) { console.error('Firestore unavailable', e); }
+
+    var EMOJI = /[\u{1F300}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FEFF}]|[\u{1F1E0}-\u{1F1FF}]{2}/gu;
+    var WORDS = [
+      [/Hawai['’‘`]i/g, 'Hawaiʻi'], [/O['’‘`]ahu/g, 'Oʻahu'],
+      [/Moloka['’‘`]i/g, 'Molokaʻi'], [/Ma['’‘`]ili/g, 'Maʻili'],
+      [/Wai['’‘`]anae/g, 'Waiʻanae'], [/Kaua['’‘`]i/g, 'Kauaʻi'],
+      [/\bHawaii\b/g, 'Hawai\u02BBi'],
+      [/Disabilities (?:&|of) Achievement/g, 'Disabilities and Achievement']
+    ];
+    function norm(t) {
+      t = String(t == null ? '' : t).replace(EMOJI, '');
+      WORDS.forEach(function (w) { t = t.replace(w[0], w[1]); });
+      return t;
+    }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function abs(u) {
+      if (!u || typeof u !== 'string' || !u.trim()) return '';
+      try { var x = new URL(u.trim(), SITE); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch (e) { return ''; }
+    }
+    function parse(html) { return new DOMParser().parseFromString('<!doctype html><body>' + String(html || ''), 'text/html').body; }
+    function toText(html) {
+      var b = parse(html);
+      b.querySelectorAll('br,p,div,li,h1,h2,h3,h4').forEach(function (n) { n.insertAdjacentText('beforebegin', ' '); });
+      return norm(b.textContent || '').replace(/\s+/g, ' ').trim();
+    }
+
+    var DROP = /^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|FORM|INPUT|TEXTAREA|SELECT|OPTION|LINK|META|SVG|TEMPLATE|NOSCRIPT|VIDEO|AUDIO|CANVAS)$/;
+    var KEEP = /^(P|BR|STRONG|B|EM|I|U|A|UL|OL|LI|H3|H4|H5|DIV|IMG)$/;
+    var PHONE = /\b(\d{3})-(\d{4})\b/g;
+    function linkPhones(text, parent) {
+      var last = 0, m; PHONE.lastIndex = 0;
+      while ((m = PHONE.exec(text))) {
+        if (m.index > last) parent.appendChild(document.createTextNode(text.slice(last, m.index)));
+        var a = document.createElement('a'); a.href = 'tel:+1808' + m[1] + m[2]; a.textContent = m[0];
+        parent.appendChild(a); last = m.index + m[0].length;
+      }
+      if (last < text.length) parent.appendChild(document.createTextNode(text.slice(last)));
+    }
+    /* Rebuilds the HTML from a whitelist: only safe tags, only href/src/alt
+       (plus id/class when keepAttrs), links open outside the app. */
+    function clean(html, opts) {
+      opts = opts || {};
+      var src = typeof html === 'string' ? parse(html) : html;
+      var out = document.createDocumentFragment();
+      (function walk(from, to, inA) {
+        Array.prototype.forEach.call(from.childNodes, function (n) {
+          if (n.nodeType === 3) {
+            var t = norm(n.nodeValue);
+            if (opts.phones && !inA) linkPhones(t, to); else to.appendChild(document.createTextNode(t));
+            return;
+          }
+          if (n.nodeType !== 1) return;
+          var tag = n.tagName.toUpperCase();
+          if (DROP.test(tag)) return;
+          if (!KEEP.test(tag)) { walk(n, to, inA); return; }
+          var el = document.createElement(tag.toLowerCase());
+          if (opts.keepAttrs) {
+            if (n.id) el.id = n.id;
+            if (n.getAttribute('class')) el.setAttribute('class', n.getAttribute('class'));
+          }
+          if (tag === 'A') {
+            var h = (n.getAttribute('href') || '').trim(), lt = (n.textContent || '').trim();
+            /* CMS slips: an email or phone typed as a web link (https://name@mail.com) */
+            if (/^https?:/i.test(h) && /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(lt) && h.indexOf(lt) !== -1) h = 'mailto:' + lt;
+            else if (/^https?:\/\/[\d\s().+-]+\/?$/i.test(h)) h = 'tel:' + h.replace(/^https?:\/\//i, '').replace(/[^\d+]/g, '');
+            if (/^(mailto:|tel:)/i.test(h)) el.setAttribute('href', h);
+            else if (abs(h) && !/^javascript:/i.test(h)) { el.setAttribute('href', abs(h)); el.target = '_blank'; el.rel = 'noopener'; }
+            if (n.classList && n.classList.contains('pg-ext')) el.className = (el.className ? el.className + ' ' : '') + 'pg-ext';
+          }
+          if (tag === 'IMG') {
+            var s = abs(n.getAttribute('src'));
+            if (!s) return;
+            el.src = s; el.alt = n.getAttribute('alt') || ''; el.loading = 'lazy';
+            el.onerror = function () { this.remove(); };
+          }
+          to.appendChild(el);
+          walk(n, el, inA || tag === 'A');
+        });
+      })(src, out, false);
+      return out;
+    }
+
+    function setImg(el, url) {
+      var s = abs(url);
+      if (!el || !s) return;
+      el.onerror = function () { this.hidden = true; };
+      el.onload = function () { this.hidden = false; };
+      el.src = s;
+    }
+    function apply(page, data, root) {
+      root = root || document;
+      Object.keys(data || {}).forEach(function (k) {
+        var v = data[k];
+        if (typeof v !== 'string' || !v.trim()) return;
+        var el = root.querySelector('#' + page + '-' + k.replace(/[^\w-]/g, ''));
+        if (!el) return;
+        if (el.tagName === 'IMG') { if (/Photo|Hero|Flag|Logo/.test(k)) setImg(el, v); return; }
+        var mode = el.getAttribute('data-cms') || 'text';
+        if (mode === 'text') { var t = toText(v); if (t) el.textContent = t; return; }
+        if (mode === 'list') {
+          var items = Array.prototype.map.call(parse(v).querySelectorAll('li'), function (li) { return toText(li.innerHTML); }).filter(Boolean);
+          if (!items.length) return;
+          el.innerHTML = items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
+          return;
+        }
+        var frag = clean(v, { phones: mode === 'phones' });
+        if (!(frag.textContent || '').trim() && !frag.querySelector('img')) return;
+        el.innerHTML = ''; el.appendChild(frag);
+      });
+    }
+    function getDoc(page) {
+      if (!db) return Promise.reject(new Error('no db'));
+      return db.collection('pageContent').doc(page).get().then(function (d) { return d.exists ? d.data() : {}; });
+    }
+    function load(page) {
+      return getDoc(page).then(function (data) { apply(page, data); return data; })
+        .catch(function (err) { console.error('Error loading page content:', err); return {}; });
+    }
+
+    /* Modals */
+    var lastFocus = null;
+    function openModal(id) {
+      var m = document.getElementById(id); if (!m) return;
+      lastFocus = document.activeElement;
+      m.hidden = false; document.body.style.overflow = 'hidden';
+      var x = m.querySelector('.pg-x'); if (x) x.focus();
+    }
+    function closeModal(id) {
+      var m = document.getElementById(id); if (!m || m.hidden) return;
+      m.hidden = true;
+      if (!document.querySelector('.pg-modal:not([hidden])')) document.body.style.overflow = '';
+      m.dispatchEvent(new CustomEvent('pg-close'));
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+    document.addEventListener('click', function (e) {
+      var x = e.target.closest('[data-close]');
+      if (x) { closeModal(x.closest('.pg-modal').id); return; }
+      if (e.target.classList && e.target.classList.contains('pg-modal')) closeModal(e.target.id);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      var open = document.querySelectorAll('.pg-modal:not([hidden])');
+      if (open.length) closeModal(open[open.length - 1].id);
+    });
+
+    /* YouTube player in a modal (same embed the website uses) */
+    function openVideo(title, videoId) {
+      var t = document.getElementById('videoTitle'), f = document.getElementById('videoFrame');
+      if (!t || !f) return;
+      t.textContent = title;
+      f.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(videoId) + '?rel=0&modestbranding=1&autoplay=1&playsinline=1';
+      openModal('videoModal');
+    }
+    var vm = document.getElementById('videoModal');
+    if (vm) vm.addEventListener('pg-close', function () { var f = document.getElementById('videoFrame'); if (f) f.src = ''; });
+
+    return { SITE: SITE, db: db, esc: esc, abs: abs, norm: norm, toText: toText, clean: clean, parse: parse,
+             apply: apply, getDoc: getDoc, load: load, setImg: setImg, openModal: openModal, closeModal: closeModal, openVideo: openVideo };
+  })();
+  </script>
+
+  <script>
+  /* Text and photos from pageContent/specialed; links are the website's. */
+  window.STC.load('specialed');
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-video]'); if (!b) return;
+    var t = document.getElementById('specialed-res7Title');
+    window.STC.openVideo((t && t.textContent.trim()) || b.getAttribute('data-video-title'), b.getAttribute('data-video'));
+  });
+  </script>
+
+  <script src="analytics-tracker.js"></script>
+  <script src="accessibility.js"></script>
+</body>
+</html>

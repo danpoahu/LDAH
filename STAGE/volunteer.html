@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LDAH">
-  <meta name="theme-color" content="#004E7C">
+  <meta name="theme-color" content="#0891B2">
   <title>LDAH - Volunteer Opportunities</title>
   
   <!-- Google Analytics -->
@@ -31,243 +31,167 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="./formatters.js"></script>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="site-theme.css?v=1">
+  <script src="js/app-shell.js?v=1" defer></script>
   <style>
-    /* Page-specific styles only */
+    /* Volunteer: the website's look (site-theme.css), vol- prefix */
+    .vol-empty { text-align: center; padding: 26px 12px; color: var(--text-soft); background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.06); }
+    .vol-empty p { margin: 4px 0 0; font-size: .93rem; color: var(--text-soft); }
+    .vol-spin { width: 34px; height: 34px; margin: 0 auto 8px; border: 3px solid var(--sand); border-top-color: var(--ocean-deep); border-radius: 50%; animation: vol-spin .9s linear infinite; }
+    @keyframes vol-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .vol-spin { animation: none; } }
+
+    .vol-opp { cursor: pointer; transition: box-shadow .15s, transform .15s; }
+    .vol-opp:hover { box-shadow: 0 8px 26px rgba(8,145,178,.14); }
+    .vol-opp:active { transform: scale(.995); }
+    .vol-opp h3 { font-size: 1.05rem; display: inline; margin-right: 6px; }
+    .vol-opp .st-badge { vertical-align: 2px; }
+    .vol-opp .vol-desc { margin: 6px 0 0; font-size: .92rem; color: #334155; line-height: 1.55; }
+    .vol-opp .vol-meta { margin-top: 8px; font-size: .84rem; color: var(--text-soft); line-height: 1.45; }
+    .vol-opp .vol-meta b { color: var(--text-dark); font-weight: 600; }
+    .vol-opp .st-btn { min-height: 44px; margin-top: 12px; }
+
+    /* Step 1 modal: white card, radius 16, teal header strip */
+    #volunteerModal { background: rgba(15,23,42,.45); }
+    #volunteerModal.active { padding: 16px; }
+    #volunteerModal .modal-content { background: #fff; border: 0; border-radius: 16px; padding: 0; max-width: 520px; max-height: 90vh; max-height: min(90dvh, 900px);
+      overflow-y: auto; box-shadow: 0 20px 50px rgba(15,23,42,.25); font-family: var(--st-font-body); }
+    /* Step 2 (va-mode) keeps its own sizing from the Step 2 styles below */
+    #volunteerModal .modal-content.va-mode { max-width: 760px; max-height: none; overflow: hidden; }
+    @media (max-width: 640px) { #volunteerModal .modal-content.va-mode { border-radius: 0; } }
+    #volunteerModal .modal-content:not(.va-mode) > #modal-body { padding: 18px; }
+    .vol-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 10px 14px 18px;
+      background: linear-gradient(135deg, #0891B2, #06B6D4); border-radius: 16px 16px 0 0; position: sticky; top: 0; z-index: 1; }
+    .vol-head h2 { color: #fff !important; font: 600 1.15rem var(--st-font-head); margin: 0; line-height: 1.3; }
+    .vol-x { background: rgba(255,255,255,.15); border: 0; color: #fff; width: 44px; height: 44px; border-radius: 10px; font-size: 1.6rem; line-height: 1; cursor: pointer; flex: none; }
+    .vol-x:hover { background: rgba(255,255,255,.28); }
+    .vol-x:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+    .vol-body { padding: 14px 18px 20px; }
+    .vol-steps { display: flex; gap: 6px; }
+    .vol-steps span { flex: 1; height: 6px; border-radius: 99px; background: #E2E8F0; }
+    .vol-steps span.cur { background: #0891B2; }
+    .vol-steplbl { margin: 8px 0 14px; font-size: .86rem; color: var(--text-soft); }
+    .vol-f { margin-bottom: 14px; }
+    .vol-l { display: block; font: 600 .92rem var(--st-font-head); color: var(--text-dark); margin-bottom: 5px; }
+    #volunteerForm .st-input { min-height: 46px; }
+    #volunteerForm textarea.st-input { min-height: 96px; resize: vertical; line-height: 1.5; }
+    .st-input.vol-ro { background: #F1F5F9; color: var(--text-soft); }
+    .vol-actions { margin-top: 4px; }
+    .vol-actions .st-btn { min-height: 48px; }
+    #submitBtn[disabled] { opacity: .65; cursor: wait; }
+    .vol-ok { margin-top: 14px; padding: 14px; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; color: #065F46; }
+    .vol-ok p { margin: 0; font-size: .92rem; }
+    .vol-ok .vol-ok-h { font-weight: 700; margin-bottom: 2px; }
   </style>
 </head>
-<body>
+<body class="st-app" data-tab="more" data-title="Volunteer" data-back="howtohelp.html" data-back-label="How to Help">
   <a href="#main-content" class="skip-link">Skip to main content</a>
   <main id="main-content">
-  <div class="min-h-screen p-2 main-content">
-    <div class="max-w-2xl mx-auto">
-      <!-- Logo Section with Hamburger Menu -->
-      <div class="text-center mb-2 mt-2 relative">
-        <!-- Hamburger Menu Icon -->
-        <button
-          onclick="toggleMenu()"
-          id="menuBtn"
-          class="menu-btn"
-          aria-controls="dropdownMenu"
-          aria-expanded="false"
-          aria-label="Open navigation menu"
-        >
-          <svg id="menuIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-          <svg id="closeIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-
-        <!-- Dropdown Menu -->
-        <div id="dropdownMenu" class="dropdown-menu" role="menu" aria-label="Site navigation">
-          <a href="index.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#004E7C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-            Home
-          </a>
-          <a href="events.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            Events
-          </a>
-          <a href="faq.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            Quick Help
-          </a>
-          <a href="volunteer.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            Volunteer
-          </a>
-          <a href="resources.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-            Resources
-          </a>
-          <a href="howtohelp.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            How to Help
-          </a>
-          <a href="contact.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-            Contact Us
-          </a>
-          <a href="https://www.ldahawaii.org/STAGE/Members/?from=app" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-            Member Login
-          </a>
-          <a href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-radius: 0 0 8px 8px;" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF9B21" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            Donate
-          </a>
-        </div>
-
-        <div class="mb-2 flex justify-center">
-          <a href="index.html" style="padding: 16px; display: inline-block; cursor: pointer;">
-            <img 
-              src="logo_transparent.png" 
-              alt="LDAH Logo"
-              class="app-logo"
-            />
-          </a>
-        </div>
-        
-        <h3 class="text-lg font-bold text-[#004E7C] mb-1">
-          Volunteer Opportunities
-        </h3>
-        <p class="text-gray-600 text-xs mb-2">
-          Join our mission to empower families
-        </p>
+    <header class="st-band">
+      <div class="st-wrap">
+        <h1>Volunteer with LDAH</h1>
+        <p>Join our &lsquo;ohana and make a difference in the lives of Hawai&lsquo;i families and children with disabilities.</p>
       </div>
+    </header>
 
-      <!-- Back Button -->
-      <div class="mb-3">
-        <a href="index.html" style="
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          background-color: rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          padding: 8px 16px;
-          cursor: pointer;
-          transition: transform 0.2s;
-          border: 2px solid #004E7C;
-          text-decoration: none;
-          color: #004E7C;
-          font-weight: bold;
-          backdrop-filter: blur(10px);
-          font-size: 14px;
-        " onmouseover="this.style.transform='translateX(-2px)';" onmouseout="this.style.transform='translateX(0)';">
-          <span>←</span>
-          <span>Back to Home</span>
-        </a>
-      </div>
-
-      <!-- Current Volunteer Opportunities Section -->
-      <div class="volunteer-card">
-        <h2 class="text-lg font-bold text-[#004E7C] mb-3 text-center">Volunteer Opportunities</h2>
+    <!-- Current Volunteer Opportunities -->
+    <section class="st-sec">
+      <div class="st-wrap">
+        <span class="st-tag">Give Your Time</span>
+        <h2 class="st-h">Volunteer Opportunities</h2>
         <div id="opportunities-container">
-          <div class="text-center py-8">
-            <div class="text-4xl mb-2">⏳</div>
-            <p class="text-gray-600 text-sm">Loading opportunities...</p>
+          <div class="vol-empty">
+            <div class="vol-spin" aria-hidden="true"></div>
+            <p>Loading opportunities...</p>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- Contact Section -->
-      <div class="volunteer-card">
-        <h2 class="text-lg font-bold text-[#004E7C] mb-3 text-center">Get Involved</h2>
-        <p class="text-gray-700 text-sm mb-3 text-center leading-relaxed">
-          Interested in volunteering? Contact us to learn more about these opportunities and how you can make a difference in the lives of families with children with disabilities.
-        </p>
-        <div class="text-center">
-          <p class="text-gray-700 text-sm mb-2">
-            <strong>Phone:</strong> <a href="tel:+18085369684" class="text-[#004E7C] underline">(808) 536-9684</a>
-          </p>
-          <p class="text-gray-700 text-sm mb-2">
-            <strong>Email:</strong> <a href="mailto:rrowe@ldahawaii.org" class="text-[#004E7C] underline">rrowe@ldahawaii.org</a>
-          </p>
-        </div>
+    <!-- Get Involved -->
+    <section class="st-sec st-alt">
+      <div class="st-wrap">
+        <span class="st-tag">Get Involved</span>
+        <h2 class="st-h">Questions about volunteering?</h2>
+        <p class="st-sub">Interested in volunteering? Contact us to learn more about these opportunities and how you can make a difference in the lives of families with children with disabilities.</p>
+        <a class="st-list" href="tel:+18085369684">
+          <span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+          <span><h3>Call us</h3><p>(808) 536-9684</p></span>
+          <span class="st-chev" aria-hidden="true">&rsaquo;</span>
+        </a>
+        <a class="st-list" href="mailto:rrowe@ldahawaii.org">
+          <span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
+          <span><h3>Email us</h3><p>rrowe@ldahawaii.org</p></span>
+          <span class="st-chev" aria-hidden="true">&rsaquo;</span>
+        </a>
       </div>
+    </section>
 
-    </div>
-  </div>
+    <!-- Support Our Mission -->
+    <section class="st-coral">
+      <div class="st-wrap">
+        <h2>Support Our Mission</h2>
+        <p>Your generous donation helps us empower families through information, training, and advocacy.</p>
+        <a href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" class="st-btn st-btn-white">Donate</a>
+      </div>
+    </section>
+  </main>
 
   <!-- Volunteer Application Modal -->
-  <div id="volunteerModal" class="modal">
+  <div id="volunteerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="vol-step1-title">
     <div class="modal-content">
       <div id="vol-step1">
-      <h2 class="text-xl font-bold text-[#004E7C] mb-4">Apply for Volunteer Opportunity</h2>
-      
+      <div class="vol-head">
+        <h2 id="vol-step1-title">Apply for Volunteer Opportunity</h2>
+        <button type="button" class="vol-x" onclick="closeModal()" aria-label="Close">&times;</button>
+      </div>
+      <div class="vol-body">
+      <div class="vol-steps" aria-hidden="true"><span class="cur"></span><span></span></div>
+      <p class="vol-steplbl">Step 1 of 2 &middot; Quick details</p>
       <form id="volunteerForm">
-        <div class="mb-4">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">First Name *</label>
-          <input
-            type="text"
-            id="firstName"
-            required
-            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
-            placeholder="Your first name"
-          />
+        <div class="vol-f">
+          <label class="vol-l" for="firstName">First Name *</label>
+          <input type="text" id="firstName" required class="st-input" placeholder="Your first name" autocomplete="given-name" />
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Last Name *</label>
-          <input
-            type="text"
-            id="lastName"
-            required
-            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
-            placeholder="Your last name"
-          />
+        <div class="vol-f">
+          <label class="vol-l" for="lastName">Last Name *</label>
+          <input type="text" id="lastName" required class="st-input" placeholder="Your last name" autocomplete="family-name" />
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
-          <input
-            type="email"
-            id="email"
-            required
-            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
-            placeholder="your.email@example.com"
-          />
+        <div class="vol-f">
+          <label class="vol-l" for="email">Email Address *</label>
+          <input type="email" id="email" required class="st-input" placeholder="your.email@example.com" autocomplete="email" />
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
-          <input
-            type="tel"
-            id="phone"
-            autocomplete="tel"
-            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
-            placeholder="(808) 555-1234"
-          />
+        <div class="vol-f">
+          <label class="vol-l" for="phone">Phone Number</label>
+          <input type="tel" id="phone" autocomplete="tel" class="st-input" placeholder="(808) 555-1234" />
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
-          <input
-            type="text"
-            id="subject"
-            readonly
-            class="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50"
-          />
+        <div class="vol-f">
+          <label class="vol-l" for="subject">Subject</label>
+          <input type="text" id="subject" readonly class="st-input vol-ro" />
         </div>
 
-        <div class="mb-6">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Notes or Questions</label>
-          <textarea
-            id="notes"
-            rows="4"
-            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#004E7C]"
-            placeholder="Tell us why you're interested or ask any questions..."
-          ></textarea>
+        <div class="vol-f">
+          <label class="vol-l" for="notes">Notes or Questions</label>
+          <textarea id="notes" rows="4" class="st-input" placeholder="Tell us why you're interested or ask any questions..."></textarea>
         </div>
 
-        <div class="flex gap-3">
-          <button
-            type="button"
-            onclick="closeModal()"
-            class="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            id="submitBtn"
-            class="flex-1 px-6 py-3 bg-[#004E7C] text-white rounded-lg font-semibold hover:bg-[#003a5c] transition-colors"
-          >
-            Submit Application
-          </button>
+        <div class="st-row2 vol-actions">
+          <button type="button" onclick="closeModal()" class="st-btn st-btn-secondary">Cancel</button>
+          <button type="submit" id="submitBtn" class="st-btn st-btn-primary">Submit Application</button>
         </div>
       </form>
 
-      <div id="successMessage" style="display: none;" class="mt-4 p-4 bg-green-100 border border-green-400 rounded-lg">
-        <p class="text-green-700 font-semibold">✓ Application submitted successfully!</p>
-        <p class="text-green-600 text-sm mt-1">We'll be in touch soon.</p>
+      <div id="successMessage" style="display: none;" class="vol-ok" role="status">
+        <p class="vol-ok-h">Application submitted successfully!</p>
+        <p>We'll be in touch soon.</p>
       </div>
       <!-- No alert(): the iOS app shell has no JS dialog handler, so errors show here. -->
-      <div id="vol-step1-err" role="alert" style="display: none; margin-top: 12px; padding: 12px 14px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; color: #991B1B; font-size: 14px; line-height: 1.5;"></div>
+      <div id="vol-step1-err" role="alert" style="display: none; margin-top: 12px; padding: 12px 14px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; color: #991B1B; font-size: 14px; line-height: 1.5;"></div>
+      </div>
       </div>
       <!-- Step 2 (full volunteer application) renders here once Step 1 is saved. -->
       <div id="modal-body" hidden></div>
@@ -275,40 +199,6 @@
   </div>
 
   <script>
-    // Hamburger menu functionality
-    function toggleMenu() {
-      const menu = document.getElementById('dropdownMenu');
-      const menuIcon = document.getElementById('menuIcon');
-      const closeIcon = document.getElementById('closeIcon');
-      const btn = document.getElementById('menuBtn');
-
-      if (menu.style.display === 'none' || menu.style.display === '') {
-        menu.style.display = 'block';
-        menuIcon.style.display = 'none';
-        closeIcon.style.display = 'block';
-        btn.setAttribute('aria-expanded', 'true');
-        btn.setAttribute('aria-label', 'Close navigation menu');
-      } else {
-        menu.style.display = 'none';
-        menuIcon.style.display = 'block';
-        closeIcon.style.display = 'none';
-        btn.setAttribute('aria-expanded', 'false');
-        btn.setAttribute('aria-label', 'Open navigation menu');
-      }
-    }
-
-    // Close menu when clicking outside
-    document.addEventListener('click', function(event) {
-      const menu = document.getElementById('dropdownMenu');
-      const button = event.target.closest('button');
-      
-      if (!button && menu.style.display === 'block') {
-        menu.style.display = 'none';
-        document.getElementById('menuIcon').style.display = 'block';
-        document.getElementById('closeIcon').style.display = 'none';
-      }
-    });
-
     // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyAU3CQ07bCVKlJ1qGak-150kaJEyPKldLk",
@@ -346,23 +236,17 @@
 
     function renderList(opportunities, container, now) {
       if (opportunities.length === 0) {
-        container.innerHTML = `<div class="text-center py-8"><p class="text-gray-600 text-sm">No active opportunities at this time.</p></div>`;
+        container.innerHTML = `<div class="vol-empty"><p>No active opportunities at this time.</p></div>`;
         return;
       }
       container.innerHTML = opportunities.map(opp => `
-          <div class="opportunity-card" onclick="openModal('${opp.title.replace(/'/g, "\'")}', '${opp.id}')">
-            ${opp.imageUrl ? `
-              <img src="${opp.imageUrl}" alt="${opp.title}" style="float:left;width:100px;height:100px;object-fit:cover;border-radius:12px;margin:0 12px 8px 0;" />
-            ` : ''}
-            <div>
-              <h3 class="font-bold text-base text-[#004E7C]" style="display:inline;">${opp.title}</h3>
-              ${opp.alwaysPost ? '<span class="text-xs text-green-600 font-semibold" style="margin-left:8px;">Ongoing</span>' : ''}
-              <p class="text-gray-700 text-sm leading-relaxed" style="margin:8px 0;">${opp.description}</p>
-              ${opp.requirements ? `<div style="margin-top:8px;"><p class="text-xs font-semibold text-gray-700" style="margin-bottom:4px;">Requirements:</p><p class="text-xs text-gray-600">${opp.requirements}</p></div>` : ''}
-              ${opp.startDate || opp.endDate ? `<div style="margin-top:8px;" class="text-xs text-gray-600">${opp.startDate ? `<span>Start: ${new Date(opp.startDate).toLocaleDateString()}</span>` : ''}${opp.startDate && opp.endDate ? ' • ' : ''}${opp.endDate ? `<span>End: ${new Date(opp.endDate).toLocaleDateString()}</span>` : ''}</div>` : ''}
-              <div style="margin-top:16px;clear:both;"><span style="display:inline-block;background-color:#004E7C;color:white;border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,0.2);">Apply Now</span></div>
-            </div>
-            <div style="clear:both;"></div>
+          <div class="st-card vol-opp" onclick="openModal('${opp.title.replace(/'/g, "\'")}', '${opp.id}')">
+            ${opp.imageUrl ? `<img src="${opp.imageUrl}" alt="${opp.title}" class="st-thumb" style="height:150px;" />` : ''}
+            <h3>${opp.title}</h3>${opp.alwaysPost ? '<span class="st-badge st-badge-on">Ongoing</span>' : ''}
+            <p class="vol-desc">${opp.description}</p>
+            ${opp.requirements ? `<div class="vol-meta"><b>Requirements:</b> ${opp.requirements}</div>` : ''}
+            ${opp.startDate || opp.endDate ? `<div class="vol-meta">${opp.startDate ? `<span>Start: ${new Date(opp.startDate).toLocaleDateString()}</span>` : ''}${opp.startDate && opp.endDate ? ' • ' : ''}${opp.endDate ? `<span>End: ${new Date(opp.endDate).toLocaleDateString()}</span>` : ''}</div>` : ''}
+            <button type="button" class="st-btn st-btn-secondary">Apply</button>
           </div>
       `).join('');
     }
@@ -385,11 +269,7 @@
 
         if (snapshot.empty) {
           container.innerHTML = `
-            <div class="text-center py-8">
-              <div class="text-4xl mb-2">📋</div>
-              <p class="text-gray-600 text-sm">No specific opportunities posted at this time.</p>
-              <p class="text-gray-600 text-sm mt-2">Please contact us to discuss volunteer options!</p>
-            </div>
+            <div class="vol-empty"><p>No specific opportunities posted at this time.</p><p>Please contact us to discuss volunteer options!</p></div>
           `;
           return;
         }
@@ -412,70 +292,39 @@
         saveVolCache(opportunities);
         if (opportunities.length === 0) {
           container.innerHTML = `
-            <div class="text-center py-8">
-              <div class="text-4xl mb-2">📋</div>
-              <p class="text-gray-600 text-sm">No active opportunities at this time.</p>
-              <p class="text-gray-600 text-sm mt-2">Check back soon or contact us directly!</p>
-            </div>
+            <div class="vol-empty"><p>No active opportunities at this time.</p><p>Check back soon or contact us directly!</p></div>
           `;
           return;
         }
 
         container.innerHTML = opportunities.map(opp => `
-          <div class="opportunity-card" onclick="openModal('${opp.title.replace(/'/g, "\\'")}', '${opp.id}')">
+          <div class="st-card vol-opp" onclick="openModal('${opp.title.replace(/'/g, "\\'")}', '${opp.id}')">
             ${opp.imageUrl ? `
-              <img 
-                src="${opp.imageUrl}" 
-                alt="${opp.title}"
-                style="float: left; width: 100px; height: 100px; object-fit: cover; border-radius: 12px; margin: 0 12px 8px 0;"
-              />
+              <img src="${opp.imageUrl}" alt="${opp.title}" class="st-thumb" style="height: 150px;" />
             ` : ''}
-            <div>
-              <h3 class="font-bold text-base text-[#004E7C]" style="display: inline;">${opp.title}</h3>
-              ${opp.alwaysPost ? 
-                '<span class="text-xs text-green-600 font-semibold" style="margin-left: 8px;">Ongoing</span>' : 
-                ''}
-              <p class="text-gray-700 text-sm leading-relaxed" style="margin: 8px 0;">${opp.description}</p>
-              ${opp.requirements ? `
-                <div style="margin-top: 8px;">
-                  <p class="text-xs font-semibold text-gray-700" style="margin-bottom: 4px;">Requirements:</p>
-                  <p class="text-xs text-gray-600">${opp.requirements}</p>
-                </div>
-              ` : ''}
-              ${opp.startDate || opp.endDate ? `
-                <div style="margin-top: 8px;" class="text-xs text-gray-600">
-                  ${opp.startDate ? `<span>Start: ${new Date(opp.startDate).toLocaleDateString()}</span>` : ''}
-                  ${opp.startDate && opp.endDate ? ' • ' : ''}
-                  ${opp.endDate ? `<span>End: ${new Date(opp.endDate).toLocaleDateString()}</span>` : ''}
-                </div>
-              ` : ''}
-              <div style="margin-top: 16px; clear: both;">
-                <span style="
-                  display: inline-block;
-                  background-color: #004E7C;
-                  color: white;
-                  border: none;
-                  border-radius: 12px;
-                  padding: 12px 24px;
-                  font-size: 14px;
-                  font-weight: bold;
-                  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                ">📝 Click to Apply</span>
+            <h3>${opp.title}</h3>${opp.alwaysPost ?
+              '<span class="st-badge st-badge-on">Ongoing</span>' :
+              ''}
+            <p class="vol-desc">${opp.description}</p>
+            ${opp.requirements ? `
+              <div class="vol-meta"><b>Requirements:</b> ${opp.requirements}</div>
+            ` : ''}
+            ${opp.startDate || opp.endDate ? `
+              <div class="vol-meta">
+                ${opp.startDate ? `<span>Start: ${new Date(opp.startDate).toLocaleDateString()}</span>` : ''}
+                ${opp.startDate && opp.endDate ? ' • ' : ''}
+                ${opp.endDate ? `<span>End: ${new Date(opp.endDate).toLocaleDateString()}</span>` : ''}
               </div>
-            </div>
-            <div style="clear: both;"></div>
+            ` : ''}
+            <button type="button" class="st-btn st-btn-secondary">Apply</button>
           </div>
         `).join('');
 
       } catch (error) {
         console.error('Error loading opportunities:', error);
         container.innerHTML = `
-          <div class="text-center py-8">
-            <div class="text-4xl mb-2">⚠️</div>
-            <p class="text-gray-600 text-sm">Unable to load opportunities.</p>
-            <p class="text-gray-600 text-sm mt-2">Please contact us directly for information.</p>
-          </div>
-        `;
+            <div class="vol-empty"><p>Unable to load opportunities.</p><p>Please contact us directly for information.</p></div>
+          `;
       }
     }
 
@@ -602,65 +451,6 @@
     })();
   </script>
 
-  </main>
-
-  <!-- Support Our Mission -->
-  <div style="max-width: 480px; margin: 2rem auto; padding: 1.5rem; background: transparent; border: 1.5px solid rgba(0,78,124,0.28); border-radius: 16px; box-shadow: 0 2px 10px rgba(15,23,42,0.05); text-align: center;">
-    <h2 style="font-size: 1.1rem; font-weight: 700; color: #004E7C; margin-bottom: 0.75rem;">Support Our Mission</h2>
-    <p style="color: #374151; font-size: 0.88rem; margin-bottom: 1rem; line-height: 1.6;">Your generous donation helps us empower families through information, training, and advocacy.</p>
-    <a href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: linear-gradient(135deg, #FF9B21 0%, #f59e0b 100%); color: white; text-decoration: none; padding: 12px 28px; border-radius: 50px; font-size: 14px; font-weight: 700; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,155,33,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px;" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>Donate Now
-    </a>
-  </div>
-
-  <!-- Bottom Navigation Bar -->
-  <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
-    <a href="javascript:void(0)" class="nav-item a11y-nav-btn" aria-label="Accessibility Options" onclick="toggleA11yPanel()">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H13V16H11V22H9V9H3V7H21V9Z"/>
-      </svg>
-      <span>Access</span>
-    </a>
-    <a href="events.html" class="nav-item" aria-label="Events">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-        <line x1="16" y1="2" x2="16" y2="6"></line>
-        <line x1="8" y1="2" x2="8" y2="6"></line>
-        <line x1="3" y1="10" x2="21" y2="10"></line>
-      </svg>
-      <span>Events</span>
-    </a>
-    <a href="faq.html" class="nav-item nav-item-qhelp" aria-label="Q-Help">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="10"></circle>
-        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-      </svg>
-      <span>Q-Help</span>
-    </a>
-    <a href="volunteer.html" class="nav-item active" aria-current="page" aria-label="Volunteer">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-      </svg>
-      <span>Volunteer</span>
-    </a>
-    <a href="resources.html" class="nav-item" aria-label="Resources">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-      </svg>
-      <span>Resources</span>
-    </a>
-    <a href="contact.html" class="nav-item" aria-label="Contact">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-      </svg>
-      <span>Contact</span>
-    </a>
-  </nav>
   <!-- ═══ Volunteer Application, STEP 2 (app STAGE, 2026-10-03) ═══════════════
        Ported from the website (LDAH_W2 volunteer.html, live v63.0) so the app
        mirrors W2 exactly: same parts, same checks, same payload keys and
@@ -679,15 +469,15 @@
        No field here carries the `required` attribute: every check is done in JS
        against VISIBLE fields only, so a hidden conditional can never block submit. -->
   <style>
-    #volunteerModal,.va-banner{--ocean-deep:#004E7C;--ocean-light:#5BB4E5;--sunset-coral:#E8590C;--sand-light:#FFFBEB;--text-dark:#1E293B;--text-soft:#64748B;--bg-warm:#F8FAFC;--plumeria:#FBBF24;}
+    #volunteerModal,.va-banner{--ocean-deep:#0891B2;--ocean-light:#22D3EE;--sunset-coral:#F97316;--sand-light:#FFFBEB;--text-dark:#1E293B;--text-soft:#64748B;--bg-warm:#FEFDFB;--plumeria:#FBBF24;}
     #volunteerModal [hidden]{display:none !important;}
-    #volunteerModal .va-shell h2,#volunteerModal .va-shell h3,#volunteerModal .va-shell h4{font-weight:700;}
+    #volunteerModal .va-shell h2,#volunteerModal .va-shell h3,#volunteerModal .va-shell h4,#volunteerModal .va-panel h3{font-family:'Outfit',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:600;}
     .modal-content.va-mode{padding:0;max-width:760px;background:#fff;display:flex;flex-direction:column;height:92vh;height:min(92dvh,940px);max-height:none;overflow:hidden;}
     #volunteerModal.va-open{z-index:10001;}
     .modal-content.va-mode > #modal-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
     .va-top h2:focus{outline:none;}
     .va-shell{display:flex;flex:1 1 auto;flex-direction:column;height:100%;min-height:0;background:#fff;}
-    .va-top{padding:16px 22px 12px;border-bottom:1px solid #E7ECF1;background:#fff;flex:0 0 auto;}
+    .va-top{padding:16px 22px 12px;border-bottom:1px solid #E7ECF1;background:#fff;flex:0 0 auto;box-shadow:inset 0 4px 0 #0891B2;}
     .va-titlerow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
     .va-kicker{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sunset-coral);}
     .va-top h2{font-size:1.3rem;color:var(--ocean-deep);margin:2px 0 0;line-height:1.25;}
@@ -705,24 +495,24 @@
     .va-foot-row .va-sp{flex:1;}
     .va-foot-sub{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px;}
     .va-saved{font-size:.8rem;color:var(--text-soft);}
-    .va-btn{min-height:48px;padding:0 22px;border-radius:12px;font-family:inherit;font-weight:600;font-size:1rem;cursor:pointer;border:2px solid transparent;transition:background .2s,transform .2s;}
+    .va-btn{min-height:48px;padding:0 22px;border-radius:10px;font-family:'Outfit',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:600;font-size:1rem;cursor:pointer;border:2px solid transparent;transition:background .2s,transform .2s;}
     .va-btn-primary{background:var(--ocean-deep);color:#fff;box-shadow:0 4px 14px rgba(8,145,178,.25);}
-    @media (hover:hover){.va-btn-primary:hover{background:#003a5c;}}
+    @media (hover:hover){.va-btn-primary:hover{background:#0E7490;}}
     .va-btn-primary[disabled]{opacity:.6;cursor:wait;}
-    .va-btn-ghost{background:#fff;color:var(--ocean-deep);border-color:rgba(8,145,178,.35);}
+    .va-btn-ghost{background:#fff;color:var(--ocean-deep);border-color:var(--ocean-deep);}
     @media (hover:hover){.va-btn-ghost:hover{background:var(--sand-light);}}
     .va-btn-link{background:none;border:0;color:var(--ocean-deep);text-decoration:underline;min-height:40px;padding:0 4px;font-weight:600;font-size:.92rem;cursor:pointer;font-family:inherit;}
     .va-btn-danger{color:#B91C1C;}
-    .va-intro{background:#fff;border:1px solid rgba(8,145,178,.15);border-left:5px solid var(--ocean-deep);border-radius:14px;padding:14px 16px;margin-bottom:16px;}
+    .va-intro{background:#fff;border:0;border-left:5px solid var(--ocean-deep);border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.06);padding:14px 16px;margin-bottom:16px;}
     .va-intro p{margin:0;line-height:1.55;}
-    .va-intro .va-hi{font-family:inherit;font-weight:600;font-size:1.08rem;color:var(--ocean-deep);margin-bottom:4px;}
+    .va-intro .va-hi{font-family:'Outfit',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:600;font-size:1.08rem;color:var(--ocean-deep);margin-bottom:4px;}
     .va-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
-    .va-chip{background:var(--sand-light);border:1px solid #FDE68A;border-radius:999px;padding:4px 12px;font-size:.86rem;color:#78350F;max-width:100%;overflow-wrap:anywhere;}
+    .va-chip{background:var(--sand-light);border:1px solid #FDE68A;border-radius:8px;padding:4px 10px;font-size:.86rem;color:var(--ocean-deep);max-width:100%;overflow-wrap:anywhere;}
     .va-chip b{font-weight:700;}
     .va-conf{font-size:.84rem;color:var(--text-soft);margin-top:8px !important;}
-    .va-card{background:#fff;border:1px solid #E7ECF1;border-radius:14px;padding:16px 16px 4px;margin-bottom:14px;box-shadow:0 2px 10px rgba(8,145,178,.04);}
+    .va-card{background:#fff;border:0;border-radius:16px;padding:16px 16px 4px;margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,.06);}
     .va-card h3{font-size:1.06rem;color:var(--text-dark);margin:0 0 4px;}
-    .va-card h4{font-family:inherit;font-size:.95rem;color:var(--ocean-deep);margin:6px 0 8px;font-weight:600;}
+    .va-card h4{font-family:'Outfit',-apple-system,BlinkMacSystemFont,sans-serif;font-size:.95rem;color:var(--ocean-deep);margin:6px 0 8px;font-weight:600;}
     .va-hint{font-size:.88rem;color:var(--text-soft);margin:0 0 12px;line-height:1.5;}
     .va-grid{display:grid;grid-template-columns:1fr;column-gap:14px;}
     @media (min-width:560px){
@@ -732,30 +522,30 @@
       .va-span{grid-column:1/-1;}
     }
     .va-f{margin-bottom:14px;min-width:0;}
-    .va-l{display:block;font-weight:600;font-size:.95rem;margin-bottom:6px;color:var(--text-dark);line-height:1.35;}
+    .va-l{display:block;font-family:'Outfit',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:600;font-size:.95rem;margin-bottom:6px;color:var(--text-dark);line-height:1.35;}
     .va-l .req{color:var(--sunset-coral);}
     .va-fh{font-size:.84rem;color:var(--text-soft);margin:-2px 0 6px;line-height:1.4;}
-    .va-in{display:block;width:100%;min-height:48px;padding:10px 14px;border:2px solid rgba(8,145,178,.2);border-radius:10px;font-size:16px;font-family:inherit;background:#fff;color:var(--text-dark);transition:border-color .2s,box-shadow .2s;}
+    .va-in{display:block;width:100%;box-sizing:border-box;min-height:48px;padding:11px 13px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:16px;font-family:inherit;background:#fff;color:var(--text-dark);transition:border-color .2s,box-shadow .2s;}
     textarea.va-in{min-height:88px;resize:vertical;line-height:1.5;}
     select.va-in{appearance:auto;}
-    .va-in:focus{outline:none;border-color:var(--ocean-deep);box-shadow:0 0 0 3px rgba(8,145,178,.12);}
+    .va-in:focus{outline:none;border-color:var(--ocean-deep);box-shadow:0 0 0 3px rgba(8,145,178,.15);}
     .va-in[readonly]{background:#F1F5F9;color:var(--text-soft);}
     .va-err{display:none;color:#B91C1C;font-size:.86rem;margin-top:5px;font-weight:600;line-height:1.35;}
     .va-f.bad .va-err{display:block;}
     .va-f.bad .va-in{border-color:#DC2626;}
-    .va-yn{display:flex;gap:10px;}
-    .va-yn button{flex:1;min-height:50px;border:2px solid rgba(8,145,178,.25);background:#fff;border-radius:12px;font-family:inherit;font-weight:600;font-size:1rem;color:var(--text-dark);cursor:pointer;transition:.15s;}
+    .va-yn{display:flex;flex-wrap:wrap;gap:8px;}
+    .va-yn button{flex:1 1 0;min-width:96px;min-height:46px;border:1.5px solid #E2E8F0;background:#fff;border-radius:999px;font-family:inherit;font-weight:600;font-size:1rem;color:var(--text-dark);cursor:pointer;transition:.15s;}
     @media (hover:hover){.va-yn button:hover{border-color:var(--ocean-deep);}}
     .va-yn button[aria-checked="true"]{background:var(--ocean-deep);border-color:var(--ocean-deep);color:#fff;}
     .va-yn button:focus-visible,.va-days button:focus-visible{outline:3px solid var(--ocean-light);outline-offset:2px;}
     .va-f.bad .va-yn button,.va-f.bad .va-days button{border-color:#FCA5A5;}
     .va-days{display:flex;flex-wrap:wrap;gap:8px;}
-    .va-days button{min-height:46px;min-width:62px;padding:0 14px;border:2px solid rgba(8,145,178,.25);background:#fff;border-radius:999px;font-family:inherit;font-weight:600;font-size:.95rem;color:var(--text-dark);cursor:pointer;}
+    .va-days button{min-height:44px;min-width:62px;padding:0 14px;border:1.5px solid #E2E8F0;background:#fff;border-radius:999px;font-family:inherit;font-weight:600;font-size:.95rem;color:var(--text-dark);cursor:pointer;}
     .va-days button[aria-pressed="true"]{background:var(--ocean-deep);border-color:var(--ocean-deep);color:#fff;}
     .va-cond{border-left:3px solid var(--ocean-light);padding-left:14px;margin:2px 0 8px;}
     .va-cond[data-show^="_"]{border-left:0;padding-left:0;margin:0;}
     .va-cond[hidden],.va-panel[hidden],[data-part][hidden]{display:none !important;}
-    .va-tick{display:flex;gap:12px;align-items:flex-start;padding:14px;border:2px solid rgba(8,145,178,.25);border-radius:12px;background:#fff;cursor:pointer;font-size:.98rem;line-height:1.5;font-weight:500;}
+    .va-tick{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1.5px solid #E2E8F0;border-radius:12px;background:#fff;cursor:pointer;font-size:.98rem;line-height:1.5;font-weight:500;}
     .va-tick input{width:26px;height:26px;flex:0 0 auto;accent-color:var(--ocean-deep);margin-top:1px;cursor:pointer;}
     .va-tick.on{border-color:var(--ocean-deep);background:#ECFEFF;}
     .va-f.bad .va-tick{border-color:#DC2626;}
@@ -765,7 +555,7 @@
     .va-eeo{font-size:.9rem;color:#334155;line-height:1.55;border-top:1px dashed #E2E8F0;padding-top:12px;margin:4px 0 14px;font-style:italic;}
     .va-date{font-size:.92rem;color:var(--text-soft);margin:-4px 0 14px;}
     .va-date b{color:var(--text-dark);}
-    .va-rev{background:#fff;border:1px solid #E7ECF1;border-radius:14px;padding:14px 16px;margin-bottom:12px;}
+    .va-rev{background:#fff;border:0;box-shadow:0 4px 20px rgba(0,0,0,.06);border-radius:16px;padding:14px 16px;margin-bottom:12px;}
     .va-rev-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;}
     .va-rev-h h3{font-size:1rem;margin:0;color:var(--ocean-deep);}
     .va-rev dl{display:grid;grid-template-columns:1fr;margin:0;}
@@ -773,7 +563,7 @@
     .va-rev dd{margin:0 0 9px;color:var(--text-dark);white-space:pre-wrap;overflow-wrap:anywhere;}
     .va-rev dd.va-none{color:#94A3B8;}
     @media (min-width:560px){ .va-rev dl{grid-template-columns:42% 58%;column-gap:14px;} .va-rev dt{padding-top:1px;} }
-    .va-rev-sub{grid-column:1/-1;font-family:inherit;font-weight:600;font-size:.88rem;color:var(--text-dark);border-top:1px dashed #E2E8F0;padding-top:8px;margin-top:2px;margin-bottom:6px;}
+    .va-rev-sub{grid-column:1/-1;font-family:'Outfit',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:600;font-size:.88rem;color:var(--text-dark);border-top:1px dashed #E2E8F0;padding-top:8px;margin-top:2px;margin-bottom:6px;}
     .va-alert{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;border-radius:10px;padding:12px 14px;font-size:.93rem;line-height:1.5;margin-bottom:14px;}
     .va-panel{padding:26px 22px;text-align:center;max-width:520px;margin:0 auto;}
     .va-panel h3{font-size:1.35rem;color:var(--ocean-deep);margin:12px 0 8px;}
@@ -786,9 +576,9 @@
     .va-panel a[href^="tel:"],.va-alert a[href^="tel:"]{color:var(--ocean-deep);font-weight:700;white-space:nowrap;}
     .va-alert a[href^="tel:"]{color:#991B1B;}
     .va-btn-danger[data-armed="1"]{background:#FEF2F2;border-radius:10px;padding:0 12px;text-decoration:none;}
-    .va-banner{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9000;background:#0F2C3A;color:#fff;border-radius:14px;padding:10px 10px 10px 18px;display:flex;align-items:center;gap:10px;box-shadow:0 12px 30px rgba(0,0,0,.25);width:calc(100% - 32px);max-width:560px;font-size:.95rem;}
+    .va-banner{position:fixed;left:50%;bottom:calc(var(--st-tabs-h, 62px) + 74px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9000;background:#1E293B;color:#fff;border-radius:14px;padding:10px 10px 10px 18px;display:flex;align-items:center;gap:10px;box-shadow:0 12px 30px rgba(0,0,0,.25);width:calc(100% - 32px);max-width:560px;font-size:.95rem;}
     .va-banner span{flex:1;line-height:1.4;}
-    .va-banner .va-btn{min-height:42px;padding:0 16px;font-size:.92rem;background:var(--plumeria);color:#0F2C3A;}
+    .va-banner .va-btn{min-height:44px;padding:0 16px;font-size:.92rem;background:var(--ocean-deep);color:#fff;}
     .va-banner .va-x{color:#fff;width:40px;height:40px;font-size:1.5rem;}
     /* Email me a link to finish on another device (2026-10-03) */
     .va-foot-sub{flex-wrap:wrap;}

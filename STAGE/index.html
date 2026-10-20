@@ -7,10 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LDAH">
-  <meta name="theme-color" content="#004E7C">
+  <meta name="theme-color" content="#0891B2">
   <meta name="description" content="Hawaiʻi & Pacific Island Parent Training & Information Center - Empowering families through information, training, and advocacy">
   <title>LDAH - Home</title>
-  
+
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-32PRRS0W85"></script>
   <script>
@@ -39,340 +39,259 @@
 
   <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
-  
+
   <!-- iOS Icons -->
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
-  
+
   <!-- Standard favicon -->
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-  
+
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="site-theme.css?v=1">
+  <script src="js/app-shell.js?v=1" defer></script>
   <!-- nh-survey-modal.css load removed 2026-05-31 per Rosie's request to stop survey -->
   <link rel="stylesheet" href="ll-popup.css?v=member"><!-- Learning Labs June first-launch popup -->
   <style>
-    /* Page-specific overrides only */
+    /* Home page only (website homepage in phone form, 2026-10-20) */
+    .hm-hero { background: linear-gradient(180deg, var(--sand-light), var(--bg-warm)); padding: 22px 16px 18px; }
+    .hm-hero h1 { font-size: 1.75rem; line-height: 1.2; margin: 10px 0 8px; font-weight: 600; letter-spacing: -.3px; }
+    .hm-hero h1 em, .hm-hero h1 .highlight { font-style: normal; color: var(--ocean-deep); }
+    .hm-hero p { color: var(--text-soft); font-size: .97rem; margin: 0 0 6px; line-height: 1.55; }
+    .hm-hero .st-row2 { margin-top: 6px; }
+    .hm-hero .st-row2 .st-btn { display: flex; align-items: center; justify-content: center; min-height: 46px; }
+    .hm-photos { display: grid; grid-template-columns: 1.2fr 1fr; grid-template-rows: 96px 96px; gap: 8px; margin-top: 16px; }
+    .hm-photos img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; display: block; box-shadow: 0 4px 20px rgba(0,0,0,.08); background: var(--sand); }
+    .hm-photos img:first-child { grid-row: 1 / 3; }
+
+    .hm-packet { display: flex; align-items: center; gap: 12px; margin-top: 12px; background: #fff; border-radius: 16px; padding: 12px 14px; min-height: 56px; box-shadow: 0 4px 20px rgba(0,0,0,.06); border: 2px solid var(--ocean-light); text-decoration: none; color: var(--text-dark) !important; transition: transform .2s, box-shadow .2s; }
+    .hm-packet:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(8,145,178,.15); }
+    .hm-packet .st-ic { width: 44px; height: 44px; border-radius: 11px; background: var(--sand); flex: none; display: flex; align-items: center; justify-content: center; }
+    .hm-packet .st-ic svg { width: 22px; height: 22px; stroke: var(--ocean-deep); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .hm-packet h3 { margin: 0; font-size: 1rem; font-weight: 600; }
+    .hm-packet p { margin: 0; font-size: .85rem; color: var(--text-soft); }
+    .hm-packet .st-chev { margin-left: auto; color: var(--ocean-deep); font-weight: 700; font-size: 1.2rem; }
+
+    .hm-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .hm-stat { background: #fff; border-radius: 14px; padding: 12px 10px; box-shadow: 0 4px 20px rgba(0,0,0,.05); text-align: center; }
+    .hm-stat b { display: block; font: 700 1.45rem var(--st-font-head); color: var(--ocean-deep); line-height: 1.25; }
+    .hm-stat span { font-size: .82rem; color: var(--text-soft); line-height: 1.3; display: block; }
+
+    .hm-sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .hm-sec-head a { color: var(--ocean-deep); font: 600 .9rem var(--st-font-head); text-decoration: none; white-space: nowrap; padding: 10px 0; }
+    .hm-ev { display: block; background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.06); overflow: hidden; margin-bottom: 12px; text-decoration: none; color: var(--text-dark) !important; }
+    .hm-ev img { width: 100%; height: auto; max-height: 420px; object-fit: cover; display: block; background: var(--sand); }
+    .hm-ev iframe { width: 100%; height: 220px; display: block; border: 0; pointer-events: none; }
+    .hm-ev .hm-ev-noimg { width: 100%; height: 150px; background: linear-gradient(135deg, var(--ocean-deep), var(--ocean-mid)); }
+    .hm-ev .hm-ev-in { padding: 11px 14px 14px; }
+    .hm-ev .st-badge { margin-left: 6px; vertical-align: 1px; }
+    .hm-ev h3 { margin: 8px 0 2px; font-size: 1.05rem; font-weight: 600; line-height: 1.3; }
+    .hm-ev .hm-loc { font-size: .86rem; color: var(--text-soft); display: flex; align-items: center; gap: 5px; }
+    .hm-ev .hm-loc svg { width: 14px; height: 14px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; }
+    @media (min-width: 640px) {
+      .hm-ev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .hm-ev-grid .hm-ev { margin-bottom: 0; }
+      .hm-photos { grid-template-rows: 140px 140px; }
+      .hm-stats { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* Mission / Vision / Core Values carousel (kept, restyled) */
+    .hm-mvv { margin-bottom: 0; padding: 18px 16px 12px; }
+    .hm-mvv .carousel-container { display: grid; height: auto; overflow: hidden; position: relative; }
+    .hm-mvv .carousel-slide { grid-area: 1 / 1; position: relative; top: auto; left: auto; right: auto; }
+    .hm-mvv h2 { font: 600 1.15rem var(--st-font-head); color: var(--text-dark); margin: 0 0 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .hm-mvv h2 svg { width: 20px; height: 20px; stroke: var(--ocean-deep); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+    .hm-mvv p { font-size: .95rem; line-height: 1.55; text-align: center; color: var(--text-soft); }
+    .hm-mvv ul.st-check { font-size: .93rem; color: var(--text-soft); max-width: 420px; margin: 0 auto; }
+    .hm-mvv .carousel-dots { display: flex; justify-content: center; gap: 2px; margin-top: 8px; }
+    .hm-mvv .carousel-dot { width: 44px; height: 32px; border: 0; background: none; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 0; transform: none; }
+    .hm-mvv .carousel-dot::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: rgba(8,145,178,.28); transition: background .3s, transform .3s; }
+    .hm-mvv .carousel-dot.active { background: none; transform: none; }
+    .hm-mvv .carousel-dot.active::before { background: var(--ocean-deep); transform: scale(1.25); }
+    .hm-mvv .carousel-dot:focus-visible { outline: 3px solid var(--ocean-light); outline-offset: -4px; border-radius: 8px; }
+
+    .st-coral .st-btn { max-width: 420px; margin-left: auto; margin-right: auto; }
+    .st-foot p { margin: 0; }
+    .hm-foot-links { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    .hm-foot-links a { display: block; padding: 6px 0; }
+    .st-foot .hm-ver { color: rgba(255,255,255,.35); font-size: .72rem; }
+    .st-foot .hm-dp { color: var(--plumeria); }
+
+    /* PWA install banner (restyled) */
+    #install-banner { bottom: calc(var(--st-tabs-h) + env(safe-area-inset-bottom, 0px) + 12px) !important; }
+    @keyframes bannerSlideUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
   </style>
 </head>
-<body>
+<body class="st-app" data-tab="home">
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  <div class="min-h-screen p-2 main-content">
-    <div class="max-w-2xl mx-auto">
-      <!-- Logo Section with Hamburger Menu -->
-      <div class="text-center mb-2 mt-2 relative">
-        <!-- Hamburger Menu Icon -->
-        <button
-          onclick="toggleMenu()"
-          id="menuBtn"
-          class="menu-btn"
-          aria-controls="dropdownMenu"
-          aria-expanded="false"
-          aria-label="Open navigation menu"
-        >
-          <svg id="menuIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-          <svg id="closeIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
 
-        <!-- Dropdown Menu -->
-        <div id="dropdownMenu" class="dropdown-menu" role="menu" aria-label="Site navigation">
-          <a href="index.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#004E7C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-            Home
-          </a>
-          <a href="events.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            Events
-          </a>
-          <a href="faq.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            Quick Help
-          </a>
-          <a href="volunteer.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            Volunteer
-          </a>
-          <a href="resources.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-            Resources
-          </a>
-          <a href="howtohelp.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            How to Help
-          </a>
-          <a href="contact.html" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-            Contact Us
-          </a>
-          <a href="https://www.ldahawaii.org/STAGE/Members/?from=app" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(0, 78, 124, 0.1);" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-            Member Login
-          </a>
-          <a href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; color: #004E7C; text-decoration: none; font-weight: bold; border-radius: 0 0 8px 8px;" onmouseover="this.style.backgroundColor='rgba(0, 78, 124, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF9B21" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            Donate
-          </a>
-        </div>
+  <main id="main-content" class="st-wrap">
 
-        <div class="mb-2 flex justify-center">
-          <a href="index.html" style="padding: 16px; display: inline-block; cursor: pointer;" aria-label="LDAH Home">
-            <img 
-              src="logo_transparent.png" 
-              alt="LDAH - Leadership in Disabilities and Achievement of Hawaiʻi"
-              class="app-logo"
-            />
-          </a>
-        </div>
-        
-        <h3 class="text-lg font-bold text-[#004E7C] mb-1">
-          Hawaiʻi &amp; Pacific Island Parent Training &amp; Information Center
-        </h3>
-        <p class="text-gray-600 text-xs mb-2">
-          Empowering families through information, training, and advocacy
-        </p>
+    <!-- Hero (text, photos: pageContent/home, like the website) -->
+    <section class="hm-hero" aria-labelledby="home-heroTitle">
+      <span class="st-tag">Hawaiʻi &amp; Pacific Islands Parent Center</span>
+      <h1 id="home-heroTitle">Empowering Families, <em>Transforming Lives</em></h1>
+      <p id="home-heroSubtitle">Supporting children and youth with disabilities across Hawaiʻi and the Pacific Islands through advocacy, education, and community partnerships.</p>
+      <div class="st-row2">
+        <a href="whatwedo.html" class="st-btn st-btn-primary">Get Support</a>
+        <a href="whoweare.html" class="st-btn st-btn-secondary">Learn About Us</a>
       </div>
 
-      <main id="main-content">
+      <!-- Aloha Packet (2026-10-14): full-width welcome button; the download attribute saves the PDF instead of opening it -->
+      <a class="hm-packet" href="../LDAH-Aloha-Packet.pdf" download="LDAH-Aloha-Packet.pdf" type="application/pdf" onclick="try{window.ldahAnalytics&&window.ldahAnalytics.trackDocumentView('aloha_packet_pdf');}catch(e){}" aria-label="Welcome to LDAH. Download our Aloha Packet (PDF)">
+        <span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
+        <div>
+          <h3>Welcome to LDAH</h3>
+          <p>Download our Aloha Packet</p>
+        </div>
+        <span class="st-chev" aria-hidden="true">&rsaquo;</span>
+      </a>
 
-      <!-- Menu Buttons -->
-      <div class="grid grid-cols-2 gap-2 mb-3" role="navigation" aria-label="Main sections">
-        <!-- Aloha Packet (2026-10-14): full-width welcome button; the download attribute saves the PDF instead of opening it -->
-        <a href="../LDAH-Aloha-Packet.pdf" download="LDAH-Aloha-Packet.pdf" type="application/pdf" onclick="try{window.ldahAnalytics&&window.ldahAnalytics.trackDocumentView('aloha_packet_pdf');}catch(e){}" style="text-decoration: none; grid-column: 1 / -1;" aria-label="Welcome to LDAH. Download our Aloha Packet (PDF)">
-          <div style="
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 12px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 2px solid #004E7C;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            <div style="text-align: left;">
-              <h3 class="font-bold text-sm text-[#004E7C]" style="margin: 0;">Welcome to LDAH</h3>
-              <p style="margin: 0; font-size: 11px; color: #4B5563;">Download our Aloha Packet</p>
-            </div>
-          </div>
-        </a>
-        <!-- Events Button -->
-        <a href="events.html?src=home" style="text-decoration: none;" aria-label="Events">
-          <div style="
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 12px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 2px solid #004E7C;
-            text-align: center;
-            backdrop-filter: blur(10px);
-          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-            <div class="mb-1" style="display:flex;justify-content:center;">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            </div>
-            <h3 class="font-bold text-xs text-[#004E7C]">Events</h3>
-          </div>
-        </a>
-
-        <!-- Volunteer Opportunities Button -->
-        <a href="volunteer.html" style="text-decoration: none;" aria-label="Volunteer opportunities">
-          <div style="
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 12px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 2px solid #004E7C;
-            text-align: center;
-            backdrop-filter: blur(10px);
-          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-            <div class="mb-1" style="display:flex;justify-content:center;">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            </div>
-            <h3 class="font-bold text-xs text-[#004E7C]">Volunteer</h3>
-          </div>
-        </a>
-
-        <!-- Quick Help (FAQ) Button -->
-        <a href="faq.html" style="text-decoration: none;" aria-label="Quick Help and FAQ">
-          <div style="
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 12px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 2px solid #004E7C;
-            text-align: center;
-            backdrop-filter: blur(10px);
-          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-            <div class="mb-1" style="display:flex;justify-content:center;">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            </div>
-            <h3 class="font-bold text-xs text-[#004E7C]">Quick Help</h3>
-          </div>
-        </a>
-
-        <!-- Resources Button -->
-        <a href="resources.html" style="text-decoration: none;" aria-label="Resources">
-          <div style="
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 12px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 2px solid #004E7C;
-            text-align: center;
-            backdrop-filter: blur(10px);
-          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-            <div class="mb-1" style="display:flex;justify-content:center;">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-            </div>
-            <h3 class="font-bold text-xs text-[#004E7C]">Resources</h3>
-          </div>
-        </a>
-
-        <!-- How to Help Button (position 5) -->
-        <a href="howtohelp.html" style="text-decoration: none;" aria-label="How to Help and membership">
-          <div style="
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 12px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 2px solid #004E7C;
-            text-align: center;
-            backdrop-filter: blur(10px);
-          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-            <div class="mb-1" style="display:flex;justify-content:center;">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            </div>
-            <h3 class="font-bold text-xs text-[#004E7C]">How to Help</h3>
-          </div>
-        </a>
-
-        <!-- Contact Us Button (position 6) -->
-        <a href="contact.html" style="text-decoration: none;" aria-label="Contact Us">
-          <div style="
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 12px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 2px solid #004E7C;
-            text-align: center;
-            backdrop-filter: blur(10px);
-          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-            <div class="mb-1" style="display:flex;justify-content:center;">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-            </div>
-            <h3 class="font-bold text-xs text-[#004E7C]">Contact Us</h3>
-          </div>
-        </a>
+      <div class="hm-photos">
+        <img id="home-heroPhoto1" src="https://www.ldahawaii.org/photo2.jpg" alt="Young person enjoying water activities">
+        <img id="home-heroPhoto2" src="https://www.ldahawaii.org/photo1.jpg" alt="Community celebration with balloons">
+        <img id="home-heroPhoto3" src="https://www.ldahawaii.org/photo3.jpg" alt="Live Aloha - Bully Free Zone advocacy">
       </div>
+    </section>
 
-      <!-- Animated Mission / Vision / Values Card -->
-      <div style="
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 15px;
-        margin-bottom: 12px;
-        border: 2px solid #004E7C;
-        backdrop-filter: blur(10px);
-      ">
-        <div class="carousel-container">
+    <!-- Stats -->
+    <section class="st-sec" aria-label="LDAH by the numbers">
+      <div class="hm-stats">
+        <div class="hm-stat"><b id="home-stat1Number">25,461+</b><span id="home-stat1Label">Family Connections</span></div>
+        <div class="hm-stat"><b id="home-stat2Number">2,384+</b><span id="home-stat2Label">Early identification &amp; Case Management</span></div>
+        <div class="hm-stat"><b id="home-stat3Number">58+</b><span id="home-stat3Label">Years of Service</span></div>
+        <div class="hm-stat"><b id="home-stat4Number">6</b><span id="home-stat4Label">Pacific Regions</span></div>
+      </div>
+    </section>
+
+    <!-- Services -->
+    <section class="st-sec st-alt" id="services" aria-labelledby="home-servicesTitle">
+      <span class="st-tag">How We Help</span>
+      <h2 class="st-h" id="home-servicesTitle">Comprehensive Support Services</h2>
+      <p class="st-sub" id="home-servicesSubtitle">A wide range of services designed to empower families and support children with disabilities.</p>
+
+      <a class="st-list" href="whatwedo.html#pti">
+        <span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2"/></svg></span>
+        <div><h3 id="home-service1Title">Parent Training &amp; Information</h3><p>Workshops and one-on-one help</p></div>
+        <span class="st-chev" aria-hidden="true">&rsaquo;</span>
+      </a>
+      <a class="st-list" href="readiness.html">
+        <span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12"/></svg></span>
+        <div><h3 id="home-service2Title">School Readiness Project</h3><p>Vision, hearing and developmental screenings</p></div>
+        <span class="st-chev" aria-hidden="true">&rsaquo;</span>
+      </a>
+      <a class="st-list" href="specialed.html">
+        <span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+        <div><h3 id="home-service3Title">Special Education Advocacy</h3><p>IEPs, 504s and your rights</p></div>
+        <span class="st-chev" aria-hidden="true">&rsaquo;</span>
+      </a>
+      <a class="st-list" href="military.html">
+        <span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg></span>
+        <div><h3 id="home-service4Title">Military Family Support</h3><p>Relocating with an IEP</p></div>
+        <span class="st-chev" aria-hidden="true">&rsaquo;</span>
+      </a>
+      <a class="st-list" href="pacific.html">
+        <span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>
+        <div><h3 id="home-service5Title">Pacific Islands Outreach</h3><p>Six island partners</p></div>
+        <span class="st-chev" aria-hidden="true">&rsaquo;</span>
+      </a>
+      <a class="st-list" href="community.html">
+        <span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg></span>
+        <div><h3 id="home-service6Title">Stand Up to Bullying</h3><p>Take the pledge, get the kit</p></div>
+        <span class="st-chev" aria-hidden="true">&rsaquo;</span>
+      </a>
+    </section>
+
+    <!-- Upcoming Events (hidden until cards load; stays hidden on error or when there are none) -->
+    <section class="st-sec" id="homeEventsSection" style="display:none;" aria-labelledby="home-eventsTitle">
+      <div class="hm-sec-head">
+        <h2 class="st-h" id="home-eventsTitle">Upcoming Events</h2>
+        <a href="events.html?src=home">View All &rarr;</a>
+      </div>
+      <div id="currentEventsGrid" class="hm-ev-grid"></div>
+    </section>
+
+    <!-- Mission / Vision / Core Values (auto-rotating carousel, kept) -->
+    <section class="st-sec st-alt" aria-label="Our mission, vision and core values">
+      <div class="st-card hm-mvv">
+        <div class="carousel-container" aria-live="polite">
           <!-- Slide 1: Our Mission -->
           <div class="carousel-slide active" data-slide="0">
-            <h2 class="text-base font-bold text-[#004E7C] mb-2 text-center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>Our Mission</h2>
-            <p class="text-gray-700" style="font-size: 11px; line-height: 1.4; text-align: center;">
-              To enhance educational, work and life opportunities for children and youth with or at risk of disabilities by empowering them and their families through screening, identification, information, training, and mentoring, and by public outreach and advocacy.
-            </p>
+            <h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>Our Mission</h2>
+            <p>To enhance educational, work and life opportunities for children and youth with or at risk of disabilities by empowering them and their families through screening, identification, information, training, and mentoring, and by public outreach and advocacy.</p>
           </div>
 
           <!-- Slide 2: Our Vision -->
           <div class="carousel-slide" data-slide="1">
-            <h2 class="text-base font-bold text-[#004E7C] mb-2 text-center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>Our Vision</h2>
-            <p class="text-gray-700" style="font-size: 11px; line-height: 1.4; text-align: center;">
-              Individuals have choice and access to educational, work and life opportunities to be successful regardless of their disabilities.
-            </p>
+            <h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>Our Vision</h2>
+            <p>Individuals have choice and access to educational, work and life opportunities to be successful regardless of their disabilities.</p>
           </div>
 
           <!-- Slide 3: Core Values -->
           <div class="carousel-slide" data-slide="2">
-            <h2 class="text-base font-bold text-[#004E7C] mb-2 text-center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>Core Values</h2>
-            <div style="font-size: 11px; line-height: 1.5;">
-              <div class="value-item">
-                <span class="value-check">✓</span>
-                <span class="text-gray-700">Advocating for the Rights of Children with Disabilities</span>
-              </div>
-              <div class="value-item">
-                <span class="value-check">✓</span>
-                <span class="text-gray-700">Putting Families First</span>
-              </div>
-              <div class="value-item">
-                <span class="value-check">✓</span>
-                <span class="text-gray-700">Creating Partnerships</span>
-              </div>
-              <div class="value-item">
-                <span class="value-check">✓</span>
-                <span class="text-gray-700">Improving Communication</span>
-              </div>
-              <div class="value-item">
-                <span class="value-check">✓</span>
-                <span class="text-gray-700">Implementing Best-Practices & Innovation</span>
-              </div>
-              <div class="value-item">
-                <span class="value-check">✓</span>
-                <span class="text-gray-700">Ensuring Accountability</span>
-              </div>
-            </div>
+            <h2><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>Core Values</h2>
+            <ul class="st-check">
+              <li>Advocating for the Rights of Children with Disabilities</li>
+              <li>Putting Families First</li>
+              <li>Creating Partnerships</li>
+              <li>Improving Communication</li>
+              <li>Implementing Best-Practices &amp; Innovation</li>
+              <li>Ensuring Accountability</li>
+            </ul>
           </div>
         </div>
 
         <!-- Carousel Dots -->
         <div class="carousel-dots">
-          <div class="carousel-dot active" data-dot="0" onclick="goToSlide(0)"></div>
-          <div class="carousel-dot" data-dot="1" onclick="goToSlide(1)"></div>
-          <div class="carousel-dot" data-dot="2" onclick="goToSlide(2)"></div>
+          <button type="button" class="carousel-dot active" data-dot="0" onclick="goToSlide(0)" aria-label="Our Mission"></button>
+          <button type="button" class="carousel-dot" data-dot="1" onclick="goToSlide(1)" aria-label="Our Vision"></button>
+          <button type="button" class="carousel-dot" data-dot="2" onclick="goToSlide(2)" aria-label="Core Values"></button>
         </div>
       </div>
+    </section>
 
-      <!-- Donate Banner -->
-      <a href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" style="text-decoration: none; display: block; margin-bottom: 12px;" aria-label="Support Our Mission - Donate">
-        <div style="
-          background: linear-gradient(135deg, #FF9B21 0%, #f59e0b 100%);
-          border-radius: 20px;
-          padding: 14px 20px;
-          cursor: pointer;
-          transition: transform 0.2s, box-shadow 0.2s;
-          text-align: center;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-          <span style="font-weight: bold; font-size: 14px; color: white;">Support Our Mission - Donate</span>
-        </div>
-      </a>
+    <!-- Coral call to action -->
+    <section class="st-coral" aria-labelledby="home-ctaTitle">
+      <h2 id="home-ctaTitle">Ready to Make a Difference?</h2>
+      <p id="home-ctaSubtitle">Join our community of volunteers, supporters, and advocates working to create opportunities for children with disabilities.</p>
+      <a href="volunteer.html" class="st-btn st-btn-white">Become a Volunteer</a>
+      <a href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" class="st-btn st-btn-outline-white">Support Our Mission</a>
+    </section>
 
-      <!-- Our Offices card (phones + office locations) removed 2026-10-14: families use Contact Us -->
-      <!-- Native Hawaiian Survey footer link removed 2026-05-31 per Rosie's request to stop survey -->
-      <p style="text-align: center; margin: 4px 0 4px 0;"><span style="color: rgba(0,78,124,0.35); font-size: 0.7rem;">v48.7.2-STAGE</span></p>
-      </main>
-    </div>
-  </div>
+    <!-- Footer -->
+    <footer class="st-foot">
+      <h4 style="margin-top:0">About LDAH</h4>
+      <p>Hawaiʻi &amp; Pacific Island Parent Training &amp; Information Center, empowering families and children with disabilities.</p>
+
+      <h4>Honolulu Office</h4>
+      <p>Harry and Jeanette Weinberg Kukui Center<br>245 North Kukui Street, Suite 205<br>Honolulu, HI 96817<br><a href="tel:+18085369684">(808) 536-9684</a></p>
+
+      <h4>Maʻili Office</h4>
+      <p>School Readiness Project<br>Community Learning Center, Kauhale Building<br>87-790 Kulauku St., Suite A116<br>Waiʻanae, HI 96792<br><a href="tel:+18086965361">(808) 696-5361</a></p>
+
+      <h4>Quick Links</h4>
+      <div class="hm-foot-links">
+        <a href="whoweare.html">Who We Are</a>
+        <a href="whatwedo.html">What We Do</a>
+        <a href="events.html">Events</a>
+        <a href="howtohelp.html">How to Help</a>
+        <a href="resources.html">Resources</a>
+        <a href="contact.html">Contact Us</a>
+      </div>
+
+      <div class="st-foot-bar">
+        <p>&copy; <span class="dynamic-year"></span> Leadership in Disabilities and Achievement of Hawaiʻi. All rights reserved.</p>
+        <p>Made with Aloha by <span class="hm-dp">DP Consulting</span> <span class="hm-ver">v49.0.0-STAGE</span></p>
+      </div>
+    </footer>
+    <!-- Our Offices card (phones + office locations) removed 2026-10-14: families use Contact Us -->
+    <!-- Native Hawaiian Survey footer link removed 2026-05-31 per Rosie's request to stop survey -->
+  </main>
 
   <!-- Learning Labs June first-launch popup (homepage only) -->
   <script src="ll-popup.js?v=rot8" defer></script>
@@ -390,40 +309,6 @@
           });
       });
     }
-
-    // Hamburger Menu Toggle
-    function toggleMenu() {
-      const menu = document.getElementById('dropdownMenu');
-      const menuIcon = document.getElementById('menuIcon');
-      const closeIcon = document.getElementById('closeIcon');
-      const btn = document.getElementById('menuBtn');
-      
-      if (menu.style.display === 'none' || menu.style.display === '') {
-        menu.style.display = 'block';
-        menuIcon.style.display = 'none';
-        closeIcon.style.display = 'block';
-        btn.setAttribute('aria-expanded', 'true');
-        btn.setAttribute('aria-label', 'Close navigation menu');
-      } else {
-        menu.style.display = 'none';
-        menuIcon.style.display = 'block';
-        closeIcon.style.display = 'none';
-        btn.setAttribute('aria-expanded', 'false');
-        btn.setAttribute('aria-label', 'Open navigation menu');
-      }
-    }
-
-    // Close menu when clicking outside
-    document.addEventListener('click', function(event) {
-      const menu = document.getElementById('dropdownMenu');
-      const button = event.target.closest('button');
-      
-      if (!button && menu.style.display === 'block') {
-        menu.style.display = 'none';
-        document.getElementById('menuIcon').style.display = 'block';
-        document.getElementById('closeIcon').style.display = 'none';
-      }
-    });
 
     // Carousel functionality
     let currentSlide = 0;
@@ -448,7 +333,7 @@
       });
 
       currentSlide = index;
-      
+
       // Reset the auto-advance timer when manually changing slides
       resetCarouselTimer();
     }
@@ -518,112 +403,268 @@
     }
   </script>
 
+  <!-- Home page content: CMS text/photos (pageContent/home) + Upcoming Events.
+       Same sources and rules as the website's index.html (W2). Read-only. -->
+  <script>
+    (function () {
+      'use strict';
+      if (typeof firebase === 'undefined' || !firebase.firestore) return;
+      const db = firebase.firestore();
+
+      function stripEmoji(text) {
+        if (!text) return text;
+        return text.replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FEFF}]|[\u{1F1E0}-\u{1F1FF}]{2}/gu, '').replace(/  +/g, ' ').trim();
+      }
+      // Hawaiian spelling as the site uses it (ʻokina, not an apostrophe).
+      function okina(s) { return String(s).replace(/Hawai['’]i/g, 'Hawaiʻi').replace(/O['’]ahu/g, 'Oʻahu').replace(/Kaua['’]i/g, 'Kauaʻi').replace(/Ma['’]ili/g, 'Maʻili').replace(/Wai['’]anae/g, 'Waiʻanae'); }
+      // CMS rich text to plain text (some titles carry nested font/size spans from the editor).
+      function plain(html) {
+        const d = document.createElement('div');
+        d.innerHTML = String(html);
+        return (d.textContent || '').replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
+      }
+      function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      }
+
+      // Keys the app shows as plain text (no CMS inline styles in the phone layout).
+      const PLAIN_KEYS = /^(heroTitle|servicesTitle|servicesSubtitle|service\dTitle|eventsTitle|ctaTitle)$/;
+
+      async function loadPageContent() {
+        try {
+          const doc = await db.collection('pageContent').doc('home').get();
+          if (!doc.exists) return;
+          const content = doc.data() || {};
+          Object.keys(content).forEach(key => {
+            const el = document.getElementById('home-' + key);
+            const val = content[key];
+            if (!el || !val || typeof val !== 'string') return;
+            if (key.includes('Photo') && el.tagName === 'IMG') {
+              if (/^https:\/\//i.test(val)) el.src = val;
+              return;
+            }
+            if (key === 'heroTitle') {
+              // "Empowering Families, Transforming Lives": second half in teal, as on the website.
+              const t = okina(stripEmoji(plain(val)));
+              if (!t) return;
+              const i = t.indexOf(',');
+              el.innerHTML = i > 0 ? esc(t.slice(0, i + 1)) + ' <em>' + esc(t.slice(i + 1).trim()) + '</em>' : esc(t);
+              return;
+            }
+            if (PLAIN_KEYS.test(key)) {
+              const t = okina(stripEmoji(plain(val)));
+              if (t) el.textContent = t;
+              return;
+            }
+            el.innerHTML = okina(stripEmoji(val));
+          });
+        } catch (err) { console.error('Error loading page content:', err); }
+      }
+
+      // ── Upcoming Events ──────────────────────────────────────────────────
+      // Same public-listing gate as the website and STAGE/events.html.
+      function isPubliclyListable(ev) {
+        if (!ev) return false;
+        if (ev.archived === true) return false;
+        if (ev.isOneOff === true) return false;
+        const pi = ev.partnerIsland;
+        if (typeof pi === 'string' && pi.trim() !== '') return false;
+        if (Array.isArray(pi) && pi.length > 0) return false;
+        return true;
+      }
+
+      // Recurring sessions close 24 h before they start (Hawaiʻi time), as on the website.
+      const RECURRING_SIGNUP_CUTOFF_HOURS_HOME = 24;
+      function _sessionClosedHome(date, sch) {
+        if (!date || !sch || !sch.startTime) return false;
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+        const start = new Date(`${dateKey}T${sch.startTime}:00-10:00`);
+        if (isNaN(start.getTime())) return false;
+        return (start.getTime() - Date.now()) < RECURRING_SIGNUP_CUTOFF_HOURS_HOME*60*60*1000;
+      }
+      function _nextOccurrence(schedules) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const end = new Date(today); end.setDate(end.getDate()+30);
+        let earliest = null;
+        (schedules||[]).forEach(s => {
+          if (s.frequency === 'weekly') {
+            const d = new Date(today); d.setDate(d.getDate()+(s.dayOfWeek-d.getDay()+7)%7);
+            while (d <= end && _sessionClosedHome(d,s)) d.setDate(d.getDate()+7);
+            if (d <= end && (!earliest || d < earliest)) earliest = d;
+          } else {
+            for (let mo = 0; mo <= 1; mo++) {
+              const ref = new Date(today.getFullYear(), today.getMonth()+mo, 1);
+              const nth = new Date(ref.getFullYear(), ref.getMonth(), 1+(s.dayOfWeek-ref.getDay()+7)%7+(s.weekOfMonth-1)*7);
+              if (nth.getMonth() === ref.getMonth() && nth >= today && nth <= end && !_sessionClosedHome(nth,s) && (!earliest || nth < earliest)) earliest = nth;
+            }
+          }
+        });
+        return earliest;
+      }
+
+      function eventCard(event) {
+        const isRec = !!event.isRecurring;
+        const chip = isRec
+          ? 'Next: ' + event._nextDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+          : (event.eventDate ? new Date(event.eventDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '');
+        const url = String(event.imageUrl || '');
+        const safeUrl = /^https:\/\//i.test(url) ? url : '';
+        const isPDF = safeUrl.toLowerCase().includes('.pdf');
+        const title = okina(event.title || 'Event');
+        const media = safeUrl
+          ? (isPDF ? '<iframe src="' + esc(safeUrl) + '" title="' + esc(title) + '" tabindex="-1" loading="lazy"></iframe>'
+                   : '<img src="' + esc(safeUrl) + '" alt="' + esc(title) + '" loading="lazy">')
+          : '<div class="hm-ev-noimg"></div>';
+        const badge = isRec ? '<span class="st-badge st-badge-on">Ongoing</span>' : '<span class="st-badge st-badge-up">Upcoming</span>';
+        const loc = event.location
+          ? '<div class="hm-loc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + esc(okina(event.location)) + '</div>'
+          : '';
+        return '<a class="hm-ev" href="events.html?src=home">' + media
+          + '<div class="hm-ev-in">' + (chip ? '<span class="st-chip">' + esc(chip) + '</span>' : '') + badge
+          + '<h3>' + esc(title) + '</h3>' + loc + '</div></a>';
+      }
+
+      async function loadCurrentEvents() {
+        const section = document.getElementById('homeEventsSection');
+        const container = document.getElementById('currentEventsGrid');
+        if (!section || !container) return;
+        try {
+          const now = new Date();
+          const [eventsSnap, recurringSnap] = await Promise.all([
+            db.collection('events').get(),
+            db.collection('recurringEvents').where('active', '==', true).get()
+          ]);
+
+          // Regular upcoming events: no info-only flyers, no Screening / Outreach Booth,
+          // and no homeOnly flyers (e.g. the app promo: pointless inside the app).
+          const currentEvents = eventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(event => {
+            if (!isPubliclyListable(event)) return false;
+            if (event.infoOnly === true) return false;
+            if (event.specialEvent === true) return false;
+            if (event.homeOnly === true) return false;
+            if (!event.startDate || !event.moveToPastDate) return false;
+            const startDate = new Date(event.startDate + 'T00:00:00');
+            const moveToPastDate = new Date(event.moveToPastDate + 'T00:00:00');
+            return now >= startDate && now < moveToPastDate;
+          }).sort((a, b) => new Date(a.eventDate + 'T00:00:00') - new Date(b.eventDate + 'T00:00:00')).slice(0, 2);
+
+          // Recurring programs with an upcoming session (flyer-only programs are not cards).
+          const recurringCards = [];
+          recurringSnap.docs.forEach(doc => {
+            const data = { id: doc.id, ...doc.data() };
+            if (!isPubliclyListable(data)) return;
+            if (data.flyerOnly) return;
+            if (data.homeOnly === true) return;
+            const next = _nextOccurrence(data.schedules);
+            if (next) recurringCards.push({ ...data, _nextDate: next, isRecurring: true });
+          });
+          recurringCards.sort((a, b) => a._nextDate - b._nextDate);
+
+          // Home Rotation (LDAH-Int CMS > Home Rotation), same rules as the website.
+          const _rotPool = [];
+          const _hrToday = new Date().toISOString().slice(0, 10);
+          const _hrKey = l => String(l || '').replace(/[^A-Za-z0-9]+/g, '_');
+          const _hrOpen = (c, lbl) => {
+            if (lbl) {
+              const f = (c.homeRotationSessionFrom || {})[_hrKey(lbl)] || '';
+              return !f || String(f) <= _hrToday;
+            }
+            if (c.homeRotationFrom && String(c.homeRotationFrom) > _hrToday) return false;
+            if (c.homeRotationTo && String(c.homeRotationTo) < _hrToday) return false;
+            return true;
+          };
+          [...currentEvents, ...recurringCards].forEach(c => {
+            if (!c.imageUrl) return;
+            const picked = Array.isArray(c.homeRotationDates) ? c.homeRotationDates : [];
+            if (picked.length) {
+              picked.forEach(lbl => {
+                if (!_hrOpen(c, lbl)) return;
+                _rotPool.push({ ...c, id: c.id + '::' + lbl, _rotSession: lbl, _pinned: String(c.homePinned || '') === lbl });
+              });
+            } else if (c.homeRotation === true) {
+              if (!_hrOpen(c, '')) return;
+              _rotPool.push({ ...c, _pinned: c.homePinned === true });
+            }
+          });
+          const _pinnedCard = _rotPool.find(c => c._pinned);
+          let allCards;
+          if (_rotPool.length) {
+            let seen = [];
+            try { seen = JSON.parse(localStorage.getItem('ldah_home_seen') || '[]'); } catch (_) { seen = []; }
+            let unseen = _rotPool.filter(c => seen.indexOf(c.id) === -1 && !c._pinned);
+            if (!unseen.length) { seen = []; unseen = _rotPool.filter(c => !c._pinned); }
+            allCards = _pinnedCard ? [_pinnedCard, ...unseen].slice(0, 2) : unseen.slice(0, 2);
+            try { localStorage.setItem('ldah_home_seen', JSON.stringify(seen.concat(allCards.map(c => c.id)).slice(-60))); } catch (_) {}
+          } else {
+            allCards = [...currentEvents, ...recurringCards.slice(0, 1)].filter(c => c.imageUrl).slice(0, 2);
+          }
+
+          if (!allCards.length) return; // nothing to show: section stays hidden
+          container.innerHTML = allCards.map(eventCard).join('');
+          section.style.display = '';
+        } catch (error) {
+          console.warn('Home events unavailable:', error);
+          section.style.display = 'none';
+        }
+      }
+
+      loadPageContent();
+      loadCurrentEvents();
+    })();
+  </script>
+
   <!-- PWA Install Banner (hidden by default, shown if not installed) -->
   <div id="install-banner" style="
     display: none;
     position: fixed;
-    bottom: 65px;
+    bottom: 74px;
     left: 50%;
     transform: translateX(-50%);
     width: calc(100% - 24px);
     max-width: 540px;
-    background: linear-gradient(135deg, #004E7C 0%, #006fa8 100%);
+    background: linear-gradient(135deg, #0891B2 0%, #06B6D4 100%);
     border-radius: 16px;
     padding: 12px 16px;
     z-index: 999;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    box-shadow: 0 8px 24px rgba(8,145,178,0.35);
     align-items: center;
     gap: 12px;
     animation: bannerSlideUp 0.4s cubic-bezier(0.22,1,0.36,1) forwards;
   ">
     <img src="icon-192.png" alt="LDAH" style="width:38px;height:38px;border-radius:10px;flex-shrink:0;">
     <div style="flex:1;min-width:0;">
-      <p style="color:white;font-size:13px;font-weight:700;margin:0 0 1px;">Add LDAH to Home Screen</p>
-      <p style="color:rgba(255,255,255,0.75);font-size:11px;margin:0;">Quick access, works offline</p>
+      <p style="color:white;font-size:14px;font-weight:600;margin:0 0 1px;font-family:var(--st-font-head);">Add LDAH to Home Screen</p>
+      <p style="color:rgba(255,255,255,0.85);font-size:12px;margin:0;">Quick access, works offline</p>
     </div>
     <a id="install-btn" href="install.html" style="
-      background: #FF9B21;
+      background: #F97316;
       color: white;
       text-decoration: none;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--st-font-head);
+      padding: 10px 16px;
       border-radius: 50px;
       white-space: nowrap;
       flex-shrink: 0;
-      box-shadow: 0 4px 10px rgba(255,155,33,0.4);
+      box-shadow: 0 4px 10px rgba(249,115,22,0.4);
     ">Install</a>
-    <button onclick="dismissBanner()" style="
-      background: rgba(255,255,255,0.15);
+    <button onclick="dismissBanner()" aria-label="Dismiss" style="
+      background: rgba(255,255,255,0.18);
       border: none;
       color: white;
       border-radius: 50%;
-      width: 26px;
-      height: 26px;
+      width: 32px;
+      height: 32px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       padding: 0;
-    ">✕</button>
+    ">&times;</button>
   </div>
-  <style>
-    @keyframes bannerSlideUp {
-      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-    }
-  </style>
-
-  <!-- Bottom Navigation Bar -->
-  <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
-    <a href="javascript:void(0)" class="nav-item a11y-nav-btn" aria-label="Accessibility Options" onclick="toggleA11yPanel()">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H13V16H11V22H9V9H3V7H21V9Z"/>
-      </svg>
-      <span>Access</span>
-    </a>
-    <a href="events.html" class="nav-item" aria-label="Events">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-        <line x1="16" y1="2" x2="16" y2="6"></line>
-        <line x1="8" y1="2" x2="8" y2="6"></line>
-        <line x1="3" y1="10" x2="21" y2="10"></line>
-      </svg>
-      <span>Events</span>
-    </a>
-    <a href="faq.html" class="nav-item nav-item-qhelp" aria-label="Q-Help">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="10"></circle>
-        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-      </svg>
-      <span>Q-Help</span>
-    </a>
-    <a href="volunteer.html" class="nav-item" aria-label="Volunteer">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-      </svg>
-      <span>Volunteer</span>
-    </a>
-    <a href="resources.html" class="nav-item" aria-label="Resources">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-      </svg>
-      <span>Resources</span>
-    </a>
-    <a href="contact.html" class="nav-item" aria-label="Contact">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-      </svg>
-      <span>Contact</span>
-    </a>
-  </nav>
 
   <script src="analytics-tracker.js"></script>
   <script src="accessibility.js"></script>
