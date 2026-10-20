@@ -129,6 +129,8 @@ body.st-app #a11y-toggle-btn, body.st-app .a11y-floating-btn { display: none !im
 .st-list .st-chev { margin-left: auto; color: #CBD5E1; font-weight: 700; font-size: 1.2rem; }
 .st-pills { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 8px; scrollbar-width: none; }
 .st-pills::-webkit-scrollbar { display: none; }
+/* Wrapping filter rows: every pill visible, no sideways scrolling (mouse users can't swipe). */
+.st-pills.st-wrap-pills { flex-wrap: wrap; overflow: visible; }
 .st-pill { flex: none; font: 500 .8rem var(--st-font-head); padding: 6px 12px; border-radius: 99px; background: #fff; border: 1px solid var(--line); color: var(--text-dark); cursor: pointer; }
 .st-pill.on, .st-pill.active { background: var(--ocean-deep); border-color: var(--ocean-deep); color: #fff; }
 .st-seg { display: flex; background: var(--sand); border-radius: 10px; padding: 3px; margin-bottom: 12px; }

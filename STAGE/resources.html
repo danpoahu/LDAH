@@ -40,7 +40,7 @@
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
   
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="site-theme.css?v=1">
+  <link rel="stylesheet" href="site-theme.css?v=2">
   <script src="js/app-shell.js?v=1" defer></script>
   <style>
     /* Resources page, website look (STAGE 2026-10-20). Tokens come from site-theme.css. */
@@ -124,7 +124,7 @@
       </div>
 
       <!-- Island Filter Pills -->
-      <div class="st-pills" id="islandFilters" role="group" aria-label="Filter by island">
+      <div class="st-pills st-wrap-pills" id="islandFilters" role="group" aria-label="Filter by island">
         <button type="button" class="st-pill filter-pill active" data-filter="all">All Islands</button>
         <button type="button" class="st-pill filter-pill" data-filter="Oahu">Oʻahu</button>
         <button type="button" class="st-pill filter-pill" data-filter="Maui">Maui</button>
@@ -134,7 +134,7 @@
 
       <!-- Type Filter Pills (built from the types in the loaded data) -->
       <div id="typeFilterSection">
-        <div class="st-pills" id="typeFilters" role="group" aria-label="Filter by type">
+        <div class="st-pills st-wrap-pills" id="typeFilters" role="group" aria-label="Filter by type">
           <button type="button" class="st-pill filter-pill active" data-filter="all">All types</button>
         </div>
       </div>
