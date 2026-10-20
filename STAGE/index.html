@@ -97,6 +97,28 @@
       .hm-stats { grid-template-columns: repeat(4, 1fr); }
     }
 
+    /* News and Information (flyers; same rules as the website's home section) */
+    .hm-news { cursor: zoom-in; }
+    .hm-news:focus-visible { outline: 3px solid var(--ocean-light); outline-offset: 2px; }
+    .hm-news .hm-ev-media { position: relative; }
+    .hm-news .hm-pdf { width: 100%; height: 150px; display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, var(--ocean-deep), var(--ocean-mid)); color: #fff; font: 600 .95rem var(--st-font-head); }
+    .st-badge.hm-badge-info { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .hm-news-all { display: flex; align-items: center; justify-content: center; min-height: 44px; margin-top: 4px; color: var(--ocean-deep); font: 600 .95rem var(--st-font-head); text-decoration: none; }
+    .hm-spot { position: absolute; z-index: 3; border-radius: 10px; cursor: pointer; }
+
+    /* Flyer viewer (News and Information cards open the flyer on its own) */
+    .hm-fv { position: fixed; inset: 0; z-index: 1000; background: rgba(15,23,42,.6); display: none; align-items: flex-start; justify-content: center; padding: calc(env(safe-area-inset-top, 0px) + 14px) 12px calc(env(safe-area-inset-bottom, 0px) + 14px); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+    .hm-fv.on { display: flex; }
+    .hm-fv-card { background: #fff; border-radius: 16px; width: 100%; max-width: 600px; margin: auto 0; box-shadow: 0 20px 50px rgba(15,23,42,.25); overflow: hidden; }
+    .hm-fv-hd { display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 18px; background: linear-gradient(135deg, #0891B2, #06B6D4); color: #fff; }
+    .hm-fv-hd h2 { flex: 1; min-width: 0; margin: 0; color: #fff !important; font: 600 1.08rem/1.3 var(--st-font-head); overflow-wrap: anywhere; }
+    .hm-fv-x { flex: none; width: 44px; height: 44px; border: 0; border-radius: 12px; background: rgba(255,255,255,.2); color: #fff; font-size: 1.5rem; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+    .hm-fv-x:focus-visible { outline: 3px solid #fff; outline-offset: 1px; }
+    .hm-fv-bd { padding: 14px; text-align: center; }
+    .hm-fv-img { position: relative; width: fit-content; max-width: 100%; margin: 0 auto; }
+    .hm-fv-img img { display: block; max-width: 100%; height: auto; border-radius: 10px; }
+    .hm-fv-bd .st-btn { display: flex; align-items: center; justify-content: center; min-height: 46px; max-width: 320px; margin: 6px auto; }
+
     /* Mission / Vision / Core Values carousel (kept, restyled) */
     .hm-mvv { margin-bottom: 0; padding: 18px 16px 12px; }
     .hm-mvv .carousel-container { display: grid; height: auto; overflow: hidden; position: relative; }
@@ -216,6 +238,16 @@
       <div id="currentEventsGrid" class="hm-ev-grid"></div>
     </section>
 
+    <!-- News and Information (flyers, booths, ongoing flyer-only programs). Same rules as the
+         website's home section; hidden when there are none or on error. -->
+    <section class="st-sec st-alt" id="homeNewsSection" style="display:none;" aria-labelledby="home-newsTitle">
+      <span class="st-tag">NEWS &amp; INFO</span>
+      <h2 class="st-h" id="home-newsTitle">News and Information</h2>
+      <p class="st-sub">Announcements, resources, and ongoing programs.</p>
+      <div id="homeNewsGrid" class="hm-ev-grid"></div>
+      <a id="homeNewsAll" class="hm-news-all" href="events.html#news" style="display:none;">See all news and information &rarr;</a>
+    </section>
+
     <!-- Mission / Vision / Core Values (auto-rotating carousel, kept) -->
     <section class="st-sec st-alt" aria-label="Our mission, vision and core values">
       <div class="st-card hm-mvv">
@@ -286,7 +318,7 @@
 
       <div class="st-foot-bar">
         <p>&copy; <span class="dynamic-year"></span> Leadership in Disabilities and Achievement of Hawaiʻi. All rights reserved.</p>
-        <p>Made with Aloha by <span class="hm-dp">DP Consulting</span> <span class="hm-ver">v49.0.0-STAGE</span></p>
+        <p>Made with Aloha by <span class="hm-dp">DP Consulting</span> <span class="hm-ver">v49.1.0-STAGE</span></p>
       </div>
     </footer>
     <!-- Our Offices card (phones + office locations) removed 2026-10-14: families use Contact Us -->
@@ -294,7 +326,7 @@
   </main>
 
   <!-- Learning Labs June first-launch popup (homepage only) -->
-  <script src="ll-popup.js?v=rot8" defer></script>
+  <script src="ll-popup.js?v=rot9" defer></script>
 
   <!-- Service Worker Registration -->
   <script>
@@ -473,6 +505,10 @@
         return true;
       }
 
+      // Inside the app, never show the "download our app" flyer: anything whose
+      // clickable flyer spots point at the App Store or Google Play.
+      function _isAppPromo(e) { return Array.isArray(e.flyerLinks) && e.flyerLinks.some(function (l) { return /apps\.apple\.com|play\.google\.com/i.test(String(l && l.url || '')); }); }
+
       // Recurring sessions close 24 h before they start (Hawaiʻi time), as on the website.
       const RECURRING_SIGNUP_CUTOFF_HOURS_HOME = 24;
       function _sessionClosedHome(date, sch) {
@@ -542,6 +578,7 @@
             if (event.infoOnly === true) return false;
             if (event.specialEvent === true) return false;
             if (event.homeOnly === true) return false;
+            if (_isAppPromo(event)) return false;
             if (!event.startDate || !event.moveToPastDate) return false;
             const startDate = new Date(event.startDate + 'T00:00:00');
             const moveToPastDate = new Date(event.moveToPastDate + 'T00:00:00');
@@ -550,11 +587,24 @@
 
           // Recurring programs with an upcoming session (flyer-only programs are not cards).
           const recurringCards = [];
+          const recurringInfo = [];
           recurringSnap.docs.forEach(doc => {
             const data = { id: doc.id, ...doc.data() };
             if (!isPubliclyListable(data)) return;
-            if (data.flyerOnly) return;
+            if (data.flyerOnly) {
+              // Ongoing flyer-only programs go to News and Information (website rule:
+              // optional Show / Move-to-Past / Remove dates respected; none = shows indefinitely).
+              if (data.imageUrl && !_isAppPromo(data)) {
+                let show = true;
+                if (data.startDate && /^\d{4}-\d{2}-\d{2}$/.test(data.startDate) && now < new Date(data.startDate + 'T00:00:00')) show = false;
+                if (data.moveToPastDate && /^\d{4}-\d{2}-\d{2}$/.test(data.moveToPastDate) && now >= new Date(data.moveToPastDate + 'T00:00:00')) show = false;
+                if (data.removeDate && /^\d{4}-\d{2}-\d{2}$/.test(data.removeDate) && now >= new Date(data.removeDate + 'T00:00:00')) show = false;
+                if (show) recurringInfo.push({ ...data, _ongoing: true });
+              }
+              return;
+            }
             if (data.homeOnly === true) return;
+            if (_isAppPromo(data)) return;
             const next = _nextOccurrence(data.schedules);
             if (next) recurringCards.push({ ...data, _nextDate: next, isRecurring: true });
           });
@@ -599,19 +649,138 @@
             allCards = [...currentEvents, ...recurringCards.slice(0, 1)].filter(c => c.imageUrl).slice(0, 2);
           }
 
+          // News and Information = one-time infoOnly items + Screening / Outreach Booth
+          // (specialEvent), each with a flyer and inside its date window, then ongoing
+          // flyer-only programs. Same rules as the website's home page. No double-listing:
+          // currentEvents above already drops infoOnly and specialEvent.
+          const infoEvents = eventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(event => {
+            if (!isPubliclyListable(event)) return false;
+            if (event.infoOnly !== true && event.specialEvent !== true) return false;
+            if (!event.imageUrl) return false;
+            if (_isAppPromo(event)) return false;
+            if (!event.startDate || !event.moveToPastDate) return false;
+            const startDate = new Date(event.startDate + 'T00:00:00');
+            const moveToPastDate = new Date(event.moveToPastDate + 'T00:00:00');
+            return now >= startDate && now < moveToPastDate;
+          }).sort((a, b) => new Date(a.eventDate + 'T00:00:00') - new Date(b.eventDate + 'T00:00:00')).map(e => ({ ...e, _ongoing: false }));
+          renderNews([...infoEvents, ...recurringInfo]);
+
           if (!allCards.length) return; // nothing to show: section stays hidden
           container.innerHTML = allCards.map(eventCard).join('');
           section.style.display = '';
         } catch (error) {
           console.warn('Home events unavailable:', error);
           section.style.display = 'none';
+          const news = document.getElementById('homeNewsSection');
+          if (news) news.style.display = 'none';
         }
       }
+
+      // ── News and Information ─────────────────────────────────────────────
+      const NEWS_MAX_HOME = 4;
+      let _newsItems = [];
+      // Clickable spots on a flyer image: flyerLinks [{ left, top, width, height } in
+      // percent, url, label}]. Only https links are honoured (as on the website).
+      function _flyerLinkSpots(links) {
+        if (!Array.isArray(links)) return '';
+        const pct = v => Math.max(0, Math.min(100, Number(v) || 0)) + '%';
+        return links.filter(l => l && /^https:\/\//i.test(String(l.url || ''))).map(l =>
+          '<a class="hm-spot" href="' + esc(l.url) + '" target="_blank" rel="noopener" aria-label="' + esc(l.label || 'Open link') + '" title="' + esc(l.label || '') + '"'
+          + ' style="left:' + pct(l.left) + ';top:' + pct(l.top) + ';width:' + pct(l.width) + ';height:' + pct(l.height) + ';"></a>'
+        ).join('');
+      }
+      const _isPdfUrl = u => String(u || '').toLowerCase().split('?')[0].indexOf('.pdf') !== -1;
+
+      function newsCard(event, i) {
+        const url = String(event.imageUrl || '');
+        const safeUrl = /^https:\/\//i.test(url) ? url : '';
+        const title = okina(event.title || 'Flyer');
+        const ongoing = event._ongoing === true;
+        const chip = (!ongoing && event.eventDate) ? new Date(event.eventDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+        const media = !safeUrl ? '<div class="hm-ev-noimg"></div>'
+          : _isPdfUrl(safeUrl) ? '<div class="hm-pdf">Flyer (PDF)</div>'
+          : '<div class="hm-ev-media"><img src="' + esc(safeUrl) + '" alt="' + esc(title) + '" loading="lazy">' + _flyerLinkSpots(event.flyerLinks) + '</div>';
+        const badge = ongoing ? '<span class="st-badge st-badge-on">Ongoing</span>' : '<span class="st-badge hm-badge-info">Information</span>';
+        const loc = event.location
+          ? '<div class="hm-loc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + esc(okina(event.location)) + '</div>'
+          : '';
+        return '<div class="hm-ev hm-news" role="button" tabindex="0" data-news="' + i + '" aria-label="Open flyer: ' + esc(title) + '">' + media
+          + '<div class="hm-ev-in">' + (chip ? '<span class="st-chip">' + esc(chip) + '</span>' : '') + badge
+          + '<h3>' + esc(title) + '</h3>' + loc + '</div></div>';
+      }
+
+      function renderNews(list) {
+        const section = document.getElementById('homeNewsSection');
+        const grid = document.getElementById('homeNewsGrid');
+        const all = document.getElementById('homeNewsAll');
+        if (!section || !grid) return;
+        _newsItems = Array.isArray(list) ? list : [];
+        if (!_newsItems.length) { section.style.display = 'none'; return; }
+        grid.innerHTML = _newsItems.slice(0, NEWS_MAX_HOME).map(newsCard).join('');
+        if (all) all.style.display = _newsItems.length > NEWS_MAX_HOME ? '' : 'none';
+        section.style.display = '';
+      }
+
+      function openNews(i) {
+        const ev = _newsItems[i];
+        if (!ev) return;
+        const url = String(ev.imageUrl || '');
+        if (!/^https:\/\//i.test(url)) { window.location.href = 'events.html#news'; return; }
+        openFlyerView(url, okina(ev.title || 'Flyer'), ev.flyerLinks);
+      }
+
+      let _fvReturn = null;
+      function openFlyerView(url, title, links) {
+        const box = document.getElementById('flyerViewer');
+        const body = document.getElementById('flyerViewerBody');
+        if (!box || !body || !url) return;
+        document.getElementById('flyerViewerTitle').textContent = title || 'Flyer';
+        body.innerHTML = _isPdfUrl(url)
+          ? '<a class="st-btn st-btn-primary" href="' + esc(url) + '" target="_blank" rel="noopener">Open the flyer (PDF)</a>'
+          : '<div class="hm-fv-img"><img src="' + esc(url) + '" alt="' + esc(title || 'Flyer') + '">' + _flyerLinkSpots(links) + '</div>';
+        _fvReturn = document.activeElement;
+        box.classList.add('on');
+        document.body.style.overflow = 'hidden';
+        const x = document.getElementById('flyerViewerClose');
+        if (x) x.focus();
+      }
+      function closeFlyerView() {
+        const box = document.getElementById('flyerViewer');
+        if (!box || !box.classList.contains('on')) return;
+        box.classList.remove('on');
+        document.getElementById('flyerViewerBody').innerHTML = '';
+        document.body.style.overflow = '';
+        if (_fvReturn && _fvReturn.focus) { try { _fvReturn.focus(); } catch (_) {} }
+        _fvReturn = null;
+      }
+
+      document.addEventListener('click', function (e) {
+        if (e.target.closest && e.target.closest('.hm-spot')) return; // a flyer link spot opens its own link
+        const card = e.target.closest && e.target.closest('.hm-news[data-news]');
+        if (card) { openNews(Number(card.getAttribute('data-news'))); return; }
+        if (e.target.id === 'flyerViewerClose' || e.target.id === 'flyerViewer') closeFlyerView();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { closeFlyerView(); return; }
+        const card = e.target.closest && e.target.closest('.hm-news[data-news]');
+        if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openNews(Number(card.getAttribute('data-news'))); }
+      });
 
       loadPageContent();
       loadCurrentEvents();
     })();
   </script>
+
+  <!-- Flyer viewer for News and Information cards -->
+  <div id="flyerViewer" class="hm-fv" role="dialog" aria-modal="true" aria-labelledby="flyerViewerTitle">
+    <div class="hm-fv-card">
+      <div class="hm-fv-hd">
+        <h2 id="flyerViewerTitle">Flyer</h2>
+        <button type="button" class="hm-fv-x" id="flyerViewerClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="hm-fv-bd" id="flyerViewerBody"></div>
+    </div>
+  </div>
 
   <!-- PWA Install Banner (hidden by default, shown if not installed) -->
   <div id="install-banner" style="

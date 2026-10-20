@@ -69,6 +69,20 @@
     .ev-more { display: block; background: none; border: 0; padding: 0; min-height: 44px; color: var(--ocean-deep); font: 600 .88rem var(--st-font-head); cursor: pointer; }
     .ev-empty { text-align: center; padding: 28px 18px; }
     .ev-empty-ic { color: #CBD5E1; margin: 0 auto 8px; display: block; }
+    /* News and Information group (bottom of Upcoming; flyers, booths, ongoing flyer-only programs) */
+    .ev-news { margin-top: 22px; scroll-margin-top: 80px; }
+    .ev-news .ev-month { margin-top: 0; }
+    .ev-news-sub { margin: -4px 2px 10px; font-size: .88rem; color: var(--text-soft); }
+    .ev-ncard { display: flex; align-items: stretch; gap: 0; width: 100%; text-align: left; background: #fff; border: 0; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.06); overflow: hidden; margin-bottom: 10px; padding: 0; cursor: pointer; font: inherit; color: var(--text-dark); min-height: 92px; }
+    .ev-ncard:focus-visible { outline: 3px solid var(--ocean-light); outline-offset: 2px; }
+    .ev-nthumb { flex: none; width: 92px; background: var(--sand-light); display: flex; align-items: center; justify-content: center; color: var(--ocean-deep); font: 700 .72rem var(--st-font-head); letter-spacing: .05em; }
+    .ev-nthumb img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+    .ev-nin { flex: 1; min-width: 0; padding: 10px 12px; }
+    .ev-nin .ev-title { margin: 6px 0 3px; font-size: .98rem; }
+    .st-badge.ev-badge-info { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .ev-fv-img { position: relative; width: fit-content; max-width: 100%; margin: 0 auto 12px; }
+    .ev-fv-img img { display: block; max-width: 100%; height: auto; border-radius: 10px; }
+    .ev-spot { position: absolute; z-index: 3; border-radius: 10px; cursor: pointer; }
     .ev-request { text-align: center; margin-top: 18px; }
     .ev-request .st-btn { max-width: 320px; margin: 12px auto 0; }
 
@@ -530,10 +544,21 @@
       return true;
     };
 
+    // Inside the app, never show the "download our app" flyer: anything whose
+    // clickable flyer spots point at the App Store or Google Play.
+    function _isAppPromo(e) { return Array.isArray(e.flyerLinks) && e.flyerLinks.some(function (l) { return /apps\.apple\.com|play\.google\.com/i.test(String(l && l.url || '')); }); }
+
+    // News and Information items never go in the month-grouped Upcoming list
+    // (website rule: one-time flyers, flyer-only programs and Screening /
+    // Outreach Booth are not event cards). They get their own group at the
+    // bottom of Upcoming instead.
+    const _isNewsItem = (e) => !!(e && (e.infoOnly === true || e._isFlyerOnly || e.flyerOnly === true || e.specialEvent === true));
+
     const EventsApp = () => {
       const [events, setEvents] = useState([]);
       const [loading, setLoading] = useState(true);
       const [selectedEvent, setSelectedEvent] = useState(null);
+      const [newsFlyer, setNewsFlyer] = useState(null);   // News and Information flyer viewer
       const [currentIndex, setCurrentIndex] = useState(0);
       // Upcoming · Calendar · Past (was a Current/Past toggle). isPastEvents keeps
       // its old meaning so every check that reads it is unchanged.
@@ -1079,6 +1104,23 @@
         load();
       }, []);
 
+      // events.html#news (the app home's "See all news and information"): open
+      // Upcoming and scroll to the News and Information group once data is in.
+      useEffect(() => {
+        if (loading) return;
+        const go = () => {
+          if (window.location.hash !== '#news') return;
+          setView('upcoming');
+          setTimeout(() => {
+            const el = document.getElementById('news');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 80);
+        };
+        go();
+        window.addEventListener('hashchange', go);
+        return () => window.removeEventListener('hashchange', go);
+      }, [loading]);
+
       const formatDate = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
@@ -1170,9 +1212,29 @@
         return String(evAnchorIso(a) || '').localeCompare(String(evAnchorIso(b) || ''));
       };
       const currentEvents = [..._oneTimeSignup, ..._recurringSignup, ..._infoFlyers]
+        .filter(e => !_isNewsItem(e) && !_isAppPromo(e))
         .sort(_byMonthThenCategory);
 
-      const pastEvents = events.filter(e => isPubliclyListable(e) && e.homeOnly !== true && isEventPast(e)).sort((a, b) =>
+      // News and Information (bottom of Upcoming). Same rules as the app home and
+      // the website's home section: one-time infoOnly / specialEvent items WITH a
+      // flyer inside their Show..Move-to-Past window, by event date; then active
+      // flyer-only recurring programs with a flyer, honouring their optional
+      // Show / Move-to-Past / Remove dates.
+      const _nowNews = new Date();
+      const _ymd = /^\d{4}-\d{2}-\d{2}$/;
+      const newsItems = [
+        ...events.filter(e => isPubliclyListable(e) && (e.infoOnly === true || e.specialEvent === true)
+            && e.imageUrl && !_isAppPromo(e) && e.startDate && e.moveToPastDate && isEventCurrent(e))
+          .sort((a, b) => new Date(a.eventDate + 'T00:00:00') - new Date(b.eventDate + 'T00:00:00'))
+          .map(e => ({ ...e, _ongoing: false })),
+        ...recurringPrograms.filter(p => p.active === true && p.flyerOnly && p.imageUrl && !_isAppPromo(p)
+            && !(p.startDate && _ymd.test(p.startDate) && _nowNews < new Date(p.startDate + 'T00:00:00'))
+            && !(p.moveToPastDate && _ymd.test(p.moveToPastDate) && _nowNews >= new Date(p.moveToPastDate + 'T00:00:00'))
+            && !(p.removeDate && _ymd.test(p.removeDate) && _nowNews >= new Date(p.removeDate + 'T00:00:00')))
+          .map(p => ({ ...p, _ongoing: true }))
+      ];
+
+      const pastEvents = events.filter(e => isPubliclyListable(e) && e.homeOnly !== true && !_isAppPromo(e) && isEventPast(e)).sort((a, b) =>
         new Date(b.moveToPastDate) - new Date(a.moveToPastDate)
       );
 
@@ -1715,7 +1777,7 @@
       const buildCalendarItems = (year, month) => {
         const items = [];
         const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-        events.filter(ev => isPubliclyListable(ev) && ev.homeOnly !== true).forEach(ev => {
+        events.filter(ev => isPubliclyListable(ev) && ev.homeOnly !== true && !_isAppPromo(ev)).forEach(ev => {
           const seen = {};
           const push = (iso, sub) => {
             if (!iso || iso.slice(0, 7) !== monthKey || seen[iso]) return;
@@ -2055,6 +2117,33 @@
                   </div>
                 ))}
 
+            {/* News and Information: flyers, booths and ongoing flyer-only programs,
+                at the very bottom of Upcoming (the website shows these on its home page). */}
+            {view === 'upcoming' && newsItems.length > 0 && (
+              <section className="ev-news" id="news" aria-labelledby="ev-news-h">
+                <h2 className="ev-month" id="ev-news-h">News and Information</h2>
+                <p className="ev-news-sub">Announcements, resources, and ongoing programs.</p>
+                {newsItems.map((it) => {
+                  const iso = !it._ongoing ? evToIso(it.eventDate) : null;
+                  const chip = iso ? new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+                  const pdf = _isPdf(it.imageUrl);
+                  return (
+                    <button type="button" className="ev-ncard" key={'n-' + it.id} onClick={() => setNewsFlyer(it)} aria-label={'Open flyer: ' + (it.title || 'flyer')}>
+                      <span className="ev-nthumb">{pdf ? 'PDF' : <img src={it.imageUrl} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}</span>
+                      <span className="ev-nin">
+                        <span className="ev-meta">
+                          {chip ? <span className="st-chip">{chip}</span> : null}
+                          {it._ongoing ? <span className="st-badge st-badge-on">Ongoing</span> : <span className="st-badge ev-badge-info">Information</span>}
+                        </span>
+                        <span className="ev-title" style={{ display: 'block' }}>{it.title}</span>
+                        {it.location ? <span className="ev-loc"><PinIcon />{it.location}</span> : null}
+                      </span>
+                    </button>
+                  );
+                })}
+              </section>
+            )}
+
             {/* Request an Event: the website's form; opens in the browser. */}
             <div className="st-card ev-request">
               <h3>Can't find what you're looking for?</h3>
@@ -2162,6 +2251,44 @@
                     </>
                   )}
                   <button type="button" className="st-btn st-btn-secondary" onClick={(e) => { e.stopPropagation(); setSelectedEvent(null); }}>Close</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* News and Information flyer viewer: the flyer on its own, clickable
+              flyerLinks spots (https only), no Sign Up. */}
+          {newsFlyer && (
+            <div className="st-ovl" onClick={() => setNewsFlyer(null)}>
+              <div className="st-sheet" role="dialog" aria-modal="true" aria-label={newsFlyer.title || 'Flyer'} onClick={(e) => e.stopPropagation()}>
+                <div className="st-sheet-hd">
+                  <div className="st-sheet-ttl">
+                    <span className="st-sheet-eyebrow">{newsFlyer._ongoing ? 'Ongoing' : 'News and Information'}</span>
+                    <h2>{newsFlyer.title}</h2>
+                  </div>
+                  <button type="button" className="st-sheet-x" aria-label="Close" onClick={(e) => { e.stopPropagation(); setNewsFlyer(null); }}>
+                    <X size={22} />
+                  </button>
+                </div>
+                <div className="st-sheet-bd">
+                  {_isPdf(newsFlyer.imageUrl) ? (
+                    <a className="st-btn st-btn-primary" href={newsFlyer.imageUrl} target="_blank" rel="noopener noreferrer" style={{ marginBottom: '12px' }}>Open the flyer (PDF)</a>
+                  ) : (
+                    <div className="ev-fv-img">
+                      <img src={newsFlyer.imageUrl} alt={newsFlyer.title ? 'Flyer: ' + newsFlyer.title : 'Flyer'} />
+                      {(Array.isArray(newsFlyer.flyerLinks) ? newsFlyer.flyerLinks : [])
+                        .filter(l => l && /^https:\/\//i.test(String(l.url || '')))
+                        .map((l, i) => {
+                          const pct = (v) => Math.max(0, Math.min(100, Number(v) || 0)) + '%';
+                          return (
+                            <a key={'s' + i} className="ev-spot" href={l.url} target="_blank" rel="noopener noreferrer"
+                               aria-label={l.label || 'Open link'} title={l.label || ''}
+                               style={{ left: pct(l.left), top: pct(l.top), width: pct(l.width), height: pct(l.height) }}></a>
+                          );
+                        })}
+                    </div>
+                  )}
+                  <button type="button" className="st-btn st-btn-secondary" onClick={(e) => { e.stopPropagation(); setNewsFlyer(null); }}>Close</button>
                 </div>
               </div>
             </div>
