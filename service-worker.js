@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — LIVE
-const CACHE_NAME = 'ldah-v18';   // 2026-10-22 no install banner inside the App Store app
+const CACHE_NAME = 'ldah-v19';   // 2026-10-22 store-app detection by user agent
 const urlsToCache = [
   './',
   './index.html',

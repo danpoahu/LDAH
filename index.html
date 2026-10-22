@@ -392,13 +392,12 @@
         window.matchMedia('(display-mode: fullscreen)').matches;
       if (isStandalone) return;
       // Inside the App Store app (a WKWebView shell) there is nothing to install
-      // (10-22). Safari on iOS defines navigator.standalone (true/false); the
-      // in-app web view leaves it undefined and exposes window.webkit.messageHandlers.
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      const inStoreApp = isIOS && (typeof window.navigator.standalone === 'undefined' ||
-        !!(window.webkit && window.webkit.messageHandlers)) ||
-        /[?&]src=app\b/.test(location.search);
+      // (10-22). An in-app web view's user agent has no "Safari/" token; Safari,
+      // Chrome (CriOS), Firefox (FxiOS) and Edge on iOS all include it.
+      const ua = navigator.userAgent;
+      const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+        (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+      const inStoreApp = (isIOS && !/Safari\//.test(ua)) || /[?&]src=app\b/.test(location.search);
       if (inStoreApp) return;
 
       // Don't show if user dismissed within the last 7 days
