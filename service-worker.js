@@ -1,14 +1,27 @@
 // Service Worker for LDAH Progressive Web App — LIVE
-const CACHE_NAME = 'ldah-v15';   // bumped 2026-07-31 — purge stale members-preview.html (old relative logo path)
+const CACHE_NAME = 'ldah-v16';   // 2026-10-22 website look goes live (site-theme.css, app shell, new pages)
 const urlsToCache = [
   './',
   './index.html',
   './events.html',
   './faq.html',
   './volunteer.html',
+  './howtohelp.html',
+  './members-preview.html',
   './contact.html',
   './resources.html',
   './install.html',
+  './whoweare.html',
+  './whatwedo.html',
+  './readiness.html',
+  './specialed.html',
+  './military.html',
+  './pacific.html',
+  './community.html',
+  './site-theme.css',
+  './js/app-shell.js',
+  './accessibility.js',
+  './logo_blue.png',
   './styles.css',
   './analytics-tracker.js',
   './logo_transparent.png',

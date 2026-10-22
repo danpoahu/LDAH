@@ -281,6 +281,14 @@
         } catch (e) {}
     }
 
+    /* A flyer that sells the app (its printed links go to the App Store or Google
+       Play). Pointless inside the app, so it never rotates here. */
+    function _isAppPromo(v) {
+        return Array.isArray(v && v.flyerLinks) && v.flyerLinks.some(function (l) {
+            return /apps\.apple\.com|play\.google\.com/i.test(String((l && l.url) || ''));
+        });
+    }
+
     function fetchRotation(cb) {
         if (typeof firebase === 'undefined' || !firebase.firestore) { cb([]); return; }
         try {
@@ -298,6 +306,8 @@
                         if (v.isOneOff === true) return;
                         if (typeof v.partnerIsland === 'string' && v.partnerIsland.trim() !== '') return;
                         if (v.homeRotation !== true) return;  // only what staff ticked
+                        // Inside the app, never pop up the "get our app" flyer: they already have it (2026-10-20, Daniel).
+                        if (_isAppPromo(v)) return;
                         if (!v.imageUrl) return;              // nothing to show without a flyer
                         var _b = v.moveToPastDate || v.eventDate;
                         if (_b && !_rotNotPast(new Date(_b + 'T00:00:00'))) return;  // event has moved to Past
@@ -309,7 +319,7 @@
                 snaps.forEach(function (snap) {
                     snap.forEach(function (doc) {
                         var v = doc.data() || {};
-                        if (v.archived === true || !v.imageUrl) return;
+                        if (v.archived === true || !v.imageUrl || _isAppPromo(v)) return;
                         (Array.isArray(v.homeRotationDates) ? v.homeRotationDates : []).forEach(function (lbl) {
                             if (!_rotNotPast(_rotDateFromLabel(lbl))) return;   // skip a past ticked session
                             out.push({ id: doc.id + '::' + lbl, title: (v.title || 'LDAH') + ' — ' + lbl, image: v.imageUrl,

@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LDAH">
-  <meta name="theme-color" content="#004E7C">
+  <meta name="theme-color" content="#0891B2">
   <title>LDAH - Events</title>
   
   <!-- Google Analytics -->
@@ -26,55 +26,140 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="site-theme.css?v=1">
+  <script src="js/app-shell.js?v=1" defer></script>
   <style>
-    /* Loading state */
-    .loading-spinner {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 60vh;
-    }
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(0, 78, 124, 0.2);
-      border-top-color: #004E7C;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
+    /* Events page — the main website's look (STAGE 2026-10-20).
+       Tokens and st-* components come from site-theme.css. */
+    .ev-page { min-height: 60vh; }
+    .loading-spinner { display: flex; justify-content: center; align-items: center; min-height: 40vh; }
+    .spinner { width: 40px; height: 40px; border: 4px solid rgba(8,145,178,.2); border-top-color: var(--ocean-deep); border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .st-seg > button { min-height: 40px; font-family: var(--st-font-head); }
 
-    /* ===== Agenda events list (v48.3.0 redesign) ===== */
-    .ev-month{padding:16px 4px 10px;}
-    .ev-month span{font-size:13px;font-weight:800;color:#004E7C;letter-spacing:1px;text-transform:uppercase;}
-    .ev-month .ev-ln{height:2px;background:linear-gradient(90deg,#0D7A7A,transparent);border-radius:2px;margin-top:5px;}
-    .ev-card{background:transparent;border:1.5px solid rgba(0,78,124,.28);border-radius:20px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 10px rgba(15,23,42,.05);}
-    .ev-row{display:flex;align-items:stretch;border-bottom:1px solid #E2E8F0;}
-    .ev-row:last-child{border-bottom:0;}
-    .ev-tile{flex:0 0 66px;background:linear-gradient(160deg,#004E7C,#0D7A7A);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 4px;text-align:center;}
-    .ev-tile .ev-mo{font-size:11px;font-weight:800;letter-spacing:1px;opacity:.92;}
-    .ev-tile .ev-dy{font-size:25px;font-weight:800;line-height:1;margin-top:2px;}
-    .ev-tile.ev-ong{background:linear-gradient(160deg,#0D7A7A,#0891B2);}
-    .ev-tile.ev-ong .ev-dy{font-size:14px;line-height:1.15;margin-top:4px;}
-    .ev-tile.ev-flyer{background:linear-gradient(160deg,#b8860b,#FBBF24);color:#3b2f00;}
-    .ev-tile.ev-flyer .ev-dy{font-size:13px;margin-top:3px;}
-    .ev-body{flex:1;padding:13px 6px 13px 14px;min-width:0;cursor:pointer;}
-    .ev-title{font-size:15.5px;font-weight:800;color:#004E7C;line-height:1.25;margin:0 0 7px;}
-    .ev-line{display:flex;align-items:center;gap:7px;font-size:12.5px;color:#475569;font-weight:600;margin-top:3px;}
-    .ev-line svg{flex:0 0 auto;}
-    .ev-vpill{font-size:10.5px;font-weight:800;color:#0891B2;background:#E0F2FE;padding:1px 7px;border-radius:999px;margin-left:2px;}
-    .ev-flyerlink{display:inline-flex;align-items:center;gap:5px;margin-top:9px;font-size:12.5px;font-weight:700;color:#0066a1;cursor:pointer;background:none;border:0;padding:0;font-family:inherit;}
-    .ev-flyerlink:hover{text-decoration:underline;}
-    .ev-aside{flex:0 0 auto;display:flex;align-items:center;padding:0 12px;}
-    .ev-signup{border:0;background:linear-gradient(135deg,#004E7C,#0D7A7A);color:#fff;font-weight:800;font-size:12.5px;padding:10px 15px;border-radius:999px;cursor:pointer;box-shadow:0 2px 8px rgba(0,78,124,.25);font-family:inherit;}
-    .ev-chevron{flex:0 0 auto;display:flex;align-items:center;padding-right:12px;color:#cbd5e1;cursor:pointer;}
-    /* Booth / screening rows take no advance signups. Deliberately NOT a button:
-       a pill that looks tappable but does nothing reads as a broken app on a
-       phone, so this is a plain muted label and the row keeps its usual tap. */
-    .ev-inperson{display:inline-block;text-align:right;font-size:10.5px;line-height:1.25;font-weight:800;
-                 letter-spacing:.03em;text-transform:uppercase;color:#94a3b8;margin-right:6px;}
-    .ev-row.ev-expired{opacity:.55;}
-    .ev-row.ev-expired .ev-title{text-decoration:line-through;}
+    /* Event cards (website style) */
+    .ev-month { font: 600 1.08rem var(--st-font-head); color: var(--text-dark); margin: 18px 2px 10px; display: flex; align-items: center; gap: 10px; }
+    .ev-month::after { content: ""; flex: 1; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--ocean-light), transparent); }
+    .ev-list > .ev-month:first-child { margin-top: 4px; }
+    .ev-card { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.06); overflow: hidden; margin-bottom: 14px; }
+    .ev-card.ev-past { opacity: .9; }
+    .ev-img { display: block; width: 100%; padding: 0; margin: 0; border: 0; background: var(--sand-light); cursor: pointer; }
+    .ev-img img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; object-position: center top; }
+    .ev-in { padding: 12px 14px 6px; }
+    .ev-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .ev-badge-past { background: #94A3B8; }
+    .ev-title { font: 600 1.06rem/1.3 var(--st-font-head); color: var(--text-dark); margin: 8px 0 4px; cursor: pointer; }
+    .ev-loc { display: flex; align-items: center; gap: 6px; font-size: .88rem; color: var(--text-soft); line-height: 1.35; }
+    .ev-loc svg, .ev-fact svg { flex: none; stroke: var(--ocean-deep); }
+    .ev-vpill { font: 600 .64rem var(--st-font-head); color: var(--ocean-dark); background: #ECFEFF; padding: 1px 7px; border-radius: 99px; letter-spacing: .04em; text-transform: uppercase; margin-left: 2px; }
+    .ev-expired-note { margin-top: 6px; text-decoration: line-through; opacity: .7; }
+    .ev-sess { list-style: none; margin: 10px 0 0; padding: 0; border-top: 1px solid var(--line); }
+    .ev-srow { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+    .ev-srow:last-child { border-bottom: 0; }
+    .ev-sdate { flex: none; width: 48px; text-align: center; background: var(--sand-light); border-radius: 10px; padding: 5px 0; color: var(--ocean-deep); font: 700 1rem/1.1 var(--st-font-head); }
+    .ev-sdate b { display: block; font-size: .6rem; letter-spacing: .06em; color: var(--sunset-coral); }
+    .ev-sdate.ev-ong { font-size: .78rem; }
+    .ev-stext { flex: 1; min-width: 0; font-size: .85rem; color: var(--text-soft); line-height: 1.35; cursor: pointer; }
+    .ev-stext strong { display: block; color: var(--text-dark); font-weight: 600; font-size: .9rem; }
+    .ev-srow.ev-expired { opacity: .55; }
+    .ev-srow.ev-expired strong { text-decoration: line-through; }
+    .ev-signup { flex: none; border: 0; background: var(--ocean-deep); color: #fff; font: 600 .84rem var(--st-font-head); padding: 0 14px; min-height: 44px; border-radius: 10px; cursor: pointer; }
+    .ev-signup:hover { background: var(--ocean-dark); }
+    .ev-inperson { margin: 8px 0 0; font: 600 .78rem var(--st-font-head); color: var(--text-soft); letter-spacing: .02em; }
+    .ev-more { display: block; background: none; border: 0; padding: 0; min-height: 44px; color: var(--ocean-deep); font: 600 .88rem var(--st-font-head); cursor: pointer; }
+    .ev-empty { text-align: center; padding: 28px 18px; }
+    .ev-empty-ic { color: #CBD5E1; margin: 0 auto 8px; display: block; }
+    /* News and Information group (bottom of Upcoming; flyers, booths, ongoing flyer-only programs) */
+    .ev-news { margin-top: 22px; scroll-margin-top: 80px; }
+    .ev-news .ev-month { margin-top: 0; }
+    .ev-news-sub { margin: -4px 2px 10px; font-size: .88rem; color: var(--text-soft); }
+    .ev-ncard { display: flex; align-items: stretch; gap: 0; width: 100%; text-align: left; background: #fff; border: 0; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.06); overflow: hidden; margin-bottom: 10px; padding: 0; cursor: pointer; font: inherit; color: var(--text-dark); min-height: 92px; }
+    .ev-ncard:focus-visible { outline: 3px solid var(--ocean-light); outline-offset: 2px; }
+    .ev-nthumb { flex: none; width: 92px; background: var(--sand-light); display: flex; align-items: center; justify-content: center; color: var(--ocean-deep); font: 700 .72rem var(--st-font-head); letter-spacing: .05em; }
+    .ev-nthumb img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+    .ev-nin { flex: 1; min-width: 0; padding: 10px 12px; }
+    .ev-nin .ev-title { margin: 6px 0 3px; font-size: .98rem; }
+    .st-badge.ev-badge-info { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .ev-fv-img { position: relative; width: fit-content; max-width: 100%; margin: 0 auto 12px; }
+    .ev-fv-img img { display: block; max-width: 100%; height: auto; border-radius: 10px; }
+    .ev-spot { position: absolute; z-index: 3; border-radius: 10px; cursor: pointer; }
+    .ev-request { text-align: center; margin-top: 18px; }
+    .ev-request .st-btn { max-width: 320px; margin: 12px auto 0; }
+
+    /* Calendar */
+    .ev-cal { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.06); padding: 12px; margin-bottom: 14px; }
+    .ev-cal-hd { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px; }
+    .ev-cal-mid { flex: 1; text-align: center; }
+    .ev-cal-mid h3 { margin: 0; font: 600 1.05rem var(--st-font-head); color: var(--text-dark); }
+    .ev-cal-nav { border: 0; background: none; color: var(--ocean-deep); font: 600 .9rem var(--st-font-head); min-height: 44px; padding: 0 6px; cursor: pointer; white-space: nowrap; }
+    .ev-cal-today { margin-top: 3px; border: 1.5px solid var(--ocean-deep); background: #fff; color: var(--ocean-deep); font: 600 .74rem var(--st-font-head); border-radius: 99px; padding: 3px 12px; cursor: pointer; }
+    .ev-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center; }
+    .ev-cal-wd { font: 600 .72rem var(--st-font-head); color: #94A3B8; padding: 4px 0; }
+    .ev-cal-d { min-height: 42px; border: 0; border-radius: 10px; background: none; padding: 0; font: 500 .92rem var(--st-font-body); color: var(--text-dark); cursor: pointer; position: relative; }
+    .ev-cal-d.has { background: var(--sand); color: var(--ocean-deep); font-weight: 700; }
+    .ev-cal-d.today { background: var(--ocean-deep); color: #fff; font-weight: 700; }
+    .ev-cal-d.today.has::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--plumeria); }
+    .ev-cal-d.sel { box-shadow: inset 0 0 0 2px var(--ocean-deep); }
+    .ev-cal-d.today.sel { box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px var(--ocean-dark); }
+    .ev-cal-d:focus-visible, .ev-cal-nav:focus-visible, .ev-cal-today:focus-visible { outline: 3px solid var(--ocean-light); outline-offset: 2px; }
+    .ev-cal-note { margin: 10px 0 2px; text-align: center; font-size: .88rem; color: var(--text-soft); }
+    .ev-cal-dayh { font: 600 1.08rem var(--st-font-head); margin: 4px 2px 10px; color: var(--text-dark); }
+    button.ev-cal-row { width: 100%; border: 0; text-align: left; font: inherit; cursor: pointer; }
+    .ev-cal-txt { flex: 1; min-width: 0; }
+    .ev-cal-cancel { opacity: .7; }
+    .ev-cal-cancel h4 { text-decoration: line-through; }
+    .ev-cal-x { color: #B91C1C; font-weight: 700; }
+
+    /* Sheets (detail, sign-up, registration, verification) */
+    .st-ovl { position: fixed; inset: 0; z-index: 1000; background: rgba(15,23,42,.55); display: flex; align-items: flex-start; justify-content: center; padding: calc(env(safe-area-inset-top, 0px) + 14px) 12px calc(env(safe-area-inset-bottom, 0px) + 14px); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+    .st-sheet { position: relative; background: #fff; border-radius: 16px; width: 100%; max-width: 600px; margin: auto 0; box-shadow: 0 20px 50px rgba(15,23,42,.25); text-align: left; }
+    .st-sheet-hd { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 3; display: flex; align-items: flex-start; gap: 10px; padding: 14px 10px 14px 18px; border-radius: 16px 16px 0 0; background: linear-gradient(135deg, var(--ocean-deep), var(--ocean-mid)); color: #fff; }
+    .st-sheet-ttl { flex: 1; min-width: 0; padding-top: 2px; }
+    .st-sheet-eyebrow { display: block; font: 600 .7rem var(--st-font-head); letter-spacing: .07em; text-transform: uppercase; opacity: .9; }
+    .st-sheet-hd h2 { margin: 2px 0 0; color: #fff !important; font: 600 1.14rem/1.3 var(--st-font-head); overflow-wrap: anywhere; }
+    .st-sheet-x { flex: none; width: 44px; height: 44px; border: 0; border-radius: 12px; background: rgba(255,255,255,.2); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+    .st-sheet-x:focus-visible { outline: 3px solid #fff; outline-offset: 1px; }
+    .st-sheet-bd { padding: 16px 16px 20px; }
+    .ev-flyer { display: block; width: 100%; height: auto; border-radius: 12px; margin-bottom: 12px; background: var(--sand-light); }
+    .ev-facts { display: grid; gap: 6px; margin-bottom: 10px; }
+    .ev-fact { display: flex; align-items: flex-start; gap: 8px; font-size: .93rem; color: var(--text-dark); line-height: 1.45; }
+    .ev-fact svg { margin-top: 3px; color: var(--ocean-deep); }
+    .ev-desc { white-space: pre-line; font-size: .93rem; color: var(--text-soft); line-height: 1.6; margin: 0 0 6px; overflow-wrap: anywhere; }
+    .ev-desc a { color: var(--ocean-deep) !important; }
+    .ev-note { margin-top: 10px; background: var(--sand-light); border: 1px solid var(--sand); border-radius: 12px; padding: 12px 14px; font-size: .92rem; color: var(--text-dark); text-align: center; }
+    .ev-cta { font-size: 1.02rem; padding: 14px 16px; }
+
+    /* Sign-up / registration form fields (st-input look). The fields carry
+       inline styles from before the re-theme, so these win with !important. */
+    .st-form, .st-form p, .st-form span { font-family: var(--st-font-body); }
+    .st-form .st-req-note { color: var(--text-soft); font-size: .85rem; margin: 0 0 16px; }
+    .st-form .st-form-lead { font: 500 1rem var(--st-font-head); color: var(--text-dark); margin: 0 0 12px; }
+    .st-form h2 { font-family: var(--st-font-head) !important; color: var(--text-dark) !important; font-weight: 600 !important; font-size: 1.3rem !important; }
+    .st-form h3 { font-family: var(--st-font-head) !important; color: var(--text-dark) !important; font-weight: 600 !important; }
+    .st-form label:not(.st-opt) { color: var(--text-dark) !important; font-family: var(--st-font-head) !important; font-weight: 600 !important; font-size: .9rem !important; }
+    .st-sheet input[type=text]:not(.st-otp), .st-sheet input[type=email], .st-sheet input[type=tel], .st-sheet input[type=number], .st-sheet input[type=date], .st-sheet select, .st-sheet textarea {
+      background-color: #fff !important; border: 1.5px solid var(--line) !important; border-radius: 12px !important;
+      padding: 11px 13px !important; font-size: 16px !important; font-family: var(--st-font-body) !important;
+      color: var(--text-dark) !important; box-sizing: border-box !important; min-height: 46px; outline: none; max-width: 100%;
+      -webkit-appearance: none; appearance: none;
+    }
+    .st-sheet input, .st-sheet select, .st-sheet textarea { min-width: 0; }
+    .st-sheet select { padding-left: 10px !important; padding-right: 26px !important; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230891B2' stroke-width='2'/%3E%3C/svg%3E") !important; background-repeat: no-repeat !important; background-position: right 9px center !important; }
+    .st-sheet input:focus, .st-sheet select:focus, .st-sheet textarea:focus, .st-sheet .st-otp:focus { border-color: var(--ocean-deep) !important; box-shadow: 0 0 0 3px rgba(8,145,178,.15) !important; outline: none; }
+    .st-sheet input[type=radio], .st-sheet input[type=checkbox] { accent-color: var(--ocean-deep) !important; width: 18px !important; height: 18px !important; flex: none; margin: 0; }
+    /* Radio / checkbox options as chips: selected = teal border, light-teal fill */
+    .st-sheet .st-opt { box-sizing: border-box; min-height: 44px; padding: 9px 12px !important; border: 1.5px solid var(--line) !important; border-radius: 10px !important; background: #fff !important; gap: 9px !important; line-height: 1.35; }
+    .st-sheet .st-opt:has(input:checked) { border-color: var(--ocean-deep) !important; background: #ECFEFF !important; }
+    .st-sheet .st-opt:has(input:checked) > span { color: var(--ocean-dark) !important; font-weight: 600; }
+    .st-sheet .st-opt:has(input:disabled) { opacity: .6; }
+    .st-sheet .st-opt.st-sess { align-items: flex-start !important; }
+    .st-sheet .st-opt.st-sess.is-full { background: #FEF2F2 !important; border-color: #FECACA !important; }
+    .st-sheet .st-actions { flex-wrap: wrap-reverse; }
+    .st-sheet .st-actions button { min-height: 46px; border-radius: 10px !important; font-family: var(--st-font-head) !important; font-size: .95rem !important; font-weight: 600 !important; }
+    .st-sheet .st-actions button[type=submit] { flex: 1 1 160px; box-shadow: 0 4px 14px rgba(8,145,178,.25); }
+    .st-sheet .st-btn { font-family: var(--st-font-head); }
+    .st-sheet .st-btn:disabled { cursor: not-allowed; }
+    @media (min-width: 700px) { .st-ovl { padding-top: calc(env(safe-area-inset-top, 0px) + 32px); } .st-sheet-bd { padding: 20px 22px 24px; } }
   </style>
   <script defer src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script defer src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -89,7 +174,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
   <script src="./formatters.js"></script>
 </head>
-<body>
+<body class="st-app" data-tab="events" data-title="Events">
   <a href="#main-content" class="skip-link">Skip to main content</a>
   <main id="main-content">
   <div id="root">
@@ -113,31 +198,17 @@
           if (part.startsWith('www.')) {
             href = 'https://' + part;
           }
-          return <a key={index} href={href} target="_blank" rel="noopener noreferrer" style={{color: '#0066a1', textDecoration: 'underline'}}>{part}</a>;
+          return <a key={index} href={href} target="_blank" rel="noopener noreferrer" style={{color: '#0E7490', textDecoration: 'underline'}}>{part}</a>;
         }
         return part;
       });
     };
 
     // Icons
-    const Menu = ({ size = 24, className = '' }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <line x1="3" y1="12" x2="21" y2="12"></line>
-        <line x1="3" y1="6" x2="21" y2="6"></line>
-        <line x1="3" y1="18" x2="21" y2="18"></line>
-      </svg>
-    );
-
     const X = ({ size = 24, className = '' }) => (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <line x1="18" y1="6" x2="6" y2="18"></line>
         <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    );
-
-    const ChevronLeft = ({ size = 24, className = '' }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <polyline points="15 18 9 12 15 6"></polyline>
       </svg>
     );
 
@@ -473,13 +544,28 @@
       return true;
     };
 
+    // Inside the app, never show the "download our app" flyer: anything whose
+    // clickable flyer spots point at the App Store or Google Play.
+    function _isAppPromo(e) { return Array.isArray(e.flyerLinks) && e.flyerLinks.some(function (l) { return /apps\.apple\.com|play\.google\.com/i.test(String(l && l.url || '')); }); }
+
+    // News and Information items never go in the month-grouped Upcoming list
+    // (website rule: one-time flyers, flyer-only programs and Screening /
+    // Outreach Booth are not event cards). They get their own group at the
+    // bottom of Upcoming instead.
+    const _isNewsItem = (e) => !!(e && (e.infoOnly === true || e._isFlyerOnly || e.flyerOnly === true || e.specialEvent === true));
+
     const EventsApp = () => {
       const [events, setEvents] = useState([]);
       const [loading, setLoading] = useState(true);
       const [selectedEvent, setSelectedEvent] = useState(null);
+      const [newsFlyer, setNewsFlyer] = useState(null);   // News and Information flyer viewer
       const [currentIndex, setCurrentIndex] = useState(0);
-      const [isPastEvents, setIsPastEvents] = useState(false);
-      const [menuOpen, setMenuOpen] = useState(false);
+      // Upcoming · Calendar · Past (was a Current/Past toggle). isPastEvents keeps
+      // its old meaning so every check that reads it is unchanged.
+      const [view, setView] = useState('upcoming');
+      const isPastEvents = view === 'past';
+      const [calMonth, setCalMonth] = useState(() => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), 1); });
+      const [calDay, setCalDay] = useState(() => { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; });
       const [showSignupModal, setShowSignupModal] = useState(false);
       const [signupEvent, setSignupEvent] = useState(null);
       // Capacity gate — parity with LDAH_W2 events.html. Until 2026-08-19 the app
@@ -1018,6 +1104,23 @@
         load();
       }, []);
 
+      // events.html#news (the app home's "See all news and information"): open
+      // Upcoming and scroll to the News and Information group once data is in.
+      useEffect(() => {
+        if (loading) return;
+        const go = () => {
+          if (window.location.hash !== '#news') return;
+          setView('upcoming');
+          setTimeout(() => {
+            const el = document.getElementById('news');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 80);
+        };
+        go();
+        window.addEventListener('hashchange', go);
+        return () => window.removeEventListener('hashchange', go);
+      }, [loading]);
+
       const formatDate = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
@@ -1109,9 +1212,29 @@
         return String(evAnchorIso(a) || '').localeCompare(String(evAnchorIso(b) || ''));
       };
       const currentEvents = [..._oneTimeSignup, ..._recurringSignup, ..._infoFlyers]
+        .filter(e => !_isNewsItem(e) && !_isAppPromo(e))
         .sort(_byMonthThenCategory);
 
-      const pastEvents = events.filter(e => isPubliclyListable(e) && e.homeOnly !== true && isEventPast(e)).sort((a, b) =>
+      // News and Information (bottom of Upcoming). Same rules as the app home and
+      // the website's home section: one-time infoOnly / specialEvent items WITH a
+      // flyer inside their Show..Move-to-Past window, by event date; then active
+      // flyer-only recurring programs with a flyer, honouring their optional
+      // Show / Move-to-Past / Remove dates.
+      const _nowNews = new Date();
+      const _ymd = /^\d{4}-\d{2}-\d{2}$/;
+      const newsItems = [
+        ...events.filter(e => isPubliclyListable(e) && (e.infoOnly === true || e.specialEvent === true)
+            && e.imageUrl && !_isAppPromo(e) && e.startDate && e.moveToPastDate && isEventCurrent(e))
+          .sort((a, b) => new Date(a.eventDate + 'T00:00:00') - new Date(b.eventDate + 'T00:00:00'))
+          .map(e => ({ ...e, _ongoing: false })),
+        ...recurringPrograms.filter(p => p.active === true && p.flyerOnly && p.imageUrl && !_isAppPromo(p)
+            && !(p.startDate && _ymd.test(p.startDate) && _nowNews < new Date(p.startDate + 'T00:00:00'))
+            && !(p.moveToPastDate && _ymd.test(p.moveToPastDate) && _nowNews >= new Date(p.moveToPastDate + 'T00:00:00'))
+            && !(p.removeDate && _ymd.test(p.removeDate) && _nowNews >= new Date(p.removeDate + 'T00:00:00')))
+          .map(p => ({ ...p, _ongoing: true }))
+      ];
+
+      const pastEvents = events.filter(e => isPubliclyListable(e) && e.homeOnly !== true && !_isAppPromo(e) && isEventPast(e)).sort((a, b) =>
         new Date(b.moveToPastDate) - new Date(a.moveToPastDate)
       );
 
@@ -1642,143 +1765,180 @@
         }
       }, [events, isPastEvents]);
 
+      // ── Calendar (Upcoming · Calendar · Past) ─────────────────────────────
+      // Built from the data this page already loaded (events + recurringPrograms):
+      // no extra queries. Mirrors the website's calendar (getAllCalendarItems +
+      // getRecurringDatesForMonth + getEventsForDate in LDAH_W2 events.html):
+      // every publicly listable event lands on its eventDate, each parsed
+      // signupDates entry and each displayDates entry; recurring programs are
+      // expanded per schedule for the month shown, and a cancelled occurrence
+      // stays visible but cannot be opened. Display only — nothing here writes.
+      const _isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const buildCalendarItems = (year, month) => {
+        const items = [];
+        const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+        events.filter(ev => isPubliclyListable(ev) && ev.homeOnly !== true && !_isAppPromo(ev)).forEach(ev => {
+          const seen = {};
+          const push = (iso, sub) => {
+            if (!iso || iso.slice(0, 7) !== monthKey || seen[iso]) return;
+            seen[iso] = true;
+            items.push({ key: ev.id + '|' + iso, iso, title: ev.title || 'Event', sub: sub || '', event: ev });
+          };
+          // A one-time flyer (infoOnly) never takes signups; stale signupDates
+          // on one would put it on the wrong days, so only its own dates count.
+          if (ev.infoOnly !== true && Array.isArray(ev.signupDates)) {
+            ev.signupDates.forEach(ds => {
+              const row = formatSignupDateRow(ds, ev.eventDate);
+              const lbl = evSessionLabel(ds);
+              push(parseSignupDateString(ds, ev.eventDate), [lbl, row && row.time].filter(Boolean).join(' · ') || ev.location || '');
+            });
+          }
+          push(evToIso(ev.eventDate), [ev.time, ev.location].filter(Boolean).join(' · '));
+          if (Array.isArray(ev.displayDates)) {
+            ev.displayDates.forEach(d => push(String(d || '').trim().slice(0, 10), ev.location || ''));
+          }
+        });
+        recurringPrograms.forEach(prog => {
+          if (!Array.isArray(prog.schedules) || prog.schedules.length === 0) return;
+          // Cancelled keyed on date AND location, like the website: one date can
+          // carry two islands' sessions. A bare "YYYY-MM-DD" cancels the whole day.
+          const cancelled = {};
+          const _ck = (iso, loc) => iso + '|' + String(loc || '').trim().toLowerCase();
+          (prog.cancelledDates || []).forEach(cd => {
+            const isObj = cd && typeof cd === 'object';
+            const iso = isObj ? cd.date : cd;
+            if (typeof iso === 'string' && iso) cancelled[_ck(iso, isObj ? cd.location : '')] = isObj ? cd : {};
+          });
+          const cancelFor = (iso, loc) => cancelled[_ck(iso, loc)] || cancelled[_ck(iso, '')] || null;
+          // Open the same card object the Upcoming list uses (it carries the
+          // _occurrences the sign-up form needs); fall back to the raw program.
+          const openObj = recurringVirtualEvents.find(v => v.id === prog.id) || prog;
+          prog.schedules.forEach((sch, si) => {
+            const dow = Number(sch.dayOfWeek);
+            if (!Number.isFinite(dow)) return;
+            const first = new Date(year, month, 1);
+            const off = (dow - first.getDay() + 7) % 7;
+            const dates = [];
+            if (sch.frequency === 'weekly') {
+              for (let d = new Date(year, month, 1 + off); d.getMonth() === month; d.setDate(d.getDate() + 7)) dates.push(new Date(d));
+            } else {
+              const nth = new Date(year, month, 1 + off + (Number(sch.weekOfMonth) - 1) * 7);
+              if (nth.getMonth() === month) dates.push(nth);
+            }
+            const line = formatScheduleLine(sch);
+            dates.forEach(d => {
+              const iso = _isoLocal(d);
+              const c = cancelFor(iso, sch.location);
+              items.push({
+                key: prog.id + '|' + si + '|' + iso, iso, title: prog.title || 'Program',
+                sub: line ? [line.time, line.where].filter(Boolean).join(' · ') : '',
+                event: openObj, recurring: true, cancelled: !!c, cancelReason: (c && c.reason) || ''
+              });
+            });
+          });
+        });
+        return items;
+      };
+
+      const renderCalendar = () => {
+        const y = calMonth.getFullYear();
+        const m = calMonth.getMonth();
+        const items = buildCalendarItems(y, m);
+        const byDay = {};
+        items.forEach(it => { (byDay[it.iso] = byDay[it.iso] || []).push(it); });
+        const todayIso = _isoLocal(new Date());
+        const startDow = new Date(y, m, 1).getDay();
+        const total = new Date(y, m + 1, 0).getDate();
+        const cells = [];
+        for (let i = 0; i < startDow; i++) cells.push(<span key={'b' + i} className="ev-cal-blank" aria-hidden="true"></span>);
+        for (let day = 1; day <= total; day++) {
+          const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const n = (byDay[iso] || []).filter(it => !it.cancelled).length;
+          const cls = 'ev-cal-d' + (n ? ' has' : '') + (iso === todayIso ? ' today' : '') + (iso === calDay ? ' sel' : '');
+          cells.push(
+            <button type="button" key={iso} className={cls} aria-pressed={iso === calDay}
+              aria-label={new Date(y, m, day).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + (n ? ', ' + n + ' event' + (n > 1 ? 's' : '') : ', no events')}
+              onClick={() => setCalDay(iso)}>{day}</button>
+          );
+        }
+        const dayItems = (calDay && calDay.slice(0, 7) === `${y}-${String(m + 1).padStart(2, '0')}`) ? (byDay[calDay] || []) : null;
+        return (
+          <>
+            <div className="ev-cal">
+              <div className="ev-cal-hd">
+                <button type="button" className="ev-cal-nav" onClick={() => { setCalMonth(new Date(y, m - 1, 1)); setCalDay(null); }} aria-label="Previous month">‹ Prev</button>
+                <div className="ev-cal-mid">
+                  <h3 aria-live="polite">{calMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h3>
+                  <button type="button" className="ev-cal-today" onClick={() => { const t = new Date(); setCalMonth(new Date(t.getFullYear(), t.getMonth(), 1)); setCalDay(_isoLocal(t)); }}>Today</button>
+                </div>
+                <button type="button" className="ev-cal-nav" onClick={() => { setCalMonth(new Date(y, m + 1, 1)); setCalDay(null); }} aria-label="Next month">Next ›</button>
+              </div>
+              <div className="ev-cal-grid">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((w, i) => <span key={'w' + i} className="ev-cal-wd" aria-hidden="true">{w}</span>)}
+                {cells}
+              </div>
+              {items.length === 0 && <p className="ev-cal-note">No events this month.</p>}
+            </div>
+            {dayItems && (
+              <div className="ev-cal-day">
+                <h3 className="ev-cal-dayh">{new Date(calDay + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
+                {dayItems.length === 0 ? (
+                  <p className="st-sub">No events on this day.</p>
+                ) : dayItems.map(it => it.cancelled ? (
+                  <div key={it.key} className="st-list ev-cal-row ev-cal-cancel">
+                    <span className="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>
+                    <span className="ev-cal-txt"><h4>{it.title}</h4><p><span className="ev-cal-x">Cancelled</span>{it.cancelReason ? ' ' + it.cancelReason : ''}</p></span>
+                  </div>
+                ) : (
+                  <button type="button" key={it.key} className="st-list ev-cal-row" onClick={() => setSelectedEvent(it.event)}>
+                    <span className="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg></span>
+                    <span className="ev-cal-txt"><h4>{it.title}</h4>{it.sub && <p>{it.sub}</p>}</span>
+                    <span className="st-chev" aria-hidden="true">›</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {!dayItems && <p className="st-sub" style={{ textAlign: 'center' }}>Tap a day to see its events.</p>}
+          </>
+        );
+      };
+
+      // Sign-up offers in the detail sheet: from Upcoming exactly as before;
+      // from Calendar only for an event that is in the Upcoming list itself
+      // (a past or not-yet-listed date on the grid never opens a sign-up).
+      const selectedIsListedCurrent = !!(selectedEvent && currentEvents.some(c => c.id === selectedEvent.id));
+      const detailOffersSignup = !isPastEvents && (view !== 'calendar' || selectedIsListedCurrent);
+      const _safeExtUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u.trim())) ? u.trim() : '';
+      // Card chip date read from the ISO day at local midnight, so it never
+      // slides to the previous day the way new Date('YYYY-MM-DD') does.
+      const _chipDate = (iso) => iso ? new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '';
+      const _isPdf = (u) => typeof u === 'string' && /\.pdf(\?|$)/i.test(u.split('#')[0]);
+
+      const PinIcon = () => (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+      );
+
       if (loading) {
         return (
-          <div className="min-h-screen flex items-center justify-center" style={{ background: "url('background.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
-            <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '24px', textAlign: 'center' }}>
-              <p className="text-[#004E7C] font-semibold">Loading events...</p>
-            </div>
+          <div className="ev-page">
+            <div className="st-band"><div className="st-wrap"><h1>Events &amp; Workshops</h1><p>Workshops, training sessions and community events.</p></div></div>
+            <div className="loading-spinner" role="status" aria-label="Loading events"><div className="spinner"></div></div>
           </div>
         );
       }
 
       return (
-        <div className="min-h-screen p-2" style={{ background: "url('background.png') no-repeat center center fixed", backgroundSize: 'cover', paddingBottom: '80px' }}>
-          <div className="max-w-2xl mx-auto">
-            {/* Header with Logo and Menu */}
-            <div className="text-center mb-4 mt-2" style={{ position: 'relative' }}>
-              {/* Hamburger Menu Icon */}
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                id="menuBtn"
-                className="menu-btn"
-                aria-controls="dropdownMenu"
-                aria-expanded={menuOpen}
-                aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-              >
-                {menuOpen ? <X size={22} /> : <Menu size={22} />}
-              </button>
+        <div className="ev-page">
+          <div className="st-band"><div className="st-wrap"><h1>Events &amp; Workshops</h1><p>Workshops, training sessions and community events.</p></div></div>
 
-              {/* Dropdown Menu */}
-              {menuOpen && (
-                <div id="dropdownMenu" className="dropdown-menu" role="menu" aria-label="Site navigation" style={{ display: 'block' }}>
-                  <a href="index.html" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#004E7C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                    Home
-                  </a>
-                  <a href="events.html" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    Events
-                  </a>
-                  <a href="faq.html" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                    Quick Help
-                  </a>
-                  <a href="volunteer.html" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    Volunteer
-                  </a>
-                  <a href="resources.html" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                    Resources
-                  </a>
-                  <a href="howtohelp.html" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E11D48" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                    How to Help
-                  </a>
-                  <a href="contact.html" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                    Contact Us
-                  </a>
-                  <a href="https://www.ldahawaii.org/Members/?from=app" role="menuitem" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 78, 124, 0.1)' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-                    Member Login
-                  </a>
-                  <a href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', color: '#004E7C', textDecoration: 'none', fontWeight: 'bold', borderRadius: '0 0 8px 8px' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 78, 124, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF9B21" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                    Donate
-                  </a>
-
-                </div>
-              )}
-
-              <div className="mb-1 flex justify-center">
-                <a href="index.html" style={{ textDecoration: 'none' }}>
-                  <div style={{
-                    padding: '16px',
-                    display: 'inline-block',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                  >
-                    <img 
-                      src="logo_transparent.png" 
-                      alt="LDAH Logo"
-                      class="app-logo"
-                    />
-                  </div>
-                </a>
-              </div>
-              <h1 className="text-2xl font-bold text-[#004E7C] mb-1">Events</h1>
-              <p className="text-gray-600 text-sm mb-2">
-                Tap any event to view full details
-              </p>
+          <div className="st-sec"><div className="st-wrap">
+            <div className="st-seg" role="tablist" aria-label="Events view">
+              {[['upcoming', 'Upcoming'], ['calendar', 'Calendar'], ['past', 'Past']].map(([k, lbl]) => (
+                <button type="button" key={k} role="tab" aria-selected={view === k} className={view === k ? 'on' : ''} onClick={() => setView(k)}>{lbl}</button>
+              ))}
             </div>
 
-            {/* Carousel Section */}
-            {(currentEvents.length > 0 || pastEvents.length > 0) && (
-              <>
-                {/* Toggle buttons for Current/Past Events */}
-                {pastEvents.length > 0 && (
-                  <div className="flex gap-2 justify-center mb-4">
-                    <button
-                      onClick={() => setIsPastEvents(false)}
-                      style={{
-                        backgroundColor: !isPastEvents ? '#004E7C' : 'white',
-                        color: !isPastEvents ? 'white' : '#004E7C',
-                        border: '2px solid #004E7C',
-                        borderRadius: '20px',
-                        padding: '8px 24px',
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      Current Events
-                    </button>
-                    <button
-                      onClick={() => setIsPastEvents(true)}
-                      style={{
-                        backgroundColor: isPastEvents ? '#004E7C' : 'white',
-                        color: isPastEvents ? 'white' : '#004E7C',
-                        border: '2px solid #004E7C',
-                        borderRadius: '20px',
-                        padding: '8px 24px',
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      Past Events
-                    </button>
-                  </div>
-                )}
-
-                {activeEvents.length > 0 ? (() => {
+            {view === 'calendar' ? renderCalendar() : (activeEvents.length > 0 ? (() => {
                   let lastMonth = '';
                   const out = [];
                   activeEvents.forEach((event, _idx) => {
@@ -1805,10 +1965,7 @@
                     if (monthLbl && monthLbl !== lastMonth) {
                       lastMonth = monthLbl;
                       out.push(
-                        <div className="ev-month" key={'m-' + _idx}>
-                          <span>{monthLbl}</span>
-                          <div className="ev-ln"></div>
-                        </div>
+                        <h2 className="ev-month" key={'m-' + _idx}>{monthLbl}</h2>
                       );
                     }
 
@@ -1826,7 +1983,8 @@
                           tileMo: mo,
                           tileDy: DOW_ABBR[sch.dayOfWeek] || '',
                           title: event.title,
-                          timeText: [line.when, line.time].filter(Boolean).join(' · '),
+                          sessLabel: line.when,
+                          timeText: line.time || '',
                           whereText: line.where || '',
                           virtual: evLooksVirtual(line.where),
                           expired: false,
@@ -1844,7 +2002,10 @@
                           tileMo: tile ? tile.mo : '',
                           tileDy: tile ? tile.dy : '•',
                           title: label ? (event.title + ' · ' + label) : event.title,
+                          sessLabel: label || (row ? row.when : ds),
+                          whenText: row ? row.when : ds,
                           timeText: (row && row.time) ? row.time : (row ? row.when : ds),
+                          timeOnly: (row && row.time) ? row.time : '',
                           whereText: '',
                           virtual: evLooksVirtual(ds),
                           expired: row ? row.expired : false,
@@ -1858,6 +2019,7 @@
                         tileMo: 'INFO',
                         tileDy: 'Flyer',
                         title: event.title,
+                        whenText: evToIso(event.eventDate) ? _chipDate(evToIso(event.eventDate)) : 'Information',
                         timeText: event.eventDate ? formatDate(event.eventDate) : '',
                         whereText: '',
                         virtual: false,
@@ -1872,6 +2034,7 @@
                         tileMo: tile ? tile.mo : '',
                         tileDy: tile ? tile.dy : '•',
                         title: event.title,
+                        whenText: _chipDate(evToIso(event.eventDate)) || formatDate(event.eventDate),
                         timeText: formatDate(event.eventDate),
                         whereText: '',
                         virtual: false,
@@ -1881,358 +2044,293 @@
                     }
                     if (rows.length === 0) return;
 
+                    // Card chrome (website style): flyer on top, date chip,
+                    // Upcoming / Ongoing badge, title, location pin line.
+                    const canSign = (r) => !isPastEvents && _accepts && r.signup && !r.expired;
+                    const liveRow = rows.find(r => !r.expired) || rows[0];
+                    let chip;
+                    if (isRecurring) {
+                      const nx = evToIso(event._nextDate);
+                      chip = nx ? 'Next: ' + new Date(nx + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Ongoing program';
+                    } else {
+                      chip = [liveRow.whenText, liveRow.timeOnly].filter(Boolean).join(' · ') || liveRow.timeText || '';
+                    }
+                    const badge = isPastEvents ? ['Completed', 'st-badge ev-badge-past']
+                      : (isRecurring ? ['Ongoing', 'st-badge st-badge-on'] : ['Upcoming', 'st-badge st-badge-up']);
+                    const whereLine = event.location || (rows.length === 1 ? rows[0].whereText : '') || '';
+                    const anyVirtual = rows.some(r => r.virtual);
+                    const showImg = !!event.imageUrl && !_isPdf(event.imageUrl);
+                    const single = rows.length === 1;
+
                     out.push(
-                      <div className="ev-card" key={event.id || _idx} style={{ opacity: isPastEvents ? 0.85 : 1 }}>
-                        {rows.map((r) => (
-                          <div className={'ev-row' + (r.expired ? ' ev-expired' : '')} key={r.key}>
-                            <div className={'ev-tile ' + r.tileClass}>
-                              <span className="ev-mo">{r.tileMo}</span>
-                              <span className="ev-dy">{r.tileDy}</span>
-                            </div>
-                            <div className="ev-body" onClick={() => setSelectedEvent(event)}>
-                              <p className="ev-title">{r.title}</p>
-                              {r.timeText && (
-                                <div className="ev-line">
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D7A7A" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
-                                  {r.timeText}
-                                </div>
-                              )}
-                              {r.whereText && (
-                                <div className="ev-line">
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="2"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                                  {r.whereText}{r.virtual && <span className="ev-vpill">VIRTUAL</span>}
-                                </div>
-                              )}
-                              {!r.whereText && r.virtual && (
-                                <div className="ev-line">
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="2"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                                  Online <span className="ev-vpill">VIRTUAL</span>
-                                </div>
-                              )}
-                              {event.imageUrl && (
-                                <button type="button" className="ev-flyerlink" onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}>
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M14 2v6h6"></path></svg>
-                                  View Flyer
-                                </button>
-                              )}
-                            </div>
-                            {(!isPastEvents && _accepts && r.signup && !r.expired) ? (
-                              <div className="ev-aside">
-                                <button type="button" className="ev-signup" onClick={(e) => { e.stopPropagation(); r.signup(); }}>Sign Up</button>
-                              </div>
-                            ) : (
-                              <div className="ev-chevron" onClick={() => setSelectedEvent(event)}>
-                                {isSpecial && !isPastEvents && !r.expired && (
-                                  <span className="ev-inperson">Sign up<br />in person</span>
-                                )}
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
-                              </div>
-                            )}
+                      <article className={'ev-card' + (isPastEvents ? ' ev-past' : '')} key={event.id || _idx}>
+                        {showImg && (
+                          <button type="button" className="ev-img" onClick={() => setSelectedEvent(event)} aria-label={'View flyer and details: ' + (event.title || 'event')}>
+                            <img src={event.imageUrl} alt="" loading="lazy" onError={(e) => { e.currentTarget.parentNode.style.display = 'none'; }} />
+                          </button>
+                        )}
+                        <div className="ev-in">
+                          <div className="ev-meta">
+                            {chip && <span className="st-chip">{chip}</span>}
+                            <span className={badge[1]}>{badge[0]}</span>
                           </div>
-                        ))}
-                      </div>
+                          <h3 className="ev-title" onClick={() => setSelectedEvent(event)}>{event.title}</h3>
+                          {(whereLine || anyVirtual) && (
+                            <div className="ev-loc"><PinIcon />{whereLine || 'Online'}{anyVirtual && <span className="ev-vpill">Virtual</span>}</div>
+                          )}
+                          {!single && (
+                            <ul className="ev-sess">
+                              {rows.map((r) => (
+                                <li className={'ev-srow' + (r.expired ? ' ev-expired' : '')} key={r.key}>
+                                  <span className={'ev-sdate ' + r.tileClass}><b>{r.tileMo}</b>{r.tileDy}</span>
+                                  <span className="ev-stext" onClick={() => setSelectedEvent(event)}>
+                                    <strong>{r.sessLabel || r.title}</strong>
+                                    {[r.timeText !== r.sessLabel ? r.timeText : '', isRecurring ? r.whereText : ''].filter(Boolean).join(' · ')}
+                                  </span>
+                                  {canSign(r) && (
+                                    <button type="button" className="ev-signup" onClick={(e) => { e.stopPropagation(); r.signup(); }}>Sign Up</button>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {single && rows[0].expired && (
+                            <div className="ev-loc ev-expired-note">{rows[0].timeText} (date has passed)</div>
+                          )}
+                          {single && canSign(rows[0]) && (
+                            <button type="button" className="st-btn st-btn-primary" onClick={(e) => { e.stopPropagation(); rows[0].signup(); }}>Sign Up</button>
+                          )}
+                          {isSpecial && !isPastEvents && (
+                            <p className="ev-inperson">Sign up in person at the event table.</p>
+                          )}
+                          <button type="button" className="ev-more" onClick={() => setSelectedEvent(event)}>{event.imageUrl ? 'View flyer and details' : 'View details'} ›</button>
+                        </div>
+                      </article>
                     );
                   });
-                  return <div style={{ padding: '4px 4px 32px' }}>{out}</div>;
-                })() : null}
-              </>
+                  return <div className="ev-list">{out}</div>;
+                })() : (
+                  <div className="st-card ev-empty">
+                    <Calendar size={40} className="ev-empty-ic" />
+                    <h3>{isPastEvents ? 'No past events to show.' : 'No events scheduled at this time.'}</h3>
+                    <p>{isPastEvents ? 'Recent events appear here after they take place.' : 'Check back soon for upcoming events.'}</p>
+                  </div>
+                ))}
+
+            {/* News and Information: flyers, booths and ongoing flyer-only programs,
+                at the very bottom of Upcoming (the website shows these on its home page). */}
+            {view === 'upcoming' && newsItems.length > 0 && (
+              <section className="ev-news" id="news" aria-labelledby="ev-news-h">
+                <h2 className="ev-month" id="ev-news-h">News and Information</h2>
+                <p className="ev-news-sub">Announcements, resources, and ongoing programs.</p>
+                {newsItems.map((it) => {
+                  const iso = !it._ongoing ? evToIso(it.eventDate) : null;
+                  const chip = iso ? new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+                  const pdf = _isPdf(it.imageUrl);
+                  return (
+                    <button type="button" className="ev-ncard" key={'n-' + it.id} onClick={() => setNewsFlyer(it)} aria-label={'Open flyer: ' + (it.title || 'flyer')}>
+                      <span className="ev-nthumb">{pdf ? 'PDF' : <img src={it.imageUrl} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}</span>
+                      <span className="ev-nin">
+                        <span className="ev-meta">
+                          {chip ? <span className="st-chip">{chip}</span> : null}
+                          {it._ongoing ? <span className="st-badge st-badge-on">Ongoing</span> : <span className="st-badge ev-badge-info">Information</span>}
+                        </span>
+                        <span className="ev-title" style={{ display: 'block' }}>{it.title}</span>
+                        {it.location ? <span className="ev-loc"><PinIcon />{it.location}</span> : null}
+                      </span>
+                    </button>
+                  );
+                })}
+              </section>
             )}
 
-            {/* No Events */}
-            {currentEvents.length === 0 && pastEvents.length === 0 && (
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '24px',
-                padding: '48px',
-                textAlign: 'center',
-                border: '2px solid #004E7C'
-              }}>
-                <Calendar size={48} className="text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 text-lg">No events scheduled at this time.</p>
-                <p className="text-gray-500 text-sm mt-2">Check back soon for upcoming events!</p>
-              </div>
-            )}
-
-            {/* Back Button */}
-            <div className="mt-6 text-center pb-6">
-              <a 
-                href="index.html"
-                className="inline-flex items-center gap-2 text-[#004E7C] font-semibold hover:opacity-70 transition-opacity"
-              >
-                <ChevronLeft size={20} />
-                Back to Home
-              </a>
+            {/* Request an Event: the website's form; opens in the browser. */}
+            <div className="st-card ev-request">
+              <h3>Can't find what you're looking for?</h3>
+              <p>Ask us to bring a workshop or training to your school, group or community.</p>
+              <a className="st-btn st-btn-secondary" href="https://www.ldahawaii.org/events.html#request" target="_blank" rel="noopener noreferrer">Request an Event</a>
             </div>
+          </div></div>
+
+          {/* Support Our Mission */}
+          <div className="st-coral">
+            <h3>Support Our Mission</h3>
+            <p>Your generous donation helps us empower families through information, training, and advocacy.</p>
+            <a className="st-btn st-btn-white" href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" style={{ maxWidth: '320px', margin: '10px auto 0' }}>Donate Now</a>
           </div>
 
-          {/* Full-Screen Modal */}
+          {/* Event detail sheet */}
           {selectedEvent && (
-            <div 
-              onClick={() => setSelectedEvent(null)}
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background: 'url("background.png") no-repeat center center fixed',
-                backgroundSize: 'cover',
-                zIndex: 1000,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '20px'
-              }}
-            >
-              {/* Blur overlay */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)'
-              }}></div>
-              {/* Close Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedEvent(null);
-                }}
-                style={{
-                  position: 'fixed',
-                  top: 'calc(env(safe-area-inset-top) + 20px)',
-                  right: 'calc(env(safe-area-inset-right) + 20px)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  border: '2px solid #004E7C',
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 1002,
-                  color: '#004E7C',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                  padding: 0
-                }}
-              >
-                <X size={24} />
-              </button>
-
-              {/* Sheet body. This was gated on imageUrl, so an event with no
-                  flyer (a booth) opened a completely blank overlay. The gate now
-                  sits on the <img> alone and a details panel stands in for it. */}
-              {(
-                <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', position: 'relative', zIndex: 1001 }}>
-                  {selectedEvent.imageUrl ? (
-                    <img 
-                      src={selectedEvent.imageUrl}
-                      alt={selectedEvent.title}
-                      style={{
-                        maxWidth: '90%',
-                        maxHeight: '70vh',
-                        width: 'auto',
-                        height: 'auto',
-                        objectFit: 'contain',
-                        borderRadius: '8px'
-                      }}
-                    />
-                  ) : (
-                    <div style={{
-                      backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: '14px',
-                      padding: '22px 24px', maxWidth: '420px', textAlign: 'center',
-                      boxShadow: '0 4px 16px rgba(0,0,0,.25)'
-                    }}>
-                      <div style={{ fontSize: '17px', fontWeight: 800, color: '#004E7C', lineHeight: 1.3 }}>
-                        {selectedEvent.title}
-                      </div>
-                      {evToIso(selectedEvent.eventDate) && (
-                        <div style={{ marginTop: '8px', fontSize: '14px', color: '#334155' }}>
-                          {new Date(evToIso(selectedEvent.eventDate) + 'T00:00:00')
-                            .toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-                        </div>
-                      )}
-                      {selectedEvent.time && (
-                        <div style={{ marginTop: '3px', fontSize: '14px', color: '#334155' }}>{selectedEvent.time}</div>
-                      )}
-                      {selectedEvent.location && (
-                        <div style={{ marginTop: '3px', fontSize: '14px', color: '#334155' }}>{selectedEvent.location}</div>
-                      )}
-                      {selectedEvent.description && (
-                        <div style={{ marginTop: '10px', fontSize: '13.5px', color: '#475569', lineHeight: 1.45 }}>
-                          {selectedEvent.description}
-                        </div>
-                      )}
-                      <div style={{ marginTop: '12px', fontSize: '12px', color: '#94a3b8' }}>
-                        No flyer for this event.
-                      </div>
-                    </div>
+            <div className="st-ovl" onClick={() => setSelectedEvent(null)}>
+              <div className="st-sheet" role="dialog" aria-modal="true" aria-label={selectedEvent.title || 'Event details'} onClick={(e) => e.stopPropagation()}>
+                <div className="st-sheet-hd">
+                  <div className="st-sheet-ttl">
+                    <span className="st-sheet-eyebrow">{selectedEvent._isRecurring && !selectedEvent._isFlyerOnly ? 'Ongoing program' : 'Event details'}</span>
+                    <h2>{selectedEvent.title}</h2>
+                  </div>
+                  <button type="button" className="st-sheet-x" aria-label="Close" onClick={(e) => { e.stopPropagation(); setSelectedEvent(null); }}>
+                    <X size={22} />
+                  </button>
+                </div>
+                <div className="st-sheet-bd">
+                  {selectedEvent.imageUrl && !_isPdf(selectedEvent.imageUrl) && (
+                    <img className="ev-flyer" src={selectedEvent.imageUrl} alt={selectedEvent.title ? 'Flyer: ' + selectedEvent.title : 'Event flyer'} />
                   )}
-                  
+                  {selectedEvent.imageUrl && _isPdf(selectedEvent.imageUrl) && (
+                    <a className="st-btn st-btn-secondary" href={selectedEvent.imageUrl} target="_blank" rel="noopener noreferrer" style={{ marginBottom: '12px' }}>Open the flyer (PDF)</a>
+                  )}
+                  <div className="ev-facts">
+                    {selectedEvent._isRecurring && Array.isArray(selectedEvent.schedules) && selectedEvent.schedules.length > 0 ? (
+                      selectedEvent.schedules.map((sch, i) => {
+                        const line = formatScheduleLine(sch);
+                        if (!line) return null;
+                        return <div key={i} className="ev-fact"><Clock size={16} /><span><strong>{line.when}</strong> · {line.time}{line.where ? ' · ' + line.where : ''}</span></div>;
+                      })
+                    ) : (
+                      evToIso(selectedEvent.eventDate) && (
+                        <div className="ev-fact"><Calendar size={16} /><span>{new Date(evToIso(selectedEvent.eventDate) + 'T00:00:00')
+                          .toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span></div>
+                      )
+                    )}
+                    {selectedEvent.time && (
+                      <div className="ev-fact"><Clock size={16} /><span>{selectedEvent.time}</span></div>
+                    )}
+                    {selectedEvent.location && (
+                      <div className="ev-fact"><PinIcon /><span>{selectedEvent.location}</span></div>
+                    )}
+                  </div>
+                  {selectedEvent.description && (
+                    <p className="ev-desc">{convertUrlsToLinks(String(selectedEvent.description))}</p>
+                  )}
+
                   {/* Sign Up Button */}
-                  {!isPastEvents && (
+                  {detailOffersSignup && (
                     <>
-                      {selectedEvent.infoOnly === true ? null
-                        : selectedEvent.specialEvent === true ? (
+                      {selectedEvent.infoOnly === true ? (
+                        _safeExtUrl(selectedEvent.registrationUrl) ? (
+                          <a className="st-btn st-btn-primary" href={_safeExtUrl(selectedEvent.registrationUrl)} target="_blank" rel="noopener noreferrer">Register Now</a>
+                        ) : null
+                      ) : selectedEvent.specialEvent === true ? (
                         /* Screening / Outreach Booth — signing up happens at the
                            table on the day, so offer no form here either. */
-                        <div style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                          color: '#475569',
-                          border: '2px solid #D1D5DB',
-                          borderRadius: '12px',
-                          padding: '12px 24px',
-                          fontSize: '14px',
-                          textAlign: 'center',
-                          maxWidth: '400px'
-                        }}>
+                        <div className="ev-note">
                           Sign up in person — come see us at the table.
                         </div>
                       ) : selectedEvent._isRecurring && !selectedEvent._isFlyerOnly ? (
-                        /* Recurring program — teal sign-up button */
+                        /* Recurring program */
                         <button
+                          type="button"
+                          className="st-btn st-btn-primary ev-cta"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedEvent(null);
                             handleRecurringSignupClick(selectedEvent);
                           }}
-                          style={{
-                            backgroundColor: '#0D7A7A',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '12px',
-                            padding: '16px 48px',
-                            fontSize: '18px',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.backgroundColor = '#0a5f5f';
-                            e.currentTarget.style.transform = 'scale(1.05)';
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.backgroundColor = '#0D7A7A';
-                            e.currentTarget.style.transform = 'scale(1)';
-                          }}
                         >
-                          📝 Sign Up for Ongoing Program
+                          Sign Up for a Session
                         </button>
                       ) : selectedEvent.signupDates && selectedEvent.signupDates.length > 0 ? (
                         <button
+                          type="button"
+                          className="st-btn st-btn-primary ev-cta"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedEvent(null);
                             handleSignupClick(selectedEvent);
                           }}
-                          style={{
-                            backgroundColor: '#004E7C',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '12px',
-                            padding: '16px 48px',
-                            fontSize: '18px',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.backgroundColor = '#003A5D';
-                            e.currentTarget.style.transform = 'scale(1.05)';
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.backgroundColor = '#004E7C';
-                            e.currentTarget.style.transform = 'scale(1)';
-                          }}
                         >
-                          📝 Sign Up for This Event
+                          Sign Up for This Event
                         </button>
+                      ) : _safeExtUrl(selectedEvent.registrationUrl) ? (
+                        <a className="st-btn st-btn-primary" href={_safeExtUrl(selectedEvent.registrationUrl)} target="_blank" rel="noopener noreferrer">Register Now</a>
                       ) : (
-                        <div style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                          color: '#666',
-                          border: '2px solid #D1D5DB',
-                          borderRadius: '12px',
-                          padding: '12px 24px',
-                          fontSize: '14px',
-                          textAlign: 'center',
-                          maxWidth: '400px'
-                        }}>
-                          ℹ️ Signup not yet available for this event
+                        <div className="ev-note">
+                          Signup not yet available for this event.
                         </div>
                       )}
                     </>
                   )}
+                  <button type="button" className="st-btn st-btn-secondary" onClick={(e) => { e.stopPropagation(); setSelectedEvent(null); }}>Close</button>
                 </div>
-              )}
+              </div>
+            </div>
+          )}
+
+          {/* News and Information flyer viewer: the flyer on its own, clickable
+              flyerLinks spots (https only), no Sign Up. */}
+          {newsFlyer && (
+            <div className="st-ovl" onClick={() => setNewsFlyer(null)}>
+              <div className="st-sheet" role="dialog" aria-modal="true" aria-label={newsFlyer.title || 'Flyer'} onClick={(e) => e.stopPropagation()}>
+                <div className="st-sheet-hd">
+                  <div className="st-sheet-ttl">
+                    <span className="st-sheet-eyebrow">{newsFlyer._ongoing ? 'Ongoing' : 'News and Information'}</span>
+                    <h2>{newsFlyer.title}</h2>
+                  </div>
+                  <button type="button" className="st-sheet-x" aria-label="Close" onClick={(e) => { e.stopPropagation(); setNewsFlyer(null); }}>
+                    <X size={22} />
+                  </button>
+                </div>
+                <div className="st-sheet-bd">
+                  {_isPdf(newsFlyer.imageUrl) ? (
+                    <a className="st-btn st-btn-primary" href={newsFlyer.imageUrl} target="_blank" rel="noopener noreferrer" style={{ marginBottom: '12px' }}>Open the flyer (PDF)</a>
+                  ) : (
+                    <div className="ev-fv-img">
+                      <img src={newsFlyer.imageUrl} alt={newsFlyer.title ? 'Flyer: ' + newsFlyer.title : 'Flyer'} />
+                      {(Array.isArray(newsFlyer.flyerLinks) ? newsFlyer.flyerLinks : [])
+                        .filter(l => l && /^https:\/\//i.test(String(l.url || '')))
+                        .map((l, i) => {
+                          const pct = (v) => Math.max(0, Math.min(100, Number(v) || 0)) + '%';
+                          return (
+                            <a key={'s' + i} className="ev-spot" href={l.url} target="_blank" rel="noopener noreferrer"
+                               aria-label={l.label || 'Open link'} title={l.label || ''}
+                               style={{ left: pct(l.left), top: pct(l.top), width: pct(l.width), height: pct(l.height) }}></a>
+                          );
+                        })}
+                    </div>
+                  )}
+                  <button type="button" className="st-btn st-btn-secondary" onClick={(e) => { e.stopPropagation(); setNewsFlyer(null); }}>Close</button>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Signup Form Modal */}
           {showSignupModal && signupEvent && (
-            <div 
+            <div
+              className="st-ovl"
               onClick={() => !submitting && setShowSignupModal(false)}
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                zIndex: 2000,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '20px',
-                overflowY: 'auto'
-              }}
+              style={{ zIndex: 2000 }}
             >
-              <div 
+              <div
+                className="st-sheet"
+                role="dialog" aria-modal="true" aria-label={'Sign up: ' + (signupEvent.title || 'event')}
                 onClick={(e) => e.stopPropagation()}
-                style={{
-                  backgroundColor: 'white',
-                  borderRadius: '24px',
-                  padding: '32px',
-                  maxWidth: '600px',
-                  width: '100%',
-                  maxHeight: '90vh',
-                  overflowY: 'auto',
-                  position: 'relative',
-                  border: '3px solid #004E7C'
-                }}
               >
-                {/* Close Button */}
-                <button
-                  onClick={() => !submitting && setShowSignupModal(false)}
-                  disabled={submitting}
-                  style={{
-                    position: 'absolute',
-                    top: '16px',
-                    right: '16px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    color: '#004E7C',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    opacity: submitting ? 0.5 : 1,
-                    padding: '8px'
-                  }}
-                >
-                  <X size={24} />
-                </button>
+                <div className="st-sheet-hd">
+                  <div className="st-sheet-ttl">
+                    <span className="st-sheet-eyebrow">{submitSuccess ? 'Signed up' : 'Sign Up'}</span>
+                    <h2>{signupEvent.title}</h2>
+                  </div>
+                  {/* Close Button */}
+                  <button
+                    type="button"
+                    className="st-sheet-x"
+                    aria-label="Close"
+                    onClick={() => !submitting && setShowSignupModal(false)}
+                    disabled={submitting}
+                    style={{ cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.5 : 1 }}
+                  >
+                    <X size={22} />
+                  </button>
+                </div>
+                <div className="st-sheet-bd st-form">
 
                 {submitSuccess ? (
                   <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg,#0891B2,#06B6D4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
-                    <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
+                    <h2 style={{ color: '#0891B2', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
                       Mahalo! You're signed up.
                     </h2>
                     {lastSignupWasInlineReg ? (
@@ -2245,7 +2343,7 @@
                           borderRadius: '0 8px 8px 0', padding: '14px 18px',
                           margin: '0 auto 20px', maxWidth: '440px', textAlign: 'left'
                         }}>
-                          <p style={{ margin: '0 0 6px', color: '#004E7C', fontWeight: 700, fontSize: '14px' }}>Watch your email for reminders</p>
+                          <p style={{ margin: '0 0 6px', color: '#0891B2', fontWeight: 700, fontSize: '14px' }}>Watch your email for reminders</p>
                           <p style={{ margin: 0, color: '#1E293B', fontSize: '13.5px', lineHeight: 1.5 }}>
                             We will send you a reminder <strong>3 days before</strong> your session and again <strong>on the day of the session</strong>, with the Zoom link or location and anything you may need to bring.
                           </p>
@@ -2265,17 +2363,8 @@
                             setSubmitSuccess(false);
                             openRegistration(lastSignupDocId, lastSignupEventId, 'event', prefillStash || undefined);
                           }}
-                          style={{
-                            display: 'inline-block', padding: '14px 32px',
-                            background: 'linear-gradient(135deg, #004E7C, #0066a1)',
-                            color: 'white', border: 'none', borderRadius: '50px',
-                            fontWeight: '600', fontSize: '16px', cursor: 'pointer',
-                            transition: 'transform 0.15s, box-shadow 0.15s',
-                            boxShadow: '0 2px 8px rgba(0, 78, 124, 0.3)',
-                            marginBottom: '12px'
-                          }}
-                          onMouseOver={(e) => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,78,124,0.4)'; }}
-                          onMouseOut={(e) => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,78,124,0.3)'; }}
+                          type="button"
+                          className="st-btn st-btn-coral ev-cta"
                         >
                           Complete Registration
                         </button>
@@ -2284,56 +2373,41 @@
                     )}
                     <button
                       onClick={() => { setShowSignupModal(false); setSubmitSuccess(false); }}
-                      style={{
-                        padding: '10px 24px', backgroundColor: 'transparent',
-                        color: '#666', border: '1px solid #D1D5DB', borderRadius: '8px',
-                        fontSize: '14px', cursor: 'pointer', marginTop: '8px'
-                      }}
+                      type="button"
+                      className="st-btn st-btn-secondary"
                     >
                       Done
                     </button>
                   </div>
                 ) : capChecking ? (
                   <div style={{ padding: '30px 6px', textAlign: 'center' }}>
-                    <h2 style={{ color: '#004E7C', fontSize: '22px', fontWeight: 'bold', marginBottom: '10px', paddingRight: '40px' }}>
-                      {signupEvent.title}
-                    </h2>
-                    <p style={{ color: '#666', fontSize: '15px', margin: 0 }}>Checking availability&hellip;</p>
+                    <div className="spinner" style={{ margin: '0 auto 12px' }}></div>
+                    <p style={{ color: '#64748B', fontSize: '15px', margin: 0 }}>Checking availability&hellip;</p>
                   </div>
                 ) : capFull ? (
                   /* Full: show the same notice the website shows, and no form.
                      Until 2026-08-19 the app had no capacity check at all. */
                   <div style={{ padding: '10px 6px 6px' }}>
-                    <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', paddingRight: '40px' }}>
-                      {signupEvent.title}
-                    </h2>
-                    <p style={{ color: '#374151', fontSize: '16px', lineHeight: 1.6, margin: '0 0 18px' }}>
+                    <p style={{ color: '#B91C1C', fontSize: '17px', fontWeight: 600, lineHeight: 1.6, margin: '0 0 14px' }}>
                       This event is full.
                     </p>
                     <button
                       type="button"
+                      className="st-btn st-btn-secondary"
                       onClick={() => setShowSignupModal(false)}
-                      style={{
-                        padding: '10px 24px', backgroundColor: 'transparent',
-                        color: '#666', border: '1px solid #D1D5DB', borderRadius: '8px',
-                        fontSize: '14px', cursor: 'pointer'
-                      }}
                     >
                       Close
                     </button>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmitSignup}>
-                    <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '8px', paddingRight: '40px' }}>
-                      Sign Up for {signupEvent.title}
-                    </h2>
-                    <p style={{ color: '#666', fontSize: '14px', marginBottom: '24px' }}>
+                    <p className="st-req-note">
                       * Indicates required question
                     </p>
 
                     {/* Email — first field; on-blur lookup pre-fills Name + other fields (v48.1.0) */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Email Address *
                       </label>
                       <input
@@ -2368,14 +2442,14 @@
                         <div style={{ marginTop: '6px', fontSize: '13px', color: '#16A34A', fontWeight: 700 }}>Pre-filled from your account on file. You can edit anything below.</div>
                       ) : (
                         <div style={{ marginTop: '6px', fontSize: '13px' }}>
-                          <a href="javascript:void(0)" onClick={requestPrefillCode} style={{ color: '#1a73e8', textDecoration: 'none', fontWeight: 600 }}>Returning family? Pre-fill from email</a>
+                          <a href="javascript:void(0)" onClick={requestPrefillCode} style={{ color: '#0891B2', textDecoration: 'none', fontWeight: 600 }}>Returning family? Pre-fill from email</a>
                         </div>
                       )}
                     </div>
 
                     {/* Name — pre-filled by email-blur lookup for returning users */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Full Name *
                       </label>
                       <input
@@ -2399,18 +2473,18 @@
 
                     {/* Registrant Type (role captured at signup, v47.11) */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         I am a... *
                       </label>
-                      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {/* Parent Talk Cafe is Parent/Guardian-only */}
                         {(/parent\s*talk\s*caf[eé]/i.test((signupEvent && signupEvent.title) || '') ? ['Parent/Guardian'] : ['Parent/Guardian', 'Professional', 'Student', 'Community Member']).map(opt => (
-                          <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
+                          <label key={opt} className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
                             <input type="radio" name="oneTimeRegistrantType" value={opt} required
                               checked={formData.registrantType === opt}
                               onChange={(e) => handleFormChange('registrantType', e.target.value)}
                               disabled={submitting}
-                              style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                              style={{ width: '18px', height: '18px', accentColor: '#0891B2' }}
                             />
                             <span style={{ fontSize: '14px', color: '#374151' }}>{opt}</span>
                           </label>
@@ -2422,13 +2496,13 @@
                         When role !== Parent/Guardian, we collect registration info here
                         so the signup can be immediately confirmed without a follow-up email. */}
                     {formData.registrantType && !roleNeedsRegistration(formData.registrantType) && (
-                      <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '12px', padding: '18px', marginBottom: '20px' }}>
-                        <h3 style={{ color: '#004E7C', fontSize: '15px', fontWeight: 'bold', marginBottom: '4px', marginTop: 0 }}>Tell us a bit more</h3>
+                      <div style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: '12px', padding: '18px', marginBottom: '20px' }}>
+                        <h3 style={{ color: '#0891B2', fontSize: '15px', fontWeight: 'bold', marginBottom: '4px', marginTop: 0 }}>Tell us a bit more</h3>
                         <p style={{ color: '#555', fontSize: '13px', marginBottom: '16px' }}>This helps us track training impact. Your signup will be confirmed immediately.</p>
 
                         {/* Address */}
                         <div style={{ marginBottom: '14px' }}>
-                          <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Street Address</label>
+                          <label style={{ display: 'block', color: '#0891B2', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Street Address</label>
                           <input type="text" value={formData.streetAddress}
                             onChange={(e) => handleFormChange('streetAddress', e.target.value)}
                             disabled={submitting} placeholder="Your answer"
@@ -2436,14 +2510,14 @@
                         </div>
                         <div style={{ display: 'flex', gap: '12px', marginBottom: '14px' }}>
                           <div style={{ flex: 2 }}>
-                            <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>City <span style={{ color: '#DC2626' }}>*</span></label>
+                            <label style={{ display: 'block', color: '#0891B2', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>City <span style={{ color: '#DC2626' }}>*</span></label>
                             <input type="text" required value={formData.city}
                               onChange={(e) => handleFormChange('city', e.target.value)}
                               disabled={submitting} placeholder="Your answer"
                               style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: submitting ? 0.6 : 1 }} />
                           </div>
                           <div style={{ flex: 1 }}>
-                            <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Zip Code <span style={{ color: '#DC2626' }}>*</span></label>
+                            <label style={{ display: 'block', color: '#0891B2', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Zip Code <span style={{ color: '#DC2626' }}>*</span></label>
                             <input type="text" required value={formData.zipCode}
                               onChange={(e) => handleFormChange('zipCode', e.target.value)}
                               disabled={submitting} placeholder="96XXX"
@@ -2453,7 +2527,7 @@
 
                         {/* Reason for Attending */}
                         <div style={{ marginBottom: '14px' }}>
-                          <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Reason for Attending <span style={{ color: '#DC2626' }}>*</span></label>
+                          <label style={{ display: 'block', color: '#0891B2', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Reason for Attending <span style={{ color: '#DC2626' }}>*</span></label>
                           <select required value={formData.reasonForAttending}
                             onChange={(e) => handleFormChange('reasonForAttending', e.target.value)}
                             disabled={submitting}
@@ -2467,10 +2541,10 @@
 
                         {/* Prior Training */}
                         <div style={{ marginBottom: '14px' }}>
-                          <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Prior LDAH training in the past 12 months?</label>
-                          <div style={{ display: 'flex', gap: '16px' }}>
+                          <label style={{ display: 'block', color: '#0891B2', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Prior LDAH training in the past 12 months?</label>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                             {['No', 'Yes'].map(val => (
-                              <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
+                              <label key={val} className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
                                 <input type="radio" name="inlinePriorTraining" value={val}
                                   checked={formData.priorTraining === val}
                                   onChange={(e) => handleFormChange('priorTraining', e.target.value)}
@@ -2482,7 +2556,7 @@
                           </div>
                           {formData.priorTraining === 'Yes' && (
                             <div style={{ marginTop: '10px', paddingLeft: '24px' }}>
-                              <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '13px' }}>Date of last training</label>
+                              <label style={{ display: 'block', color: '#0891B2', fontWeight: '600', marginBottom: '6px', fontSize: '13px' }}>Date of last training</label>
                               <input type="date" value={formData.priorTrainingDate}
                                 onChange={(e) => handleFormChange('priorTrainingDate', e.target.value)}
                                 disabled={submitting}
@@ -2493,7 +2567,7 @@
 
                         {/* How Heard */}
                         <div style={{ marginBottom: '14px' }}>
-                          <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>How did you hear about this training? <span style={{ color: '#DC2626' }}>*</span></label>
+                          <label style={{ display: 'block', color: '#0891B2', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>How did you hear about this training? <span style={{ color: '#DC2626' }}>*</span></label>
                           <select required value={formData.howHeard}
                             onChange={(e) => {
                               const v = e.target.value;
@@ -2509,7 +2583,7 @@
                           </select>
                           {formData.howHeard === 'Other' && (
                             <div style={{ marginTop: '10px' }}>
-                              <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '13px' }}>Please specify <span style={{ color: '#DC2626' }}>*</span></label>
+                              <label style={{ display: 'block', color: '#0891B2', fontWeight: '600', marginBottom: '6px', fontSize: '13px' }}>Please specify <span style={{ color: '#DC2626' }}>*</span></label>
                               <input type="text" required value={formData.howHeardOther} maxLength="200"
                                 onChange={(e) => handleFormChange('howHeardOther', e.target.value)}
                                 disabled={submitting} placeholder="Tell us how you heard about us"
@@ -2520,7 +2594,7 @@
 
                         {/* Accommodations */}
                         <div style={{ marginBottom: '0' }}>
-                          <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Accommodations Needed</label>
+                          <label style={{ display: 'block', color: '#0891B2', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>Accommodations Needed</label>
                           <textarea value={formData.accommodations}
                             onChange={(e) => handleFormChange('accommodations', e.target.value)}
                             disabled={submitting} rows="3"
@@ -2532,7 +2606,7 @@
 
                     {/* Phone */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Phone Number (best to text or call) *
                       </label>
                       <input
@@ -2560,7 +2634,7 @@
                         <a href="#" onClick={(e) => { e.preventDefault(); setShowSecondParent(true); }} style={{ fontSize: '.9rem', color: '#0891B2', textDecoration: 'none', fontWeight: 600 }}>+ Add a second parent/guardian (optional)</a>
                       ) : (
                         <div>
-                          <div style={{ fontWeight: 600, marginBottom: '6px', color: '#004E7C' }}>Second parent / guardian</div>
+                          <div style={{ fontWeight: 600, marginBottom: '6px', color: '#0891B2' }}>Second parent / guardian</div>
                           <input type="text" placeholder="First name" value={secondParent.firstName} onChange={(e) => setSecondParent(prev => ({ ...prev, firstName: e.target.value }))} style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', marginBottom: '8px' }} />
                           <input type="text" placeholder="Last name" value={secondParent.lastName} onChange={(e) => setSecondParent(prev => ({ ...prev, lastName: e.target.value }))} style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', marginBottom: '8px' }} />
                           <input type="email" placeholder="Email" value={secondParent.email} onChange={(e) => setSecondParent(prev => ({ ...prev, email: e.target.value }))} style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px' }} />
@@ -2570,12 +2644,12 @@
 
                     {/* Preferred Contact Method */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Preferred Method of Contact *
                       </label>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {['Email', 'Phone call', 'Text'].map(method => (
-                          <label key={method} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
+                          <label key={method} className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
                             <input
                               type="radio"
                               name="preferredContact"
@@ -2601,8 +2675,8 @@
                       if (nonExpired.length === 1) {
                         return (
                           <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Event Date</label>
-                            <div style={{ padding: '10px 12px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #e0f2fe', color: '#0369a1', fontWeight: '600', fontSize: '14px' }}>
+                            <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Event Date</label>
+                            <div style={{ padding: '10px 12px', background: '#FFFBEB', borderRadius: '8px', border: '1px solid #E2E8F0', color: '#0E7490', fontWeight: '600', fontSize: '14px' }}>
                               {nonExpired[0]}
                             </div>
                           </div>
@@ -2611,14 +2685,14 @@
                       if (nonExpired.length === 0) return null;
                       return (
                         <div style={{ marginBottom: '20px' }}>
-                          <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                          <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                             Select the dates you're available to attend *
                           </label>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {allDates.map((date, index) => {
                               const expired = isSignupDateExpired(date);
                               return (
-                                <label key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: (submitting || expired) ? 'not-allowed' : 'pointer', opacity: expired ? 0.6 : 1 }}>
+                                <label key={index} className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: (submitting || expired) ? 'not-allowed' : 'pointer', opacity: expired ? 0.6 : 1 }}>
                                   <input
                                     type="checkbox"
                                     checked={formData.selectedDates.includes(date)}
@@ -2645,7 +2719,7 @@
                       <>
                         {signupEvent.customQuestions.map((question, index) => (
                           <div key={index} style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px', lineHeight: '1.6' }}>
+                            <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px', lineHeight: '1.6' }}>
                               {convertUrlsToLinks(question)}
                             </label>
                             <textarea
@@ -2678,7 +2752,7 @@
 
                     {/* Special Accommodations */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Any additional comments or special accommodations we should know about?
                       </label>
                       <textarea
@@ -2703,12 +2777,12 @@
                     {/* Participation Type — hidden when showGroupField is explicitly false */}
                     {signupEvent.showGroupField !== false && (
                       <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                           Are you attending on your own, or with others? *
                         </label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           {[['Individual', 'Just me'], ['Group', 'Me and others']].map(([type, optLabel]) => (
-                            <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
+                            <label key={type} className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: submitting ? 'not-allowed' : 'pointer' }}>
                               <input
                                 type="radio"
                                 name="participationType"
@@ -2731,7 +2805,7 @@
                         before the radios have been touched, same as W2. */}
                     {signupEvent.showGroupField !== false && (formData.participationType || 'Group') === 'Group' && (
                       <div style={{ marginBottom: '20px', paddingLeft: '26px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                           How many participants? *
                         </label>
                         <input
@@ -2756,7 +2830,7 @@
                     )}
 
                     {/* Submit Buttons */}
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                    <div className="st-actions" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                       <button
                         type="button"
                         onClick={() => setShowSignupModal(false)}
@@ -2764,8 +2838,8 @@
                         style={{
                           padding: '12px 24px',
                           backgroundColor: 'white',
-                          color: '#004E7C',
-                          border: '2px solid #004E7C',
+                          color: '#0891B2',
+                          border: '2px solid #0891B2',
                           borderRadius: '8px',
                           fontSize: '14px',
                           fontWeight: 'bold',
@@ -2781,7 +2855,7 @@
                         disabled={submitting || formData.selectedDates.length === 0}
                         style={{
                           padding: '12px 24px',
-                          backgroundColor: (submitting || formData.selectedDates.length === 0) ? '#9CA3AF' : '#004E7C',
+                          backgroundColor: (submitting || formData.selectedDates.length === 0) ? '#9CA3AF' : '#0891B2',
                           color: 'white',
                           border: 'none',
                           borderRadius: '8px',
@@ -2796,6 +2870,7 @@
                     </div>
                   </form>
                 )}
+                </div>
               </div>
             </div>
           )}
@@ -2803,43 +2878,40 @@
           {/* ── Recurring Program Signup Modal ──────────────────────────────── */}
           {showRecurringModal && recurringSignupEvent && (
             <div
+              className="st-ovl"
               onClick={() => !recurringSubmitting && setShowRecurringModal(false)}
-              style={{
-                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-                backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 2000,
-                display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-                padding: '20px', overflowY: 'auto'
-              }}
+              style={{ zIndex: 2000 }}
             >
               <div
+                className="st-sheet"
+                role="dialog" aria-modal="true" aria-label={'Sign up: ' + (recurringSignupEvent.title || 'program')}
                 onClick={(e) => e.stopPropagation()}
-                style={{
-                  backgroundColor: 'white', borderRadius: '24px', padding: '32px',
-                  maxWidth: '600px', width: '100%',
-                  position: 'relative', border: '3px solid #0D7A7A',
-                  marginTop: '20px', marginBottom: '20px'
-                }}
               >
-                {/* Close button */}
-                <button
-                  onClick={() => !recurringSubmitting && setShowRecurringModal(false)}
-                  disabled={recurringSubmitting}
-                  style={{
-                    position: 'absolute', top: '16px', right: '16px',
-                    backgroundColor: 'transparent', border: 'none', color: '#0D7A7A',
-                    cursor: recurringSubmitting ? 'not-allowed' : 'pointer',
-                    opacity: recurringSubmitting ? 0.5 : 1, padding: '8px'
-                  }}
-                >
-                  <X size={24} />
-                </button>
+                <div className="st-sheet-hd">
+                  <div className="st-sheet-ttl">
+                    <span className="st-sheet-eyebrow">{recurringSubmitSuccess ? 'Signed up' : 'Sign Up for a Session'}</span>
+                    <h2>{recurringSignupEvent.title}</h2>
+                  </div>
+                  {/* Close button */}
+                  <button
+                    type="button"
+                    className="st-sheet-x"
+                    aria-label="Close"
+                    onClick={() => !recurringSubmitting && setShowRecurringModal(false)}
+                    disabled={recurringSubmitting}
+                    style={{ cursor: recurringSubmitting ? 'not-allowed' : 'pointer', opacity: recurringSubmitting ? 0.5 : 1 }}
+                  >
+                    <X size={22} />
+                  </button>
+                </div>
+                <div className="st-sheet-bd st-form">
 
                 {recurringSubmitSuccess ? (
                   <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg,#0891B2,#06B6D4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
-                    <h2 style={{ color: '#0D7A7A', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
+                    <h2 style={{ color: '#0891B2', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
                       Mahalo! You're signed up.
                     </h2>
                     <p style={{ color: '#666', fontSize: '16px', marginBottom: '24px' }}>
@@ -2851,45 +2923,30 @@
                         setRecurringSubmitSuccess(false);
                         openRegistration(recurringLastSignupDocId, lastSignupEventId, 'recurring', prefillStash || undefined);
                       }}
-                      style={{
-                        display: 'inline-block', padding: '14px 32px',
-                        background: 'linear-gradient(135deg, #004E7C, #0066a1)',
-                        color: 'white', border: 'none', borderRadius: '50px',
-                        fontWeight: '600', fontSize: '16px', cursor: 'pointer',
-                        transition: 'transform 0.15s, box-shadow 0.15s',
-                        boxShadow: '0 2px 8px rgba(0, 78, 124, 0.3)',
-                        marginBottom: '12px'
-                      }}
-                      onMouseOver={(e) => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,78,124,0.4)'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,78,124,0.3)'; }}
+                      type="button"
+                      className="st-btn st-btn-coral ev-cta"
                     >
                       Complete Registration
                     </button>
                     <br />
                     <button
                       onClick={() => { setShowRecurringModal(false); setRecurringSubmitSuccess(false); }}
-                      style={{
-                        padding: '10px 24px', backgroundColor: 'transparent',
-                        color: '#666', border: '1px solid #D1D5DB', borderRadius: '8px',
-                        fontSize: '14px', cursor: 'pointer', marginTop: '8px'
-                      }}
+                      type="button"
+                      className="st-btn st-btn-secondary"
                     >
                       Done
                     </button>
                   </div>
                 ) : (
                   <form onSubmit={handleRecurringSubmit}>
-                    <h2 style={{ color: '#0D7A7A', fontSize: '22px', fontWeight: 'bold', marginBottom: '6px', paddingRight: '40px' }}>
-                      Sign Up: {recurringSignupEvent.title}
-                    </h2>
-                    <p style={{ color: '#666', fontSize: '14px', marginBottom: '24px' }}>
+                    <p className="st-req-note">
                       * Indicates required question
                     </p>
 
                     {/* ── Contact Info ── */}
                     {/* Email — first field; consistent with one-time form (v48.1.0) */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Email Address *
                       </label>
                       <input
@@ -2905,7 +2962,7 @@
 
                     {/* Full Name */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Your Full Name (Parent/Guardian) *
                       </label>
                       <input
@@ -2921,43 +2978,43 @@
 
                     {/* Registrant Type */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         I am a... *
                       </label>
-                      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <label className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
                           <input type="radio" name="registrantType" value="Parent/Guardian" required
                             checked={recurringFormData.registrantType === 'Parent/Guardian'}
                             onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
                             disabled={recurringSubmitting}
-                            style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                            style={{ width: '18px', height: '18px', accentColor: '#0891B2' }}
                           />
                           <span style={{ fontSize: '14px', color: '#374151' }}>Parent / Guardian</span>
                         </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                        <label className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
                           <input type="radio" name="registrantType" value="Professional" required
                             checked={recurringFormData.registrantType === 'Professional'}
                             onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
                             disabled={recurringSubmitting}
-                            style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                            style={{ width: '18px', height: '18px', accentColor: '#0891B2' }}
                           />
                           <span style={{ fontSize: '14px', color: '#374151' }}>Professional</span>
                         </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                        <label className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
                           <input type="radio" name="registrantType" value="Student" required
                             checked={recurringFormData.registrantType === 'Student'}
                             onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
                             disabled={recurringSubmitting}
-                            style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                            style={{ width: '18px', height: '18px', accentColor: '#0891B2' }}
                           />
                           <span style={{ fontSize: '14px', color: '#374151' }}>Student</span>
                         </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                        <label className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
                           <input type="radio" name="registrantType" value="Community Member" required
                             checked={recurringFormData.registrantType === 'Community Member'}
                             onChange={(e) => handleRecurringFormChange('registrantType', e.target.value)}
                             disabled={recurringSubmitting}
-                            style={{ width: '18px', height: '18px', accentColor: '#0D7A7A' }}
+                            style={{ width: '18px', height: '18px', accentColor: '#0891B2' }}
                           />
                           <span style={{ fontSize: '14px', color: '#374151' }}>Community Member</span>
                         </label>
@@ -2966,7 +3023,7 @@
 
                     {/* Phone */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Phone Number *
                       </label>
                       <input
@@ -2992,7 +3049,7 @@
                         <a href="#" onClick={(e) => { e.preventDefault(); setShowSecondParent(true); }} style={{ fontSize: '.9rem', color: '#0891B2', textDecoration: 'none', fontWeight: 600 }}>+ Add a second parent/guardian (optional)</a>
                       ) : (
                         <div>
-                          <div style={{ fontWeight: 600, marginBottom: '6px', color: '#004E7C' }}>Second parent / guardian</div>
+                          <div style={{ fontWeight: 600, marginBottom: '6px', color: '#0891B2' }}>Second parent / guardian</div>
                           <input type="text" placeholder="First name" value={secondParent.firstName} onChange={(e) => setSecondParent(prev => ({ ...prev, firstName: e.target.value }))} style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', marginBottom: '8px' }} />
                           <input type="text" placeholder="Last name" value={secondParent.lastName} onChange={(e) => setSecondParent(prev => ({ ...prev, lastName: e.target.value }))} style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', marginBottom: '8px' }} />
                           <input type="email" placeholder="Email" value={secondParent.email} onChange={(e) => setSecondParent(prev => ({ ...prev, email: e.target.value }))} style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px' }} />
@@ -3002,12 +3059,12 @@
 
                     {/* Preferred Contact */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Preferred Method of Contact *
                       </label>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {['Email', 'Phone call', 'Text'].map(method => (
-                          <label key={method} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <label key={method} className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
                             <input
                               type="radio" name="recurringPreferredContact" value={method} required
                               checked={recurringFormData.preferredContact === method}
@@ -3022,17 +3079,17 @@
                     </div>
 
                     {/* ── Student Information Box ── */}
-                    <div style={{
-                      backgroundColor: '#f0fafa', border: '2px solid #0D7A7A',
-                      borderRadius: '12px', padding: '16px', marginBottom: '20px'
+                    <div className="st-fbox" style={{
+                      backgroundColor: '#FFFBEB', border: '1px solid #FEF3C7',
+                      borderRadius: '14px', padding: '16px', marginBottom: '20px'
                     }}>
-                      <h3 style={{ color: '#0D7A7A', fontWeight: 'bold', marginBottom: '16px', fontSize: '15px', margin: '0 0 16px 0' }}>
+                      <h3 style={{ color: '#0891B2', fontWeight: 'bold', marginBottom: '16px', fontSize: '15px', margin: '0 0 16px 0' }}>
                         Student Information
                       </h3>
 
                       {/* Student Name */}
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
                           Student's Name *
                         </label>
                         <input type="text" required
@@ -3040,7 +3097,7 @@
                           onChange={(e) => handleRecurringFormChange('studentName', e.target.value)}
                           onBlur={(e) => handleRecurringFormChange('studentName', window.LDAHFormat ? window.LDAHFormat.formatNameSmart(e.target.value) : e.target.value)}
                           disabled={recurringSubmitting} placeholder="First and last name"
-                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0891B2', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
                         />
                       </div>
 
@@ -3048,7 +3105,7 @@
                           is painful 10+ years back). Combined into YYYY-MM-DD on every change
                           so recurringFormData.dob stays the canonical value. */}
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
                           Date of Birth *
                         </label>
                         {(() => {
@@ -3089,7 +3146,7 @@
                           for (let y = cy; y >= cy - 100; y--) years.push(y);
                           const days = [];
                           for (let d = 1; d <= 31; d++) days.push(d < 10 ? '0' + d : String(d));
-                          const selStyle = { padding: '10px 8px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', background: '#fff', minWidth: 0, boxSizing: 'border-box', opacity: recurringSubmitting ? 0.6 : 1 };
+                          const selStyle = { padding: '10px 8px', border: '1px solid #0891B2', borderRadius: '8px', fontSize: '14px', background: '#fff', minWidth: 0, boxSizing: 'border-box', opacity: recurringSubmitting ? 0.6 : 1 };
                           return (
                             <div style={{ display: 'flex', gap: '6px' }}>
                               <select required value={mV} disabled={recurringSubmitting}
@@ -3117,72 +3174,72 @@
 
                       {/* Student ID */}
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
                           Student ID# *
                         </label>
                         <input type="text" required
                           value={recurringFormData.studentId}
                           onChange={(e) => handleRecurringFormChange('studentId', e.target.value)}
                           disabled={recurringSubmitting} placeholder="Student ID number"
-                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0891B2', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
                         />
                       </div>
 
                       {/* Grade */}
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
                           Grade *
                         </label>
                         <input type="text" required
                           value={recurringFormData.grade}
                           onChange={(e) => handleRecurringFormChange('grade', e.target.value)}
                           disabled={recurringSubmitting} placeholder="e.g. 3rd, 8th, 12th"
-                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0891B2', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
                         />
                       </div>
 
                       {/* Current School */}
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
                           Current School *
                         </label>
                         <input type="text" required
                           value={recurringFormData.currentSchool}
                           onChange={(e) => handleRecurringFormChange('currentSchool', e.target.value)}
                           disabled={recurringSubmitting} placeholder="School name"
-                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0891B2', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
                         />
                       </div>
 
                       {/* IEP Annual Review Date */}
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
                           IEP Annual Review Date *
                         </label>
                         <input type="date" required
                           value={recurringFormData.iepReviewDate}
                           onChange={(e) => handleRecurringFormChange('iepReviewDate', e.target.value)}
                           disabled={recurringSubmitting}
-                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0891B2', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
                         />
                       </div>
 
                       {/* Reevaluation Date */}
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
                           Reevaluation Date *
                         </label>
                         <input type="date" required
                           value={recurringFormData.reevDate}
                           onChange={(e) => handleRecurringFormChange('reevDate', e.target.value)}
                           disabled={recurringSubmitting}
-                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0891B2', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
                         />
                       </div>
 
                       {/* Care Coordinator */}
                       <div>
-                        <label style={{ display: 'block', color: '#0D7A7A', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>
                           Care Coordinator *
                         </label>
                         <input type="text" required
@@ -3190,14 +3247,14 @@
                           onChange={(e) => handleRecurringFormChange('careCoordinator', e.target.value)}
                           onBlur={(e) => handleRecurringFormChange('careCoordinator', window.LDAHFormat ? window.LDAHFormat.formatNameSmart(e.target.value) : e.target.value)}
                           disabled={recurringSubmitting} placeholder="Care coordinator name"
-                          style={{ width: '100%', padding: '10px', border: '1px solid #0D7A7A', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                          style={{ width: '100%', padding: '10px', border: '1px solid #0891B2', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
                         />
                       </div>
                     </div>
 
                     {/* ── Session Selection ── */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Select ONE session you will be attending *
                       </label>
                       {(() => {
@@ -3217,13 +3274,13 @@
                         const isClosed = !isFull && closed === true;
                         const isBlocked = isFull || isClosed;
                         return (
-                          <label key={i} style={{
+                          <label key={i} className={'st-opt st-sess' + (isFull ? ' is-full' : '') + (isClosed ? ' is-closed' : '')} style={{
                             display: 'flex', alignItems: 'flex-start', gap: '8px',
-                            padding: '10px 12px', marginBottom: '8px', borderRadius: '8px',
-                            background: isFull ? '#fee2e2' : (isClosed ? '#f3f4f6' : '#f0f9ff'),
-                            border: `1px solid ${isFull ? '#fecaca' : (isClosed ? '#e5e7eb' : '#e0f2fe')}`,
+                            padding: '10px 12px', marginBottom: '8px', borderRadius: '10px',
+                            background: isFull ? '#FEF2F2' : (isClosed ? '#F8FAFC' : '#fff'),
+                            border: `1.5px solid ${isFull ? '#FECACA' : '#E2E8F0'}`,
                             cursor: isBlocked || recurringSubmitting ? 'not-allowed' : 'pointer',
-                            opacity: isBlocked ? 0.6 : 1
+                            opacity: isClosed ? 0.65 : 1
                           }}>
                             <input
                               type={isConnectGen ? 'radio' : 'checkbox'}
@@ -3240,13 +3297,13 @@
                               disabled={recurringSubmitting || isBlocked}
                               style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0, cursor: isBlocked ? 'not-allowed' : 'pointer' }}
                             />
-                            <span style={{ fontSize: '14px', color: isFull ? '#991b1b' : (isClosed ? '#6B7280' : '#374151'), lineHeight: '1.5' }}>
+                            <span style={{ fontSize: '14px', color: isFull ? '#B91C1C' : (isClosed ? '#64748B' : '#1E293B'), lineHeight: '1.5', textDecoration: isFull ? 'line-through' : 'none' }}>
                               {display}
                               {isFull && (
-                                <span style={{ background: '#DC2626', color: 'white', padding: '1px 8px', borderRadius: '50px', fontSize: '11px', fontWeight: 700, marginLeft: '6px' }}>FULL</span>
+                                <span style={{ color: '#B91C1C', fontWeight: 700, fontSize: '12px', letterSpacing: '.04em', marginLeft: '6px', display: 'inline-block', textDecoration: 'none' }}>FULL</span>
                               )}
                               {isClosed && (
-                                <span style={{ background: '#6B7280', color: 'white', padding: '1px 8px', borderRadius: '50px', fontSize: '11px', fontWeight: 700, marginLeft: '6px' }}>Closed</span>
+                                <span style={{ background: '#64748B', color: 'white', padding: '1px 8px', borderRadius: '50px', fontSize: '11px', fontWeight: 700, marginLeft: '6px' }}>Closed</span>
                               )}
                             </span>
                           </label>
@@ -3292,12 +3349,12 @@
                     {recurringSignupEvent.showGroupField !== false && (
                       <>
                         <div style={{ marginBottom: '20px' }}>
-                          <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                          <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                             Are you attending on your own, or with others? *
                           </label>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {[['Individual', 'Just me'], ['Group', 'Me and others']].map(([type, optLabel]) => (
-                              <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                              <label key={type} className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
                                 <input
                                   type="radio" name="recurringParticipationType" value={type} required
                                   checked={(recurringFormData.participationType || 'Group') === type}
@@ -3312,7 +3369,7 @@
                         </div>
                         {recurringFormData.participationType === 'Group' && (
                           <div style={{ marginBottom: '20px', paddingLeft: '26px' }}>
-                            <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                            <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                               Group name and number of members? *
                             </label>
                             <div style={{ display: 'flex', gap: '12px' }}>
@@ -3337,18 +3394,18 @@
                     {/* ── Returning Connect-Gen Family (CG only) ── */}
                     {recurringSignupEvent.zoomMode === 'program' && (
                       <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                           Have you ever participated in a Connect-Gen session before? *
                         </label>
-                        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                           {['Yes', 'No'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
+                            <label key={opt} className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: recurringSubmitting ? 'not-allowed' : 'pointer' }}>
                               <input
                                 type="radio" name="recurringPriorCG" value={opt} required
                                 checked={recurringFormData.priorConnectGen === opt}
                                 onChange={(e) => handleRecurringFormChange('priorConnectGen', e.target.value)}
                                 disabled={recurringSubmitting}
-                                style={{ width: '18px', height: '18px', accentColor: '#0369a1' }}
+                                style={{ width: '18px', height: '18px', accentColor: '#0E7490' }}
                               />
                               <span style={{ fontSize: '14px', color: '#374151' }}>{opt}</span>
                             </label>
@@ -3359,7 +3416,7 @@
 
                     {/* ── Additional Comments ── */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                         Any additional comments or accommodations we should know about?
                       </label>
                       <textarea
@@ -3377,14 +3434,14 @@
                     </div>
 
                     {/* ── Submit Buttons ── */}
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                    <div className="st-actions" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                       <button
                         type="button"
                         onClick={() => setShowRecurringModal(false)}
                         disabled={recurringSubmitting}
                         style={{
-                          padding: '12px 24px', backgroundColor: 'white', color: '#0D7A7A',
-                          border: '2px solid #0D7A7A', borderRadius: '8px', fontSize: '14px',
+                          padding: '12px 24px', backgroundColor: 'white', color: '#0891B2',
+                          border: '2px solid #0891B2', borderRadius: '8px', fontSize: '14px',
                           fontWeight: 'bold', cursor: recurringSubmitting ? 'not-allowed' : 'pointer',
                           opacity: recurringSubmitting ? 0.5 : 1, transition: 'all 0.2s'
                         }}
@@ -3396,7 +3453,7 @@
                         disabled={recurringSubmitting || recurringFormData.selectedSessions.length === 0}
                         style={{
                           padding: '12px 24px',
-                          backgroundColor: (recurringSubmitting || recurringFormData.selectedSessions.length === 0) ? '#9CA3AF' : '#0D7A7A',
+                          backgroundColor: (recurringSubmitting || recurringFormData.selectedSessions.length === 0) ? '#9CA3AF' : '#0891B2',
                           color: 'white', border: 'none', borderRadius: '8px',
                           fontSize: '14px', fontWeight: 'bold', transition: 'all 0.2s',
                           cursor: (recurringSubmitting || recurringFormData.selectedSessions.length === 0) ? 'not-allowed' : 'pointer'
@@ -3407,6 +3464,7 @@
                     </div>
                   </form>
                 )}
+                </div>
               </div>
             </div>
           )}
@@ -3415,41 +3473,38 @@
           {/* ── Registration Modal ──────────────────────────────────────────── */}
           {showRegistrationModal && (
             <div
+              className="st-ovl"
               onClick={() => !regSubmitting && !regLoading && setShowRegistrationModal(false)}
-              style={{
-                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-                backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 3000,
-                display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-                padding: '20px', overflowY: 'auto'
-              }}
+              style={{ zIndex: 3000 }}
             >
               <div
+                className="st-sheet"
+                role="dialog" aria-modal="true" aria-label="Complete registration"
                 onClick={(e) => e.stopPropagation()}
-                style={{
-                  backgroundColor: 'white', borderRadius: '24px', padding: '32px',
-                  maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto',
-                  position: 'relative', border: '3px solid #004E7C',
-                  marginTop: '20px', marginBottom: '20px'
-                }}
               >
-                {/* Close button */}
-                <button
-                  onClick={() => !regSubmitting && !regLoading && setShowRegistrationModal(false)}
-                  disabled={regSubmitting || regLoading}
-                  style={{
-                    position: 'absolute', top: '16px', right: '16px',
-                    backgroundColor: 'transparent', border: 'none', color: '#004E7C',
-                    cursor: (regSubmitting || regLoading) ? 'not-allowed' : 'pointer',
-                    opacity: (regSubmitting || regLoading) ? 0.5 : 1, padding: '8px', fontSize: '24px'
-                  }}
-                >
-                  <X size={24} />
-                </button>
+                <div className="st-sheet-hd">
+                  <div className="st-sheet-ttl">
+                    <span className="st-sheet-eyebrow">{regSuccess || regAlreadyCompleted ? 'Registration' : 'Complete Registration'}</span>
+                    <h2>{(!regLoading && !regError && regRegistrantName) ? regRegistrantName : 'Registration'}</h2>
+                  </div>
+                  {/* Close button */}
+                  <button
+                    type="button"
+                    className="st-sheet-x"
+                    aria-label="Close"
+                    onClick={() => !regSubmitting && !regLoading && setShowRegistrationModal(false)}
+                    disabled={regSubmitting || regLoading}
+                    style={{ cursor: (regSubmitting || regLoading) ? 'not-allowed' : 'pointer', opacity: (regSubmitting || regLoading) ? 0.5 : 1 }}
+                  >
+                    <X size={22} />
+                  </button>
+                </div>
+                <div className="st-sheet-bd st-form">
 
                 {/* Loading state */}
                 {regLoading && (
                   <div style={{ textAlign: 'center', padding: '40px' }}>
-                    <p style={{ color: '#004E7C', fontWeight: '600' }}>Loading your registration...</p>
+                    <p style={{ color: '#0891B2', fontWeight: '600' }}>Loading your registration...</p>
                   </div>
                 )}
 
@@ -3463,10 +3518,10 @@
                 {/* Already completed */}
                 {!regLoading && !regError && regAlreadyCompleted && (
                   <div style={{ textAlign: 'center', padding: '40px' }}>
-                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg,#0891B2,#06B6D4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
-                    <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
+                    <h2 style={{ color: '#0891B2', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
                       You have already completed registration. Mahalo!
                     </h2>
                     {regFormData.role === 'Parent/Guardian' && (
@@ -3476,11 +3531,8 @@
                     </p>
                     <button
                       onClick={handleRegisterAnotherChild}
-                      style={{
-                        padding: '12px 24px', background: 'linear-gradient(135deg, #0891b2, #0e7490)',
-                        color: 'white', border: 'none', borderRadius: '10px',
-                        fontWeight: '600', fontSize: '14px', cursor: 'pointer', marginTop: '8px'
-                      }}
+                      type="button"
+                      className="st-btn st-btn-primary"
                     >
                       + Register Another Child
                     </button>
@@ -3492,10 +3544,10 @@
                 {/* Registration success */}
                 {!regLoading && !regError && !regAlreadyCompleted && regSuccess && (
                   <div style={{ textAlign: 'center', padding: '40px' }}>
-                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg,#0891B2,#06B6D4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
-                    <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
+                    <h2 style={{ color: '#0891B2', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
                       Mahalo! Your registration is complete.
                     </h2>
                     <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>You may now close this window.</p>
@@ -3509,7 +3561,7 @@
                       maxWidth: '440px',
                       textAlign: 'left'
                     }}>
-                      <p style={{ margin: '0 0 6px', color: '#004E7C', fontWeight: 700, fontSize: '14px' }}>
+                      <p style={{ margin: '0 0 6px', color: '#0891B2', fontWeight: 700, fontSize: '14px' }}>
                         Watch your email for reminders
                       </p>
                       <p style={{ margin: 0, color: '#1E293B', fontSize: '13.5px', lineHeight: 1.5 }}>
@@ -3519,8 +3571,8 @@
 
                     {/* Sibling-signup prompt */}
                     {regSiblings.length > 0 && !regSiblingDismissed && regSiblingApplied === 0 && (
-                      <div style={{ background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '10px', padding: '16px', textAlign: 'left', marginTop: '20px' }}>
-                        <p style={{ color: '#0369A1', fontWeight: 700, fontSize: '14px', margin: '0 0 6px 0' }}>
+                      <div style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: '10px', padding: '16px', textAlign: 'left', marginTop: '20px' }}>
+                        <p style={{ color: '#0E7490', fontWeight: 700, fontSize: '14px', margin: '0 0 6px 0' }}>
                           You're also signed up for {regSiblings.length} other event{regSiblings.length > 1 ? 's' : ''}.
                         </p>
                         <p style={{ color: '#374151', fontSize: '13px', margin: '0 0 10px 0' }}>
@@ -3528,7 +3580,7 @@
                         </p>
                         <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
                           {regSiblings.map((s, idx) => (
-                            <label key={s.signupId} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '6px 4px', cursor: 'pointer' }}>
+                            <label key={s.signupId} className="st-opt" style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '6px 4px', cursor: 'pointer' }}>
                               <input type="checkbox"
                                 checked={!!regSiblingChecked[idx]}
                                 onChange={(e) => setRegSiblingChecked(prev => ({ ...prev, [idx]: e.target.checked }))}
@@ -3574,12 +3626,8 @@
                     </p>
                     <button
                       onClick={handleRegisterAnotherChild}
-                      style={{
-                        padding: '12px 24px', background: 'linear-gradient(135deg, #0891b2, #0e7490)',
-                        color: 'white', border: 'none', borderRadius: '10px',
-                        fontWeight: '600', fontSize: '14px', cursor: 'pointer', marginTop: '8px',
-                        marginBottom: '12px'
-                      }}
+                      type="button"
+                      className="st-btn st-btn-primary"
                     >
                       + Register Another Child
                     </button>
@@ -3588,11 +3636,8 @@
                     )}
                     <button
                       onClick={() => setShowRegistrationModal(false)}
-                      style={{
-                        padding: '10px 24px', backgroundColor: 'transparent',
-                        color: '#666', border: '1px solid #D1D5DB', borderRadius: '8px',
-                        fontSize: '14px', cursor: 'pointer'
-                      }}
+                      type="button"
+                      className="st-btn st-btn-secondary"
                     >
                       Done
                     </button>
@@ -3602,9 +3647,9 @@
                 {/* Registration form */}
                 {!regLoading && !regError && !regAlreadyCompleted && !regSuccess && (
                   <form onSubmit={handleRegSubmit}>
-                    <h2 style={{ color: '#004E7C', fontSize: '24px', fontWeight: 'bold', marginBottom: '8px', paddingRight: '40px' }}>
-                      Complete Registration for {regRegistrantName}
-                    </h2>
+                    <p className="st-form-lead">
+                      Complete registration for <strong>{regRegistrantName}</strong>
+                    </p>
 
                     {/* Prefill banner */}
                     {regPrefillData && (
@@ -3616,21 +3661,21 @@
                     <p style={{ color: '#666', fontSize: '14px', marginBottom: '24px' }}>* Indicates required question</p>
 
                     {/* ── Mailing Address ── */}
-                    <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
-                      <h3 style={{ color: '#004E7C', fontSize: '16px', fontWeight: 'bold', marginBottom: '14px', marginTop: 0 }}>Mailing Address</h3>
+                    <div style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
+                      <h3 style={{ color: '#0891B2', fontSize: '16px', fontWeight: 'bold', marginBottom: '14px', marginTop: 0 }}>Mailing Address</h3>
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Street Address</label>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Street Address</label>
                         <input type="text" value={regFormData.streetAddress} onChange={(e) => handleRegFormChange('streetAddress', e.target.value)} disabled={regSubmitting} placeholder="Your answer"
                           style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: regSubmitting ? 0.6 : 1 }} />
                       </div>
                       <div style={{ display: 'flex', gap: '12px' }}>
                         <div style={{ flex: 2 }}>
-                          <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>City <span style={{ color: '#DC2626' }}>*</span></label>
+                          <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>City <span style={{ color: '#DC2626' }}>*</span></label>
                           <input type="text" required value={regFormData.city} onChange={(e) => handleRegFormChange('city', e.target.value)} disabled={regSubmitting} placeholder="Your answer"
                             style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: regSubmitting ? 0.6 : 1 }} />
                         </div>
                         <div style={{ flex: 1 }}>
-                          <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Zip Code <span style={{ color: '#DC2626' }}>*</span></label>
+                          <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Zip Code <span style={{ color: '#DC2626' }}>*</span></label>
                           <input type="text" required value={regFormData.zipCode} onChange={(e) => handleRegFormChange('zipCode', e.target.value)} disabled={regSubmitting} placeholder="96XXX"
                             style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: regSubmitting ? 0.6 : 1 }} />
                         </div>
@@ -3641,11 +3686,11 @@
                     {/* "I am a..." removed here (v47.11) — role is captured at
                         signup and bridged into regFormData.role on load. The
                         Parent/Guardian gating below reads regFormData.role. */}
-                    <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
-                      <h3 style={{ color: '#004E7C', fontSize: '16px', fontWeight: 'bold', marginBottom: '14px', marginTop: 0 }}>About You</h3>
+                    <div style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
+                      <h3 style={{ color: '#0891B2', fontSize: '16px', fontWeight: 'bold', marginBottom: '14px', marginTop: 0 }}>About You</h3>
 
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Reason for Attending <span style={{ color: '#DC2626' }}>*</span></label>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Reason for Attending <span style={{ color: '#DC2626' }}>*</span></label>
                         <select required value={regFormData.reasonForAttending} onChange={(e) => handleRegFormChange('reasonForAttending', e.target.value)} disabled={regSubmitting}
                           style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', background: 'white', opacity: regSubmitting ? 0.6 : 1 }}>
                           <option value="">-- Select --</option>
@@ -3657,29 +3702,29 @@
 
                       {regFormData.role === 'Parent/Guardian' && (
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Military Status</label>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Military Status</label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           {/* Canonical militaryStatus values (v120.1.0): 'Not military' | 'Active Duty' | 'Veteran' | 'Reserves'
                               Tolerates legacy lowercase 'none'/'active' from prefill data. */}
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <label className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
                             <input type="radio" name="regMilitary" value="Not military" checked={regFormData.militaryStatus === 'Not military' || regFormData.militaryStatus === 'none'}
                               onChange={(e) => handleRegFormChange('militaryStatus', e.target.value)} disabled={regSubmitting}
                               style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
                             <span style={{ fontSize: '14px', color: '#374151' }}>Not military affiliated</span>
                           </label>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <label className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
                             <input type="radio" name="regMilitary" value="Active Duty" checked={regFormData.militaryStatus === 'Active Duty' || regFormData.militaryStatus === 'active'}
                               onChange={(e) => handleRegFormChange('militaryStatus', e.target.value)} disabled={regSubmitting}
                               style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
                             <span style={{ fontSize: '14px', color: '#374151' }}>Active Duty/Military Family</span>
                           </label>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <label className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
                             <input type="radio" name="regMilitary" value="Veteran" checked={regFormData.militaryStatus === 'Veteran'}
                               onChange={(e) => handleRegFormChange('militaryStatus', e.target.value)} disabled={regSubmitting}
                               style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
                             <span style={{ fontSize: '14px', color: '#374151' }}>Veteran</span>
                           </label>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <label className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
                             <input type="radio" name="regMilitary" value="Reserves" checked={regFormData.militaryStatus === 'Reserves'}
                               onChange={(e) => handleRegFormChange('militaryStatus', e.target.value)} disabled={regSubmitting}
                               style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
@@ -3688,7 +3733,7 @@
                         </div>
                         {(regFormData.militaryStatus === 'Active Duty' || regFormData.militaryStatus === 'active' || regFormData.militaryStatus === 'Veteran' || regFormData.militaryStatus === 'Reserves') && (
                           <div style={{ marginTop: '10px', paddingLeft: '26px' }}>
-                            <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Branch</label>
+                            <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Branch</label>
                             <select value={regFormData.militaryBranch === 'Marines' ? 'Marine Corps' : regFormData.militaryBranch} onChange={(e) => handleRegFormChange('militaryBranch', e.target.value)} disabled={regSubmitting}
                               style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', background: 'white', opacity: regSubmitting ? 0.6 : 1 }}>
                               <option value="">-- Select --</option>
@@ -3705,19 +3750,19 @@
 
                     {/* ── Child Information (Parent/Guardian only) ── */}
                     {regFormData.role === 'Parent/Guardian' && (
-                    <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
-                      <h3 style={{ color: '#004E7C', fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', marginTop: 0 }}>Child Information</h3>
+                    <div style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
+                      <h3 style={{ color: '#0891B2', fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', marginTop: 0 }}>Child Information</h3>
                       {/* Why we ask. Under the header so it covers the whole section. (2026-07-14) */}
                       <div style={{ marginBottom: '14px', fontSize: '13px', color: '#6B7280', lineHeight: 1.4 }}>* We collect this information for grant purposes only.</div>
 
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Child's full name <span style={{ color: '#DC2626' }}>*</span></label>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Child's full name <span style={{ color: '#DC2626' }}>*</span></label>
                         <input type="text" required value={regFormData.childName} onChange={(e) => handleRegFormChange('childName', e.target.value)} disabled={regSubmitting}
                           style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: regSubmitting ? 0.6 : 1 }} />
                       </div>
 
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Child's Age Range <span style={{ color: '#DC2626' }}>*</span></label>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Child's Age Range <span style={{ color: '#DC2626' }}>*</span></label>
                         {/* Canonical childAgeRange values (v120.1.0): '0-2'|'3-5'|'6-12'|'13-17'|'High School'|'Adult'
                             Visible labels stay friendly; only stored values are canonical. */}
                         <select required value={regFormData.childAgeRange} onChange={(e) => handleRegFormChange('childAgeRange', e.target.value)} disabled={regSubmitting}
@@ -3733,7 +3778,7 @@
                       </div>
 
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Child's Gender</label>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Child's Gender</label>
                         {/* Canonical childGender values (v120.1.0): Female | Male | Non-binary | Prefer not to say */}
                         <select value={regFormData.childGender} onChange={(e) => handleRegFormChange('childGender', e.target.value)} disabled={regSubmitting}
                           style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', background: 'white', opacity: regSubmitting ? 0.6 : 1 }}>
@@ -3746,10 +3791,10 @@
                       </div>
 
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Primary Ethnicity <span style={{ color: '#DC2626' }}>*</span></label>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Primary Ethnicity <span style={{ color: '#DC2626' }}>*</span></label>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                           {['African American', 'Asian', 'Caucasian', 'Filipino', 'Hispanic', 'Hawaiian/Part Hawaiian', 'Pacific Islander', 'Other/2 or more'].map(eth => (
-                            <label key={eth} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
+                            <label key={eth} className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
                               <input type="radio" name="regEthnicity" value={eth} required checked={regFormData.ethnicity === eth}
                                 onChange={(e) => handleRegFormChange('ethnicity', e.target.value)} disabled={regSubmitting}
                                 style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
@@ -3760,10 +3805,10 @@
                       </div>
 
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Disability Category (select all that apply) <span style={{ color: '#DC2626' }}>*</span></label>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Disability Category (select all that apply) <span style={{ color: '#DC2626' }}>*</span></label>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                           {['ADD-ADHD', 'Autism Spectrum (ASD)', 'Deaf/Hard of Hearing', 'Developmental Disability', 'Emotional Disability', 'Gifted', 'Intellectual Disability', 'Multiple Disabilities', 'No IDEA Disability', 'Orthopedic (Physical)', 'Other Health Disability', 'Specific Learning Disability', 'Speech or Language', 'Suspected', 'Traumatic Brain Injury', 'Visual (incl. blindness)', 'Deaf/Blindness'].map(dis => (
-                            <label key={dis} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
+                            <label key={dis} className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
                               <input type="checkbox" checked={regFormData.disabilityCategories.includes(dis)}
                                 onChange={() => handleDisabilityToggle(dis)} disabled={regSubmitting}
                                 style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
@@ -3779,19 +3824,19 @@
                     )}
 
                     {/* ── Training History ── */}
-                    <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
-                      <h3 style={{ color: '#004E7C', fontSize: '16px', fontWeight: 'bold', marginBottom: '14px', marginTop: 0 }}>Training History</h3>
+                    <div style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
+                      <h3 style={{ color: '#0891B2', fontSize: '16px', fontWeight: 'bold', marginBottom: '14px', marginTop: 0 }}>Training History</h3>
 
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Prior LDAH training in the past 12 months?</label>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Prior LDAH training in the past 12 months?</label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <label className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
                             <input type="radio" name="regPriorTraining" value="No" checked={regFormData.priorTraining === 'No'}
                               onChange={(e) => handleRegFormChange('priorTraining', e.target.value)} disabled={regSubmitting}
                               style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
                             <span style={{ fontSize: '14px', color: '#374151' }}>No</span>
                           </label>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
+                          <label className="st-opt" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }}>
                             <input type="radio" name="regPriorTraining" value="Yes" checked={regFormData.priorTraining === 'Yes'}
                               onChange={(e) => handleRegFormChange('priorTraining', e.target.value)} disabled={regSubmitting}
                               style={{ width: '18px', height: '18px', cursor: regSubmitting ? 'not-allowed' : 'pointer' }} />
@@ -3800,7 +3845,7 @@
                         </div>
                         {regFormData.priorTraining === 'Yes' && (
                           <div style={{ marginTop: '10px', paddingLeft: '26px' }}>
-                            <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Date of last training</label>
+                            <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Date of last training</label>
                             <input type="date" value={regFormData.priorTrainingDate} onChange={(e) => handleRegFormChange('priorTrainingDate', e.target.value)} disabled={regSubmitting}
                               style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: regSubmitting ? 0.6 : 1 }} />
                           </div>
@@ -3808,7 +3853,7 @@
                       </div>
 
                       <div style={{ marginBottom: '14px' }}>
-                        <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>How did you hear about this training? <span style={{ color: '#DC2626' }}>*</span></label>
+                        <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>How did you hear about this training? <span style={{ color: '#DC2626' }}>*</span></label>
                         <select required value={regFormData.howHeard} onChange={(e) => {
                           const v = e.target.value;
                           handleRegFormChange('howHeard', v);
@@ -3822,7 +3867,7 @@
                         </select>
                         {regFormData.howHeard === 'Other' && (
                           <div style={{ marginTop: '10px' }}>
-                            <label style={{ display: 'block', color: '#004E7C', fontWeight: '600', marginBottom: '6px', fontSize: '13px' }}>Please specify <span style={{ color: '#DC2626' }}>*</span></label>
+                            <label style={{ display: 'block', color: '#0891B2', fontWeight: '600', marginBottom: '6px', fontSize: '13px' }}>Please specify <span style={{ color: '#DC2626' }}>*</span></label>
                             <input type="text" required value={regFormData.howHeardOther} maxLength="200"
                               onChange={(e) => handleRegFormChange('howHeardOther', e.target.value)} disabled={regSubmitting}
                               placeholder="Tell us how you heard about us"
@@ -3834,7 +3879,7 @@
 
                     {/* ── Accommodations ── */}
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', color: '#004E7C', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Accommodations Needed</label>
+                      <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Accommodations Needed</label>
                       <textarea value={regFormData.accommodations} onChange={(e) => handleRegFormChange('accommodations', e.target.value)} disabled={regSubmitting}
                         placeholder="Please let us know at least 2 weeks prior to the event..." rows="3"
                         style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', fontFamily: 'inherit', resize: 'vertical', opacity: regSubmitting ? 0.6 : 1 }} />
@@ -3842,89 +3887,35 @@
 
                     {/* Submit */}
                     <button type="submit" disabled={regSubmitting}
+                      className="st-btn st-btn-primary"
                       style={{
-                        width: '100%', padding: '16px',
-                        background: regSubmitting ? '#9CA3AF' : 'linear-gradient(135deg, #004E7C, #0066a1)',
-                        color: 'white', border: 'none', borderRadius: '12px',
-                        fontWeight: 'bold', fontSize: '16px',
-                        cursor: regSubmitting ? 'not-allowed' : 'pointer',
-                        transition: 'transform 0.2s'
+                        background: regSubmitting ? '#9CA3AF' : undefined,
+                        cursor: regSubmitting ? 'not-allowed' : 'pointer'
                       }}
-                      onMouseOver={(e) => { if (!regSubmitting) e.currentTarget.style.transform='translateY(-2px)'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.transform='translateY(0)'; }}
                     >
                       {regSubmitting ? 'Submitting...' : 'Submit Registration'}
                     </button>
                   </form>
                 )}
+                </div>
               </div>
             </div>
           )}
           {/* ───────────────────────────────────────────────────────────────── */}
 
-          {/* Support Our Mission */}
-          <div style={{maxWidth: '480px', margin: '2rem auto', padding: '1.5rem', background: 'transparent', border: '1.5px solid rgba(0,78,124,0.28)', borderRadius: '16px', boxShadow: '0 2px 10px rgba(15,23,42,0.05)', textAlign: 'center'}}>
-            <h2 style={{fontSize: '1.1rem', fontWeight: '700', color: '#004E7C', marginBottom: '0.75rem'}}>Support Our Mission</h2>
-            <p style={{color: '#374151', fontSize: '0.88rem', marginBottom: '1rem', lineHeight: '1.6'}}>Your generous donation helps us empower families through information, training, and advocacy.</p>
-            <a href="https://www.paypal.com/donate?hosted_button_id=F6F2DPC4D6RSA" target="_blank" rel="noopener noreferrer" style={{display: 'inline-block', background: 'linear-gradient(135deg, #FF9B21 0%, #f59e0b 100%)', color: 'white', textDecoration: 'none', padding: '12px 28px', borderRadius: '50px', fontSize: '14px', fontWeight: '700', transition: 'transform 0.2s, box-shadow 0.2s'}} onMouseOver={(e) => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(255,155,33,0.4)'; }} onMouseOut={(e) => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none'; }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline-block',verticalAlign:'middle',marginRight:'6px'}} aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>Donate Now
-            </a>
-          </div>
-
-          {/* Bottom Navigation Bar */}
-          <nav className="bottom-nav" role="navigation" aria-label="Main navigation">
-            <a href="javascript:void(0)" className="nav-item a11y-nav-btn" aria-label="Accessibility Options" onClick={() => window.toggleA11yPanel && window.toggleA11yPanel()}>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H13V16H11V22H9V9H3V7H21V9Z"/>
-              </svg>
-              <span>Access</span>
-            </a>
-            <a href="events.html" className="nav-item active" aria-current="page" aria-label="Events">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              <span>Events</span>
-            </a>
-            <a href="faq.html" className="nav-item nav-item-qhelp" aria-label="Q-Help">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-              </svg>
-              <span>Q-Help</span>
-            </a>
-            <a href="volunteer.html" className="nav-item" aria-label="Volunteer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-              <span>Volunteer</span>
-            </a>
-            <a href="resources.html" className="nav-item" aria-label="Resources">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-              </svg>
-              <span>Resources</span>
-            </a>
-            <a href="contact.html" className="nav-item" aria-label="Contact">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-              </svg>
-              <span>Contact</span>
-            </a>
-          </nav>
 
           {/* Pre-fill Verification Modal (B'' OTP-by-email) */}
           {prefillModalOpen && (
-            <div onClick={(e) => { if (e.target === e.currentTarget) setPrefillModalOpen(false); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10001, padding: '16px' }}>
-              <div style={{ background: '#fff', borderRadius: '12px', maxWidth: '420px', width: '100%', padding: '28px 24px', boxShadow: '0 12px 40px rgba(0,0,0,0.3)' }}>
-                <h2 style={{ margin: '0 0 8px', color: '#004E7C', fontSize: '20px' }}>Verify it's you</h2>
+            <div className="st-ovl" onClick={(e) => { if (e.target === e.currentTarget) setPrefillModalOpen(false); }} style={{ zIndex: 10001, alignItems: 'center' }}>
+              <div className="st-sheet" role="dialog" aria-modal="true" aria-label="Verify it's you" style={{ maxWidth: '420px' }}>
+                <div className="st-sheet-hd">
+                  <div className="st-sheet-ttl">
+                    <span className="st-sheet-eyebrow">Returning family</span>
+                    <h2>Verify it's you</h2>
+                  </div>
+                  <button type="button" className="st-sheet-x" aria-label="Close" onClick={() => setPrefillModalOpen(false)}><X size={22} /></button>
+                </div>
+                <div className="st-sheet-bd">
                 <p style={{ margin: '0 0 6px', fontSize: '14px', color: '#374151' }}>If you have an LDAH account, we just emailed a 6-digit code to:</p>
                 <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#0f172a', fontWeight: 700, wordBreak: 'break-all' }}>{(formData.email || '').trim()}</p>
                 <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#666' }}>Enter the code to pre-fill your information. Code expires in 10 minutes.</p>
@@ -3934,16 +3925,18 @@
                   onChange={(e) => setPrefillCode(e.target.value.replace(/\D/g, ''))}
                   onKeyDown={(e) => { if (e.key === 'Enter') verifyPrefillCode(); }}
                   autoFocus
-                  style={{ width: '100%', padding: '14px', fontSize: '24px', letterSpacing: '8px', textAlign: 'center', border: '2px solid #1a3c6e', borderRadius: '8px', fontFamily: 'Courier,monospace', marginBottom: '8px' }}
+                  className="st-otp"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '14px', fontSize: '26px', letterSpacing: '10px', textAlign: 'center', border: '1.5px solid #E2E8F0', borderRadius: '12px', fontFamily: "'Outfit', ui-monospace, monospace", fontWeight: 600, color: '#1E293B', marginBottom: '8px' }}
                 />
                 {prefillError && (
                   <div style={{ color: '#DC2626', fontSize: '13px', marginBottom: '8px' }}>{prefillError}</div>
                 )}
                 <div style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
-                  <button type="button" onClick={() => setPrefillModalOpen(false)} style={{ flex: '0 0 auto', padding: '12px 18px', background: '#fff', color: '#666', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Skip</button>
-                  <button type="button" onClick={verifyPrefillCode} disabled={prefillBusy} style={{ flex: 1, padding: '12px', background: '#1a3c6e', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: prefillBusy ? 'wait' : 'pointer', opacity: prefillBusy ? 0.6 : 1 }}>{prefillBusy ? 'Verifying...' : 'Verify & Pre-fill'}</button>
+                  <button type="button" className="st-btn st-btn-secondary" onClick={() => setPrefillModalOpen(false)} style={{ flex: '0 0 auto', width: 'auto', marginTop: 0, padding: '12px 18px' }}>Skip</button>
+                  <button type="button" className="st-btn st-btn-primary" onClick={verifyPrefillCode} disabled={prefillBusy} style={{ flex: 1, marginTop: 0, cursor: prefillBusy ? 'wait' : 'pointer', opacity: prefillBusy ? 0.6 : 1 }}>{prefillBusy ? 'Verifying...' : 'Verify & Pre-fill'}</button>
                 </div>
-                <div style={{ marginTop: '14px', fontSize: '12px', color: '#94a3b8', textAlign: 'center' }}>Didn't get it? Check spam, or <a href="javascript:void(0)" onClick={() => { setPrefillModalOpen(false); requestPrefillCode(); }} style={{ color: '#1a73e8' }}>resend</a>.</div>
+                <div style={{ marginTop: '14px', fontSize: '12px', color: '#94a3b8', textAlign: 'center' }}>Didn't get it? Check spam, or <a href="javascript:void(0)" onClick={() => { setPrefillModalOpen(false); requestPrefillCode(); }} style={{ color: '#0891B2' }}>resend</a>.</div>
+                </div>
               </div>
             </div>
           )}

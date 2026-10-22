@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LDAH">
+  <meta name="theme-color" content="#0891B2">
+  <title>LDAH - School Readiness</title>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-32PRRS0W85"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-32PRRS0W85');
+  </script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/cms-donate.js" defer></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAU3CQ07bCVKlJ1qGak-150kaJEyPKldLk",
+      authDomain: "ldah-932d5.firebaseapp.com",
+      projectId: "ldah-932d5",
+      storageBucket: "ldah-932d5.firebasestorage.app",
+      messagingSenderId: "662130454003",
+      appId: "1:662130454003:web:437576d5a5811ecd8df686",
+      measurementId: "G-32PRRS0W85"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS Icons -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="site-theme.css?v=1">
+  <script src="js/app-shell.js?v=1" defer></script>
+  <style>
+
+    [hidden] { display: none !important; }
+    .pg-center { text-align: center; }
+    .pg-mt { margin-top: 14px; }
+    body.st-app .st-sec a:not(.st-btn):not(.pg-card-link) { color: var(--ocean-deep); }
+    .st-btn:focus-visible, .pg-tap:focus-visible, .pg-x:focus-visible { outline: 3px solid var(--ocean-light); outline-offset: 2px; }
+    .st-btn { min-height: 46px; display: flex; align-items: center; justify-content: center; }
+    .st-coral .st-btn { max-width: 420px; margin-left: auto; margin-right: auto; }
+    .st-coral .st-btn + .st-btn { margin-top: 10px; }
+    .st-band .st-btn { max-width: 320px; margin-top: 14px; }
+
+    /* Photo frame: sand box with an icon; the CMS photo covers it once it loads */
+    .pg-ph { position: relative; overflow: hidden; background: var(--sand); display: flex; align-items: center; justify-content: center; flex: none; }
+    .pg-ph > svg { width: 26px; height: 26px; stroke: var(--ocean-deep); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .7; }
+    .pg-ph > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pg-av { width: 56px; height: 56px; border-radius: 50%; border: 3px solid var(--ocean-light); }
+    .pg-sq { width: 84px; height: 84px; border-radius: 12px; }
+
+    /* Card with a photo on the left */
+    .pg-row { display: flex; gap: 12px; align-items: flex-start; }
+    .pg-row > div { min-width: 0; flex: 1; }
+    .pg-row h3 { margin: 0 0 4px; font: 600 1rem var(--st-font-head); line-height: 1.3; }
+    .pg-row p { margin: 0; }
+    .pg-card .st-btn { margin-top: 12px; }
+    .pg-grid { display: grid; grid-template-columns: 1fr; gap: 0 12px; }
+    @media (min-width: 600px) { .pg-grid { grid-template-columns: 1fr 1fr; } .pg-grid > .st-card { display: flex; flex-direction: column; } .pg-grid > .st-card > .st-btn { margin-top: auto; } .pg-grid > .st-card > .pg-row { margin-bottom: 12px; } }
+
+    /* Modal: white, radius 16, teal header strip */
+    .pg-modal { position: fixed; inset: 0; z-index: 1100; background: rgba(15,23,42,.55); display: flex; align-items: flex-end; justify-content: center; padding: env(safe-area-inset-top, 0px) 0 0; }
+    .pg-modal-card { background: #fff; width: 100%; max-width: 640px; max-height: 92vh; max-height: 92dvh; border-radius: 16px 16px 0 0; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 40px rgba(0,0,0,.2); }
+    @media (min-width: 640px) { .pg-modal { align-items: center; padding: 20px; } .pg-modal-card { border-radius: 16px; max-height: 88vh; } }
+    .pg-modal-head { background: linear-gradient(135deg, #0891B2, #06B6D4); color: #fff; padding: 12px 10px 12px 18px; display: flex; align-items: center; gap: 10px; flex: none; }
+    .pg-modal-head h2 { color: #fff !important; margin: 0; font: 600 1.12rem var(--st-font-head); flex: 1; line-height: 1.3; }
+    .pg-modal-head p { margin: 2px 0 0; font-size: .85rem; color: #fff; opacity: .92; line-height: 1.35; }
+    .pg-modal-head > div { flex: 1; min-width: 0; }
+    .pg-x { width: 44px; height: 44px; border: 0; border-radius: 12px; background: rgba(255,255,255,.18); color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; flex: none; }
+    .pg-modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
+    .pg-note { text-align: center; background: var(--sand-light); border-radius: 12px; padding: 14px; margin-top: 14px; font-size: .9rem; color: var(--text-soft); }
+    .pg-note p { margin: 4px 0; }
+    .pg-msg { text-align: center; color: var(--text-soft); padding: 18px 8px; font-size: .92rem; }
+
+    /* Video modal */
+    .pg-video { position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 12px; overflow: hidden; }
+    .pg-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+    .rd-two { display: grid; gap: 0 12px; }
+    @media (min-width: 600px) { .rd-two { grid-template-columns: 1fr 1fr; } }
+    .rd-card h3 { margin: 0 0 6px; font: 600 1.05rem var(--st-font-head); }
+    .rd-card p { color: var(--text-soft); font-size: .9rem; line-height: 1.55; margin: 0; }
+    .rd-card strong { color: var(--text-dark); }
+
+  </style>
+</head>
+<body class="st-app" data-tab="more" data-back="whatwedo.html" data-back-label="What We Do" data-title="School Readiness">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <main id="main-content">
+    <header class="st-band">
+      <div class="st-wrap">
+        <h1 id="readiness-heroTitle">School Readiness Project</h1>
+        <p id="readiness-heroSubtitle" data-cms="html">Supporting children in gaining the skills to be successful in their education.</p>
+      </div>
+    </header>
+
+    <section class="st-sec">
+      <div class="st-wrap rd-two">
+        <article class="st-card rd-card">
+          <h3 id="readiness-aboutTitle">About the Program</h3>
+          <p id="readiness-aboutText" data-cms="html">The School Readiness Project (SRP) provides services for families of preschool aged children throughout Oʻahu, Molokaʻi, and Hawaiʻi Island. We provide developmental, social-emotional, hearing, vision, and autism screenings. SRP works to strengthen families through case management and parent education. Let us be part of your family's medical home and support pediatricians to better meet the needs of your child.</p>
+        </article>
+        <article class="st-card rd-card">
+          <h3 id="readiness-partnersTitle">Our Partners</h3>
+          <p id="readiness-partnersText" data-cms="html">SRP is a collaborative project with: Aloha United Way, The Community Learning Center at Maʻili, Harry &amp; Jeanette Weinberg Kukui Center, and Kamehameha Schools.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="st-sec st-alt" aria-labelledby="readiness-screeningsTitle">
+      <div class="st-wrap">
+        <span class="st-tag">Screenings</span>
+        <h2 class="st-h" id="readiness-screeningsTitle">Childhood Screenings</h2>
+        <div class="pg-mt"></div>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12"/></svg><img id="readiness-visionPhoto" alt="" hidden></div>
+            <div><h3 id="readiness-visionTitle">Vision Screening</h3>
+            <p id="readiness-visionText" data-cms="html">We use the <strong>Plusoptix Digital Vision Screener</strong> to check your child's eyes. It is an accurate, non-invasive way to detect a variety of vision disorders in children. It takes moments for the device to screen your child's eyes and produce immediate results for your review.</p></div>
+          </div>
+        </article>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8.5a6 6 0 0 1 12 0c0 3.5-3 4.5-3 7.5a3 3 0 0 1-6 0"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0"/></svg><img id="readiness-hearingPhoto" alt="" hidden></div>
+            <div><h3 id="readiness-hearingTitle">Hearing Screening</h3>
+            <p id="readiness-hearingText" data-cms="html">Two methods can be used to check your child's hearing. The first is called <strong>Otoacoustic Emissions</strong> — this method checks both the middle ear and inner ear and will quickly tell you if your child is hearing normally. The second is called <strong>Tympanometry</strong> — this method checks for reduced eardrum movement caused by fluid, wax, or other problems.</p></div>
+          </div>
+        </article>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg><img id="readiness-devPhoto" alt="" hidden></div>
+            <div><h3 id="readiness-devTitle">Developmental Screening</h3>
+            <p id="readiness-devText" data-cms="html">Our qualified personnel use the Ages &amp; Stages Questionnaire (ASQ-3) and ASQ-SE (Social-Emotional) screening tools. When developmental concerns are detected, children will be screened for autism using the Modified Checklist for Autism in Toddlers (M-CHAT).</p></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="st-sec" aria-labelledby="readiness-servicesTitle">
+      <div class="st-wrap">
+        <span class="st-tag">How We Help</span>
+        <h2 class="st-h" id="readiness-servicesTitle">Our Services</h2>
+        <div class="pg-mt"></div>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><img id="readiness-casePhoto" alt="" hidden></div>
+            <div><h3 id="readiness-caseTitle">Case Management</h3>
+            <p id="readiness-caseText" data-cms="html">Case Management is provided for families of children identified with a specific need through the screening process. Our staff will support you by explaining results, offering next-step solutions, connecting you with community resources, and following up on referrals made to other systems of care.</p></div>
+          </div>
+        </article>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg><img id="readiness-workshopsPhoto" alt="" hidden></div>
+            <div><h3 id="readiness-workshopsTitle">Parent Workshops</h3>
+            <p id="readiness-workshopsText" data-cms="html">Trainings are designed to increase understanding of health, developmental, and school readiness needs of preschool aged children. Participants will learn what development should look like, discuss milestones, and review possible signs of developmental delays along with solutions.</p></div>
+          </div>
+        </article>
+        <article class="st-card pg-card">
+          <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg><img id="readiness-providerPhoto" alt="" hidden></div>
+            <div><h3 id="readiness-providerTitle">Provider Services</h3>
+            <p id="readiness-providerText" data-cms="html">If you are a provider of services for children and would like to add our screening services to your program or event, we can help! We offer vision, hearing, and developmental screenings, staff and family trainings, outreach events, and resources.</p></div>
+          </div>
+          <a class="st-btn st-btn-primary" href="https://www.ldahawaii.org/readiness.html" target="_blank" rel="noopener">Request Services</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="st-coral" aria-labelledby="readiness-ctaTitle">
+      <div class="st-wrap">
+        <h2 id="readiness-ctaTitle">Schedule a Screening</h2>
+        <p id="readiness-ctaSubtitle" data-cms="html">Contact us to schedule a screening event in your community.</p>
+        <a class="st-btn st-btn-white" href="https://www.ldahawaii.org/readiness.html" target="_blank" rel="noopener">Schedule a Screening</a>
+        <a class="st-btn st-btn-outline-white" href="contact.html">Contact Us Today</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+  /* Website content loader (STAGE, 2026-10-20). Reads the same Firestore
+     pageContent/{page} documents the main website reads, and fills any element
+     whose id is "{page}-{field}", exactly like the website's loader. The HTML
+     in the page is the website's own text and stays if the read fails.
+     data-cms on an element picks how a field is shown:
+       text (default) plain text, as whoweare/specialed/military/community do
+       html  cleaned HTML (bold, links, lists kept; colours/fonts dropped)
+       list  <li> items only (Core Values)
+       phones cleaned HTML with 7-digit Hawaiʻi numbers turned into tel: links */
+  window.STC = (function () {
+    'use strict';
+    var SITE = 'https://www.ldahawaii.org/';
+    var db = null;
+    try { db = firebase.firestore(); } catch (e) { console.error('Firestore unavailable', e); }
+
+    var EMOJI = /[\u{1F300}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FEFF}]|[\u{1F1E0}-\u{1F1FF}]{2}/gu;
+    var WORDS = [
+      [/Hawai['’‘`]i/g, 'Hawaiʻi'], [/O['’‘`]ahu/g, 'Oʻahu'],
+      [/Moloka['’‘`]i/g, 'Molokaʻi'], [/Ma['’‘`]ili/g, 'Maʻili'],
+      [/Wai['’‘`]anae/g, 'Waiʻanae'], [/Kaua['’‘`]i/g, 'Kauaʻi'],
+      [/\bHawaii\b/g, 'Hawai\u02BBi'],
+      [/Disabilities (?:&|of) Achievement/g, 'Disabilities and Achievement']
+    ];
+    function norm(t) {
+      t = String(t == null ? '' : t).replace(EMOJI, '');
+      WORDS.forEach(function (w) { t = t.replace(w[0], w[1]); });
+      return t;
+    }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function abs(u) {
+      if (!u || typeof u !== 'string' || !u.trim()) return '';
+      try { var x = new URL(u.trim(), SITE); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch (e) { return ''; }
+    }
+    function parse(html) { return new DOMParser().parseFromString('<!doctype html><body>' + String(html || ''), 'text/html').body; }
+    function toText(html) {
+      var b = parse(html);
+      b.querySelectorAll('br,p,div,li,h1,h2,h3,h4').forEach(function (n) { n.insertAdjacentText('beforebegin', ' '); });
+      return norm(b.textContent || '').replace(/\s+/g, ' ').trim();
+    }
+
+    var DROP = /^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|FORM|INPUT|TEXTAREA|SELECT|OPTION|LINK|META|SVG|TEMPLATE|NOSCRIPT|VIDEO|AUDIO|CANVAS)$/;
+    var KEEP = /^(P|BR|STRONG|B|EM|I|U|A|UL|OL|LI|H3|H4|H5|DIV|IMG)$/;
+    var PHONE = /\b(\d{3})-(\d{4})\b/g;
+    function linkPhones(text, parent) {
+      var last = 0, m; PHONE.lastIndex = 0;
+      while ((m = PHONE.exec(text))) {
+        if (m.index > last) parent.appendChild(document.createTextNode(text.slice(last, m.index)));
+        var a = document.createElement('a'); a.href = 'tel:+1808' + m[1] + m[2]; a.textContent = m[0];
+        parent.appendChild(a); last = m.index + m[0].length;
+      }
+      if (last < text.length) parent.appendChild(document.createTextNode(text.slice(last)));
+    }
+    /* Rebuilds the HTML from a whitelist: only safe tags, only href/src/alt
+       (plus id/class when keepAttrs), links open outside the app. */
+    function clean(html, opts) {
+      opts = opts || {};
+      var src = typeof html === 'string' ? parse(html) : html;
+      var out = document.createDocumentFragment();
+      (function walk(from, to, inA) {
+        Array.prototype.forEach.call(from.childNodes, function (n) {
+          if (n.nodeType === 3) {
+            var t = norm(n.nodeValue);
+            if (opts.phones && !inA) linkPhones(t, to); else to.appendChild(document.createTextNode(t));
+            return;
+          }
+          if (n.nodeType !== 1) return;
+          var tag = n.tagName.toUpperCase();
+          if (DROP.test(tag)) return;
+          if (!KEEP.test(tag)) { walk(n, to, inA); return; }
+          var el = document.createElement(tag.toLowerCase());
+          if (opts.keepAttrs) {
+            if (n.id) el.id = n.id;
+            if (n.getAttribute('class')) el.setAttribute('class', n.getAttribute('class'));
+          }
+          if (tag === 'A') {
+            var h = (n.getAttribute('href') || '').trim(), lt = (n.textContent || '').trim();
+            /* CMS slips: an email or phone typed as a web link (https://name@mail.com) */
+            if (/^https?:/i.test(h) && /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(lt) && h.indexOf(lt) !== -1) h = 'mailto:' + lt;
+            else if (/^https?:\/\/[\d\s().+-]+\/?$/i.test(h)) h = 'tel:' + h.replace(/^https?:\/\//i, '').replace(/[^\d+]/g, '');
+            if (/^(mailto:|tel:)/i.test(h)) el.setAttribute('href', h);
+            else if (abs(h) && !/^javascript:/i.test(h)) { el.setAttribute('href', abs(h)); el.target = '_blank'; el.rel = 'noopener'; }
+            if (n.classList && n.classList.contains('pg-ext')) el.className = (el.className ? el.className + ' ' : '') + 'pg-ext';
+          }
+          if (tag === 'IMG') {
+            var s = abs(n.getAttribute('src'));
+            if (!s) return;
+            el.src = s; el.alt = n.getAttribute('alt') || ''; el.loading = 'lazy';
+            el.onerror = function () { this.remove(); };
+          }
+          to.appendChild(el);
+          walk(n, el, inA || tag === 'A');
+        });
+      })(src, out, false);
+      return out;
+    }
+
+    function setImg(el, url) {
+      var s = abs(url);
+      if (!el || !s) return;
+      el.onerror = function () { this.hidden = true; };
+      el.onload = function () { this.hidden = false; };
+      el.src = s;
+    }
+    function apply(page, data, root) {
+      root = root || document;
+      Object.keys(data || {}).forEach(function (k) {
+        var v = data[k];
+        if (typeof v !== 'string' || !v.trim()) return;
+        var el = root.querySelector('#' + page + '-' + k.replace(/[^\w-]/g, ''));
+        if (!el) return;
+        if (el.tagName === 'IMG') { if (/Photo|Hero|Flag|Logo/.test(k)) setImg(el, v); return; }
+        var mode = el.getAttribute('data-cms') || 'text';
+        if (mode === 'text') { var t = toText(v); if (t) el.textContent = t; return; }
+        if (mode === 'list') {
+          var items = Array.prototype.map.call(parse(v).querySelectorAll('li'), function (li) { return toText(li.innerHTML); }).filter(Boolean);
+          if (!items.length) return;
+          el.innerHTML = items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
+          return;
+        }
+        var frag = clean(v, { phones: mode === 'phones' });
+        if (!(frag.textContent || '').trim() && !frag.querySelector('img')) return;
+        el.innerHTML = ''; el.appendChild(frag);
+      });
+    }
+    function getDoc(page) {
+      if (!db) return Promise.reject(new Error('no db'));
+      return db.collection('pageContent').doc(page).get().then(function (d) { return d.exists ? d.data() : {}; });
+    }
+    function load(page) {
+      return getDoc(page).then(function (data) { apply(page, data); return data; })
+        .catch(function (err) { console.error('Error loading page content:', err); return {}; });
+    }
+
+    /* Modals */
+    var lastFocus = null;
+    function openModal(id) {
+      var m = document.getElementById(id); if (!m) return;
+      lastFocus = document.activeElement;
+      m.hidden = false; document.body.style.overflow = 'hidden';
+      var x = m.querySelector('.pg-x'); if (x) x.focus();
+    }
+    function closeModal(id) {
+      var m = document.getElementById(id); if (!m || m.hidden) return;
+      m.hidden = true;
+      if (!document.querySelector('.pg-modal:not([hidden])')) document.body.style.overflow = '';
+      m.dispatchEvent(new CustomEvent('pg-close'));
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+    document.addEventListener('click', function (e) {
+      var x = e.target.closest('[data-close]');
+      if (x) { closeModal(x.closest('.pg-modal').id); return; }
+      if (e.target.classList && e.target.classList.contains('pg-modal')) closeModal(e.target.id);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      var open = document.querySelectorAll('.pg-modal:not([hidden])');
+      if (open.length) closeModal(open[open.length - 1].id);
+    });
+
+    /* YouTube player in a modal (same embed the website uses) */
+    function openVideo(title, videoId) {
+      var t = document.getElementById('videoTitle'), f = document.getElementById('videoFrame');
+      if (!t || !f) return;
+      t.textContent = title;
+      f.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(videoId) + '?rel=0&modestbranding=1&autoplay=1&playsinline=1';
+      openModal('videoModal');
+    }
+    var vm = document.getElementById('videoModal');
+    if (vm) vm.addEventListener('pg-close', function () { var f = document.getElementById('videoFrame'); if (f) f.src = ''; });
+
+    return { SITE: SITE, db: db, esc: esc, abs: abs, norm: norm, toText: toText, clean: clean, parse: parse,
+             apply: apply, getDoc: getDoc, load: load, setImg: setImg, openModal: openModal, closeModal: closeModal, openVideo: openVideo };
+  })();
+  </script>
+
+  <script>
+  /* Text and photos from pageContent/readiness (the website shows these fields as HTML).
+     The provider request form stays on the website: Request Services and
+     Schedule a Screening open www.ldahawaii.org/readiness.html. */
+  window.STC.load('readiness');
+  </script>
+
+  <script src="analytics-tracker.js"></script>
+  <script src="accessibility.js"></script>
+</body>
+</html>
