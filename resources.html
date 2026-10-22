@@ -59,6 +59,11 @@
     /* Resource cards */
     .resource-card { border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; background: #fff; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,.05); margin-bottom: 10px; overflow: hidden; }
     .resource-header { display: block; padding: 13px 14px 4px; cursor: pointer; }
+    /* Logo on the card face, like the website (10-22): 55 of 64 resources have one. */
+    .rs-head { display: flex; gap: 12px; align-items: flex-start; }
+    .rs-id { flex: 1; min-width: 0; }
+    .rs-logo { width: 52px; height: 52px; border-radius: 10px; object-fit: contain; background: #fff; border: 1px solid #E2E8F0; padding: 5px; flex-shrink: 0; }
+    .rs-logo-ph { width: 52px; height: 52px; border-radius: 10px; background: linear-gradient(135deg, #0E7490, #0891B2); color: #fff; font: 700 1.3rem var(--st-font-head); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .resource-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
     .resource-name { font: 600 1rem var(--st-font-head); color: var(--text-dark); margin: 0; line-height: 1.3; }
     .resource-type-badge { flex: none; display: inline-block; margin-top: 0; max-width: 48%; font: 600 .68rem var(--st-font-head); padding: 3px 9px; border-radius: 99px; background: var(--sand); color: #92400E; line-height: 1.3; text-align: right; }
@@ -351,30 +356,32 @@
     // Render resource card
     function renderResourceCard(resource) {
       const updatedLabel = ldahResourceUpdatedLabel(resource);
+      const _ini = rsEsc((String(resource.name || '?').trim().charAt(0) || '?').toUpperCase());
       const logoHtml = resource.logo
-        ? `<img src="${resource.logo}" alt="${rsEsc(resource.name)}" class="resource-logo" loading="lazy" onerror="this.style.display='none'">`
-        : '';
+        ? `<img src="${resource.logo}" alt="" class="rs-logo" loading="lazy" onerror="this.outerHTML='<div class=&quot;rs-logo-ph&quot;>${_ini}</div>'">`
+        : `<div class="rs-logo-ph" aria-hidden="true">${_ini}</div>`;
 
       const websiteUrl = resource.website && resource.website.startsWith('http') ? resource.website : `https://${resource.website}`;
       const displayIsland = rsIslandDisplay(resource);
       const shortDesc = rsShortDesc(resource);
       const typeLabel = (resource.types && resource.types.length ? resource.types.join(' · ') : (resource.type || ''));
-      const hasDetails = !!(resource.logo || resource.person || resource.address || resource.city || resource.services);
+      const hasDetails = !!(resource.person || resource.address || resource.city || resource.services);
 
       return `
         <div class="resource-card" data-id="${resource.id}" data-island="${ldahIslandLabel(resource)}" data-type="${resource.type}">
           <div class="resource-header" onclick="toggleCard('${resource.id}')">
+           <div class="rs-head">${logoHtml}<div class="rs-id">
             <div class="resource-top">
               <h3 class="resource-name">${resource.name}</h3>
               ${typeLabel ? `<span class="resource-type-badge">${typeLabel}</span>` : ''}
             </div>
             <p class="resource-meta"><span class="rs-isl">${rsEsc(displayIsland)}</span>${shortDesc ? ' · ' + rsEsc(shortDesc) : ''}</p>
             ${updatedLabel ? `<div class="resource-updated">${updatedLabel}</div>` : ''}
+           </div></div>
             ${hasDetails ? `<button type="button" class="resource-more" aria-label="Show details for ${rsEsc(resource.name)}"><span class="rs-more">Details</span><span class="rs-less">Hide details</span>${RS_ICON.chev}</button>` : ''}
           </div>
           <div class="resource-details">
             <div class="resource-details-inner">
-              ${logoHtml}
               ${resource.person ? `<div class="detail-section">
                 <h4>Contact Person</h4>
                 <p>${resource.person}</p>

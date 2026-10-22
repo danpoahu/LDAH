@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — LIVE
-const CACHE_NAME = 'ldah-v16';   // 2026-10-22 website look goes live (site-theme.css, app shell, new pages)
+const CACHE_NAME = 'ldah-v17';   // 2026-10-22 resource logos back on the card facenew pages)
 const urlsToCache = [
   './',
   './index.html',
