@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — LIVE
-const CACHE_NAME = 'ldah-v17';   // 2026-10-22 resource logos back on the card facenew pages)
+const CACHE_NAME = 'ldah-v18';   // 2026-10-22 no install banner inside the App Store app
 const urlsToCache = [
   './',
   './index.html',
