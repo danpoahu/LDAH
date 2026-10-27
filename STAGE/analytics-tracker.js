@@ -83,8 +83,13 @@
     // Build update with dot-notation keys (update() treats these as nested paths)
     const pageName = getPageName();
     var update = {};
+    /* Snapshot the batch. pendingEvents is reset synchronously at the end of
+       this function, before the update() promise rejects -- so the not-found
+       create path below used to loop over an EMPTY array and write no events.
+       Both paths now read this snapshot. (2026-10-27) */
+    var batch = pendingEvents;
 
-    pendingEvents.forEach(function(evt) {
+    batch.forEach(function(evt) {
       switch (evt.type) {
         case 'pageview':
           update['pageviews.' + pageName] = increment(1);
@@ -92,6 +97,14 @@
           break;
         case 'donation_click':
           update['events.donation_click'] = increment(1);
+          /* Breakdown by WHERE the click happened, same scheme as the website
+             tracker. Kept in a SEPARATE field: events.donation_click is already
+             a plain number on existing day-docs, and writing
+             events.donation_click.<key> onto a number fails outright. So the
+             scalar stays exactly as the report reads it and the detail lives
+             alongside. App clicks are keyed app_<page> (or src_<x> when the
+             page was opened with ?src= / utm_source). (2026-10-27) */
+          update['events.donation_click_src.' + _donationSourceKey(evt.details)] = increment(1);
           break;
         case 'phone_call':
           update['events.phone_call'] = increment(1);
@@ -130,10 +143,15 @@
         var pageviews = {};
         var events = {};
         var totalPV = 0;
-        pendingEvents.forEach(function(evt) {
+        batch.forEach(function(evt) {
           switch (evt.type) {
             case 'pageview': pageviews[pageName] = (pageviews[pageName] || 0) + 1; totalPV++; break;
-            case 'donation_click': events['donation_click'] = (events['donation_click'] || 0) + 1; break;
+            case 'donation_click':
+              events['donation_click'] = (events['donation_click'] || 0) + 1;
+              if (!events['donation_click_src']) events['donation_click_src'] = {};
+              var _dk = _donationSourceKey(evt.details);
+              events['donation_click_src'][_dk] = (events['donation_click_src'][_dk] || 0) + 1;
+              break;
             case 'phone_call': events['phone_call'] = (events['phone_call'] || 0) + 1; break;
             case 'email_click': events['email_click'] = (events['email_click'] || 0) + 1; break;
             case 'outbound_click': events['outbound_click'] = (events['outbound_click'] || 0) + 1; break;
@@ -201,6 +219,51 @@
   }
 
   // --- Event tracking functions ---
+  /* App screen name for donation attribution. getPageName() keeps the path as
+     served (STAGE gives 'STAGE/index', a store-app wrapper may serve from its
+     own folder), so key off the file name alone and map it through PAGE_NAMES:
+     index.html -> home, events.html -> events, etc. */
+  function _appPageName() {
+    var path = (window.location && window.location.pathname) || '/';
+    var file = path.split('/').pop() || '';
+    var base = file.replace(/\.html$/i, '');
+    return PAGE_NAMES['/' + file] || PAGE_NAMES['/' + base + '.html'] || base || 'home';
+  }
+
+  /* Where did this donate click come from? A ?src= / utm_source on the page
+     URL wins (src_<x>), otherwise it is the app screen (app_<page>).
+     Sanitised for use as a Firestore field name -- same rules as the website. */
+  function _donationSourceKey(details) {
+    details = details || {};
+    var src = details.src || '';
+    if (!src) {
+      try {
+        var q = new URLSearchParams(window.location.search);
+        src = q.get('src') || q.get('utm_source') || '';
+      } catch (e) { src = ''; }
+    }
+    var key = src ? ('src_' + src) : ('app_' + _appPageName());
+    return key.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase().slice(0, 60) || 'unknown';
+  }
+
+  /* Donate links that land on the website's donate page get src=app_<page>
+     so ldahawaii.org attributes the visit to the app. PayPal links are left
+     untouched (PayPal ignores unknown params; hosted_button_id must not move). */
+  function _isWebsiteDonateUrl(href) {
+    return /^(https?:)?\/\/(www\.)?ldahawaii\.org\/donate(\.html)?([?#]|$)/i.test(href || '');
+  }
+
+  function _withAppSrc(href) {
+    try {
+      var u = new URL(href, window.location.href);
+      if (!u.searchParams.get('src')) {
+        var tag = ('app_' + _appPageName()).replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase().slice(0, 60);
+        u.searchParams.set('src', tag);
+      }
+      return u.toString();
+    } catch (e) { return href; }
+  }
+
   function trackDonationClick(url) {
     queueEvent('donation_click', { url: url });
     fireGA4Event('donation_click', { link_url: url });
@@ -255,6 +318,15 @@
       return;
     }
 
+    // Website donate page (cms-donate.js can swap the PayPal href for whatever
+    // system/donateBlocks.donateUrl holds) -- count it and tag it as from the app
+    if (_isWebsiteDonateUrl(href)) {
+      var tagged = _withAppSrc(href);
+      if (tagged !== href) link.setAttribute('href', tagged);
+      trackDonationClick(tagged);
+      return;
+    }
+
     // Phone calls
     if (href.indexOf('tel:') === 0) {
       trackPhoneCall(href.replace('tel:', ''));
@@ -278,6 +350,8 @@
   document.addEventListener('submit', function(e) {
     var form = e.target;
     if (form && form.action && form.action.indexOf('paypal.com/donate') !== -1) {
+      trackDonationClick(form.action);
+    } else if (form && form.action && _isWebsiteDonateUrl(form.action)) {
       trackDonationClick(form.action);
     }
   }, true);
