@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — LIVE
-const CACHE_NAME = 'ldah-v20';   // 2026-11-04 Aloha Packet link fixed (was ../, 404)
+const CACHE_NAME = 'ldah-v21';   // 2026-11-04 updated Aloha Packet PDF (58 Years + app QR)
 const urlsToCache = [
   './',
   './index.html',
