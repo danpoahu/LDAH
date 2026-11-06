@@ -243,7 +243,7 @@
             <div><h3 id="readiness-providerTitle">Provider Services</h3>
             <p id="readiness-providerText" data-cms="html">If you are a provider of services for children and would like to add our screening services to your program or event, we can help! We offer vision, hearing, and developmental screenings, staff and family trainings, outreach events, and resources.</p></div>
           </div>
-          <a class="st-btn st-btn-primary" href="https://www.ldahawaii.org/readiness.html" target="_blank" rel="noopener">Request Services</a>
+          <a class="st-btn st-btn-primary" id="rsOpen" href="#">Request Services</a>
         </article>
       </div>
     </section>
@@ -258,6 +258,33 @@
     </section>
   </main>
 
+  <!-- Request Services sheet (Daniel 2026-11-06: the app is self-contained; it
+       never opens the website). Same fields and the same providers record as
+       the website's Provider Services Request. -->
+  <div class="pg-modal" id="rsModal" hidden role="dialog" aria-modal="true" aria-labelledby="rsTitle">
+    <div class="pg-modal-card">
+      <div class="pg-modal-head">
+        <div><p>School Readiness</p><h2 id="rsTitle">Request provider services</h2></div>
+        <button type="button" class="pg-x" data-close aria-label="Close">&times;</button>
+      </div>
+      <div class="pg-modal-body">
+        <form id="rsForm" novalidate>
+          <div class="ob-fg"><label class="ob-lbl" for="rsOrg">Organization name <span class="ob-req">*</span></label><input class="ob-in" id="rsOrg" type="text" autocomplete="organization"></div>
+          <div class="ob-fg"><label class="ob-lbl" for="rsFirst">Point of contact <span class="ob-req">*</span></label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input class="ob-in" id="rsFirst" type="text" placeholder="First name" autocomplete="given-name"><input class="ob-in" id="rsLast" type="text" placeholder="Last name" autocomplete="family-name"></div></div>
+          <div class="ob-fg"><label class="ob-lbl" for="rsEmail">Email <span class="ob-req">*</span></label><input class="ob-in" id="rsEmail" type="email" inputmode="email" autocomplete="email"></div>
+          <div class="ob-fg"><label class="ob-lbl" for="rsPhone">Phone</label><input class="ob-in" id="rsPhone" type="tel" inputmode="tel" placeholder="(808) 000-0000" autocomplete="tel"></div>
+          <div class="ob-fg"><label class="ob-lbl" for="rsMsg">Comment or message</label><textarea class="ob-in" id="rsMsg" rows="4" placeholder="Tell us about your program or event and what services you are interested in."></textarea></div>
+          <div class="ob-err" id="rsErr" role="alert" hidden></div>
+          <button type="submit" class="ob-cta" id="rsSend">Send request</button>
+        </form>
+        <div id="rsDone" hidden>
+          <div class="ob-when"><b>Mahalo!</b>Your request is in. Our team will contact you soon about how we can support your program.</div>
+          <button type="button" class="ob-cta ob-cta-plain" data-close>Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- Office screening booking sheet (STAGE 2026-11-06): pick a time, sign the consent, booked. -->
   <div class="pg-modal" id="obModal" hidden role="dialog" aria-modal="true" aria-labelledby="obTitle">
     <div class="pg-modal-card">
@@ -1027,6 +1054,38 @@
   })();
   </script>
 
+  <script>
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var btn = $('rsOpen'); if (!btn) return;
+    function reset() { $('rsForm').reset(); $('rsForm').hidden = false; $('rsDone').hidden = true; $('rsErr').hidden = true; $('rsSend').disabled = false; $('rsSend').textContent = 'Send request'; }
+    btn.addEventListener('click', function (e) { e.preventDefault(); reset(); window.STC.openModal('rsModal'); });
+    $('rsForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var v = function (id) { return String($(id).value || '').trim(); };
+      var cap = function (t) { return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : t; };
+      var miss = [];
+      if (!v('rsOrg')) miss.push('the organization name');
+      if (!v('rsFirst') || !v('rsLast')) miss.push('the contact’s first and last name');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('rsEmail'))) miss.push('an email address');
+      if (v('rsPhone') && v('rsPhone').replace(/\D/g, '').length < 10) miss.push('a 10-digit phone number');
+      if (miss.length) { $('rsErr').textContent = 'Please add ' + miss.join(', ') + '.'; $('rsErr').hidden = false; return; }
+      $('rsErr').hidden = true; $('rsSend').disabled = true; $('rsSend').textContent = 'Sending…';
+      try {
+        await firebase.firestore().collection('providers').add({
+          organizationName: v('rsOrg'), firstName: cap(v('rsFirst')), lastName: cap(v('rsLast')),
+          email: v('rsEmail').toLowerCase(), phone: v('rsPhone'), message: v('rsMsg'),
+          submittedAt: firebase.firestore.FieldValue.serverTimestamp(), status: 'new', source: 'app'
+        });
+        if (window.ldahAnalytics && ldahAnalytics.trackFormSubmit) ldahAnalytics.trackFormSubmit('provider_request');
+        $('rsForm').hidden = true; $('rsDone').hidden = false;
+      } catch (err) {
+        $('rsErr').textContent = 'Your request did not go through. Please try again, or call us at (808) 536-9684.'; $('rsErr').hidden = false;
+        $('rsSend').disabled = false; $('rsSend').textContent = 'Send request';
+      }
+    });
+  })();
+  </script>
   <script src="analytics-tracker.js"></script>
   <script src="accessibility.js"></script>
 <script>/* One-tap signature (Daniel 2026-11-06): the parent's name is already on the

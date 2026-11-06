@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — LIVE
-const CACHE_NAME = 'ldah-v23';   // 2026-11-04 updated Aloha Packet PDF (58 Years + app QR)
+const CACHE_NAME = 'ldah-v24';   // 2026-11-04 updated Aloha Packet PDF (58 Years + app QR)
 const urlsToCache = [
   './',
   './index.html',
