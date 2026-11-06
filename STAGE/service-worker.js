@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — STAGE
-const CACHE_NAME = 'ldah-stage-v25';   // 2026-11-06 readiness.html office screening booking sheet
+const CACHE_NAME = 'ldah-stage-v26';   // 2026-11-06 readiness.html office screening booking sheet
 const urlsToCache = [
   './',
   './index.html',

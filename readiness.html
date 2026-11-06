@@ -252,7 +252,7 @@
       <div class="st-wrap">
         <h2 id="readiness-ctaTitle">Schedule a Screening</h2>
         <p id="readiness-ctaSubtitle" data-cms="html">Contact us to schedule a screening event in your community.</p>
-        <a class="st-btn st-btn-white" id="obOpen" href="https://www.ldahawaii.org/readiness.html" target="_blank" rel="noopener">Schedule a Screening</a>
+        <a class="st-btn st-btn-white" id="obOpen" href="#">Schedule a Screening</a>
         <a class="st-btn st-btn-outline-white" href="contact.html">Contact Us Today</a>
       </div>
     </section>
@@ -269,7 +269,7 @@
         <div id="obStepPick">
           <p class="ob-body-sub">At our office, 245 N Kukui St, Suite 205. About 15 minutes.</p>
           <div id="ob_loading" class="ob-msg">Loading open times&hellip;</div>
-          <div id="ob_none" class="ob-msg" hidden>There are no open times at our office right now. <a href="contact.html">Contact us</a> and we will help you find a time.</div>
+          <div id="ob_none" class="ob-msg" hidden>There are no open times at our office right now. Call us at <a href="tel:+18085369684">(808) 536-9684</a> or <a href="contact.html">contact us</a>, and we will help you find a time.</div>
           <div id="obPickWrap" hidden>
             <div class="ob-cap">Pick a day</div>
             <div class="ob-days" id="ob_days" role="group" aria-label="Pick a day"></div>
@@ -1017,8 +1017,9 @@
       return any;
     }
     OB.loadTimes().then(function (days) { loaded = settle(days) ? 'open' : 'none'; });
+    /* Always books inside the app (Daniel 2026-11-06): with no open days the
+       sheet says so, with a call button, instead of opening the website. */
     open.addEventListener('click', function (e) {
-      if (loaded === 'none') return; /* no open days: keep the website link */
       e.preventDefault();
       window.STC.openModal('obModal');
       if (step === 'pick') OB.loadTimes().then(settle);
