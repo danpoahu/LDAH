@@ -646,7 +646,7 @@
             phone: prev.phone.trim() ? prev.phone : (c.phone || prev.phone),
             streetAddress: prev.streetAddress.trim() ? prev.streetAddress : (c.streetAddress || prev.streetAddress),
             city: prev.city.trim() ? prev.city : (c.city || prev.city),
-            zipCode: prev.zipCode.trim() ? prev.zipCode : (c.zipCode || prev.zipCode),
+            zipCode: prev.zipCode.trim() ? prev.zipCode : (((String(c.zipCode || '').match(/\d{5}/) || [])[0]) || c.zipCode || prev.zipCode),
             reasonForAttending: prev.reasonForAttending ? prev.reasonForAttending : (c.reasonForAttending || prev.reasonForAttending),
             priorTraining: prev.priorTraining ? prev.priorTraining : (c.priorTraining || prev.priorTraining),
             priorTrainingDate: prev.priorTrainingDate ? prev.priorTrainingDate : (c.priorTrainingDate || prev.priorTrainingDate),
@@ -751,7 +751,8 @@
         participationType: 'Individual', groupName: '', groupSize: '',
         selectedSessions: [], additionalComments: '',
         multipleSessionsReason: '',
-        priorConnectGen: ''
+        priorConnectGen: '',
+        zipCode: ''
       });
       const [recurringSubmitting, setRecurringSubmitting] = useState(false);
       const [recurringSubmitSuccess, setRecurringSubmitSuccess] = useState(false);
@@ -872,6 +873,11 @@
               role: signupRole || prev.role,
               childName: signupChildName || prev.childName
             }));
+          }
+          // Bridge the zip given on the signup form (2026-11-06) — fill blank only.
+          var signupZip = String(data.zipCode || '').trim();
+          if (signupZip) {
+            setRegFormData(prev => (prev.zipCode ? prev : { ...prev, zipCode: signupZip }));
           }
 
           if (data.status === 'confirmed') {
@@ -1397,7 +1403,8 @@
           participationType: 'Individual', groupName: '', groupSize: '',
           selectedSessions: [], additionalComments: '',
           multipleSessionsReason: '',
-          priorConnectGen: ''
+          priorConnectGen: '',
+          zipCode: ''
         });
         setRecurringSubmitSuccess(false);
 
@@ -1471,6 +1478,14 @@
         const phoneDigits = recurringFormData.phone.replace(/\D/g, '');
         if (phoneDigits.length !== 10) {
           alert('Please enter a valid 10-digit phone number.');
+          return;
+        }
+
+        // Parent zip (2026-11-06) — written top-level on the signup so the
+        // server can set the family's island straight away.
+        if (recurringFormData.registrantType === 'Parent/Guardian' &&
+            !/^\d{5}$/.test(String(recurringFormData.zipCode || '').trim())) {
+          alert('Please enter your 5-digit zip code.');
           return;
         }
 
@@ -1599,6 +1614,13 @@
         const phoneDigits = formData.phone.replace(/\D/g, '');
         if (phoneDigits.length !== 10) {
           alert('Please enter a valid 10-digit phone number.');
+          return;
+        }
+
+        // Zip (2026-11-06): parents give it in the short box on this form,
+        // everyone else in "Tell us a bit more". Either way, 5 digits.
+        if (formData.registrantType && !/^\d{5}$/.test(String(formData.zipCode || '').trim())) {
+          alert('Please enter your 5-digit zip code.');
           return;
         }
 
@@ -2492,6 +2514,23 @@
                       </div>
                     </div>
 
+                    {/* Parent zip (2026-11-06): parents give their address only in the
+                        later registration step, which many never finish. One short box
+                        here, rendered (so required) only for Parent/Guardian. */}
+                    {formData.registrantType === 'Parent/Guardian' && (
+                      <div style={{ marginBottom: '20px' }}>
+                        <label htmlFor="oneTimeParentZip" style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                          Zip Code *
+                        </label>
+                        <input id="oneTimeParentZip" type="text" required inputMode="numeric" maxLength={5} autoComplete="postal-code"
+                          value={formData.zipCode || ''}
+                          onChange={(e) => handleFormChange('zipCode', e.target.value.replace(/\D/g, '').slice(0, 5))}
+                          disabled={submitting} placeholder="96XXX"
+                          style={{ width: '100%', maxWidth: '180px', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: submitting ? 0.6 : 1 }}
+                        />
+                      </div>
+                    )}
+
                     {/* ── Inline registration fields for non-Parent/Guardian (v48.0.0) ──
                         When role !== Parent/Guardian, we collect registration info here
                         so the signup can be immediately confirmed without a follow-up email. */}
@@ -3020,6 +3059,23 @@
                         </label>
                       </div>
                     </div>
+
+                    {/* Parent zip (2026-11-06): parents give their address only in the
+                        later registration step, which many never finish. One short box
+                        here, rendered (so required) only for Parent/Guardian. */}
+                    {recurringFormData.registrantType === 'Parent/Guardian' && (
+                      <div style={{ marginBottom: '20px' }}>
+                        <label htmlFor="recurringParentZip" style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                          Zip Code *
+                        </label>
+                        <input id="recurringParentZip" type="text" required inputMode="numeric" maxLength={5} autoComplete="postal-code"
+                          value={recurringFormData.zipCode || ''}
+                          onChange={(e) => handleRecurringFormChange('zipCode', e.target.value.replace(/\D/g, '').slice(0, 5))}
+                          disabled={recurringSubmitting} placeholder="96XXX"
+                          style={{ width: '100%', maxWidth: '180px', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', opacity: recurringSubmitting ? 0.6 : 1 }}
+                        />
+                      </div>
+                    )}
 
                     {/* Phone */}
                     <div style={{ marginBottom: '20px' }}>
