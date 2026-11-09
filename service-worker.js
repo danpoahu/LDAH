@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — LIVE
-const CACHE_NAME = 'ldah-v25';   // 2026-11-06 zip on parent signup + membership forms
+const CACHE_NAME = 'ldah-v26';   // 2026-11-09 event's own full message
 const urlsToCache = [
   './',
   './index.html',

@@ -2411,7 +2411,7 @@
                      Until 2026-08-19 the app had no capacity check at all. */
                   <div style={{ padding: '10px 6px 6px' }}>
                     <p style={{ color: '#B91C1C', fontSize: '17px', fontWeight: 600, lineHeight: 1.6, margin: '0 0 14px' }}>
-                      This event is full.
+                      {(signupEvent && String(signupEvent.fullMessage || '').trim()) || 'This event is full.'}
                     </p>
                     <button
                       type="button"
