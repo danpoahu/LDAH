@@ -1280,10 +1280,17 @@
           // when there is at most one live date left to attend.
           const live = (Array.isArray(event.signupDates) ? event.signupDates : [])
             .filter(function (s) { return !isSignupDateExpired(s); });
-          if (live.length > 1) {
-            setCapFull(live.every(function (s) { return (counts[s] || 0) >= cap; }));
-          } else {
-            setCapFull(d.full === true);
+          const _isFull = live.length > 1
+            ? live.every(function (s) { return (counts[s] || 0) >= cap; })
+            : d.full === true;
+          setCapFull(_isFull);
+          // Internal only (2026-11-09): count this showing of the full notice, with
+          // the signed-in member's email when there is one. Nothing is shown.
+          if (_isFull) {
+            try {
+              const _u = firebase.auth && firebase.auth().currentUser;
+              firebase.functions().httpsCallable('eventFullNoticeSeen')({ eventId: event.id, collection: coll, email: (_u && _u.email) || '', src: 'app' }).catch(function () {});
+            } catch (_) {}
           }
         } catch (err) {
           // Fail open, same as the website: a capacity-call failure must never

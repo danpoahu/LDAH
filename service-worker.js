@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — LIVE
-const CACHE_NAME = 'ldah-v26';   // 2026-11-09 event's own full message
+const CACHE_NAME = 'ldah-v27';   // 2026-11-09 full-notice count
 const urlsToCache = [
   './',
   './index.html',
