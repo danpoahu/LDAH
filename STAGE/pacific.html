@@ -129,6 +129,23 @@
     #islandModalBody .photo-gallery img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; display: block; background: var(--sand); }
     @media (min-width: 560px) { #islandModalBody .photo-gallery { grid-template-columns: 1fr 1fr 1fr; } }
     #islandModalBody .pc-fallback { padding: 16px; }
+    /* Upcoming events strip: same events and layout as the website's partner pages (partnerPages[]) */
+    #islandModalBody .veb-strip { margin: 18px 0; padding: 14px; border-radius: 14px; background: #f0f9ff; border: 1px solid #bae6fd; }
+    #islandModalBody .veb-strip h3 { margin: 0 0 4px; border: 0; color: #0c4a6e; }
+    #islandModalBody .veb-card { display: flex; gap: 12px; align-items: flex-start; background: #fff; border-radius: 12px; padding: 12px; border: 1px solid #e0f2fe; margin-top: 10px; }
+    #islandModalBody .veb-thumb { flex: 0 0 104px; cursor: zoom-in; }
+    #islandModalBody .veb-thumb img { width: 104px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.15); display: block; }
+    #islandModalBody .veb-info { flex: 1; min-width: 0; }
+    #islandModalBody .veb-sub { font-size: .8rem; color: #64748b; margin-bottom: 6px; }
+    #islandModalBody .veb-info ul { margin: 0 0 10px; padding-left: 18px; font-size: .88rem; color: #1e293b; }
+    #islandModalBody .veb-info li { margin: 4px 0; }
+    #islandModalBody .veb-info li span { display: block; color: #0369a1; }
+    #islandModalBody a.veb-reg { display: inline-flex; align-items: center; min-height: 42px; background: #0e7490; color: #fff !important; text-decoration: none; font-weight: 700; border-radius: 10px; padding: 0 18px; }
+    @media (max-width: 420px) { #islandModalBody .veb-card { flex-direction: column; } #islandModalBody .veb-thumb { flex-basis: auto; } #islandModalBody .veb-thumb img { width: 100%; max-width: 260px; } }
+    #vebZoom { position: fixed; inset: 0; z-index: 100000; background: rgba(15,23,42,.88); display: none; align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; }
+    #vebZoom.open { display: flex; }
+    #vebZoom img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+    #vebZoom button { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: 16px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: #fff; color: #0f172a; font-size: 28px; line-height: 1; }
 
   </style>
 </head>
@@ -471,6 +488,88 @@
       return S.clean(d, { keepAttrs: true });
     }
 
+    /* Upcoming events for this partner, the same list the website shows: events
+       tagged for the island in DAN (partnerPages[]), with the partner flyer and
+       times in the island's local time. Register opens the event here in the app. */
+    var VEB = {
+      samoa:    { label: 'American Samoa',   zones: [['American Samoa', -11]] },
+      guam:     { label: 'Guam',             zones: [['Guam', 10]] },
+      cnmi:     { label: 'CNMI',             zones: [['CNMI', 10]] },
+      fsm:      { label: 'Micronesia',       zones: [['Yap & Chuuk', 10], ['Pohnpei & Kosrae', 11]] },
+      marshall: { label: 'Marshall Islands', zones: [['Marshall Islands', 12]] },
+      palau:    { label: 'Palau',            zones: [['Palau', 9]] }
+    };
+    function vebZoom(src) {
+      var o = document.getElementById('vebZoom');
+      if (!o) {
+        o = document.createElement('div'); o.id = 'vebZoom';
+        o.innerHTML = '<button type="button" aria-label="Close">&times;</button><img alt="Event flyer">';
+        o.addEventListener('click', function () { o.classList.remove('open'); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') o.classList.remove('open'); });
+        document.body.appendChild(o);
+      }
+      o.querySelector('img').src = src;
+      o.classList.add('open');
+    }
+    function vebLocal(dateStr, hhmm, off) {
+      var p = dateStr.split('-').map(Number), t = hhmm.split(':').map(Number);
+      return new Date(Date.UTC(p[0], p[1] - 1, p[2], t[0], t[1]) + (10 + off) * 3600e3);
+    }
+    function vebWhen(s, off) {
+      var a = vebLocal(s.date, s.start, off), b = vebLocal(s.date, s.end, off);
+      var day = a.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'short', day: 'numeric' });
+      var f = function (d) { return d.toLocaleTimeString('en-US', { timeZone: 'UTC', hour: 'numeric', minute: '2-digit' }); };
+      return day + ', ' + f(a) + ' to ' + f(b);
+    }
+    function vebSessions(x) {
+      if (x.vebSpec && Array.isArray(x.vebSpec.sessions) && x.vebSpec.sessions.length) return x.vebSpec.sessions;
+      return (Array.isArray(x.sessions) ? x.sessions : []).filter(function (s) { return s && s.dateKey && s.startTime; }).map(function (s) {
+        var end = s.endTime;
+        if (!end) { var t = s.startTime.split(':').map(Number); end = String((t[0] + 1) % 24).padStart(2, '0') + ':' + String(t[1]).padStart(2, '0'); }
+        return { date: s.dateKey, start: s.startTime, end: end, lesson: String(x.title || '').replace(/^Parent Talk Caf[eé]\s*:\s*/i, '') };
+      });
+    }
+    function renderVebStrip(k, body) {
+      var isl = VEB[k], db = null;
+      try { db = firebase.firestore(); } catch (e) { return; }
+      if (!isl || !body) return;
+      body.dataset.vebKey = k;
+      db.collection('events').where('partnerPages', 'array-contains', isl.label).get().then(function (snap) {
+        var now = new Date();
+        var today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        var rows = snap.docs.map(function (d) { var x = d.data(); x.id = d.id; return x; }).filter(function (x) {
+          if (x.archived || x.isOneOff || x.infoOnly || x.active === false) return false;
+          var ss = vebSessions(x);
+          var last = ss.length ? ss.map(function (s) { return s.date; }).sort().pop() : (x.eventDate || '');
+          return last >= today;
+        }).sort(function (a, b) { return (a.eventDate || '') < (b.eventDate || '') ? -1 : 1; });
+        if (!rows.length || body.dataset.vebKey !== k || body.querySelector('.veb-strip')) return;
+        var strip = document.createElement('div');
+        strip.className = 'veb-strip';
+        strip.innerHTML = '<h3>Upcoming events</h3>' + rows.map(function (x) {
+          var times = vebSessions(x).map(function (s) {
+            return '<li><b>' + esc(S.norm(s.lesson)) + '</b>' + isl.zones.map(function (z) {
+              return '<span>' + (isl.zones.length > 1 ? esc(z[0]) + ': ' : '') + esc(vebWhen(s, z[1])) + '</span>';
+            }).join('') + '</li>';
+          }).join('');
+          var img = S.abs(x.partnerFlyerUrl || x.imageUrl || '');
+          var reg = 'events.html?eventId=' + encodeURIComponent(x.id) + '&autoOpen=1&src=pacific-' + k;
+          var where = /parent talk|facebook/i.test((x.location || '') + ' ' + (x.title || '')) ? 'Recorded and posted on Facebook @ Parent Talk Café' : 'On Zoom';
+          return '<div class="veb-card">'
+            + (img ? '<a href="' + esc(img) + '" class="veb-thumb" data-veb-zoom title="Tap to see the flyer larger"><img src="' + esc(img) + '" alt="Flyer for ' + esc(S.norm(x.title)) + '"></a>' : '')
+            + '<div class="veb-info"><h4>' + esc(S.norm(x.title)) + '</h4><div class="veb-sub">' + where + ' · times shown in your local time</div><ul>' + times + '</ul>'
+            + '<a class="veb-reg" href="' + reg + '">Register</a></div></div>';
+        }).join('');
+        strip.addEventListener('click', function (e) {
+          var a = e.target.closest('[data-veb-zoom]'); if (!a) return;
+          e.preventDefault(); vebZoom(a.getAttribute('href'));
+        });
+        /* Right before the Photo Gallery, as on the website; at the end if there is none. */
+        var gal = [].filter.call(body.querySelectorAll('h3'), function (h) { return /photo gallery/i.test(h.textContent); })[0];
+        if (gal) gal.parentNode.insertBefore(strip, gal); else body.appendChild(strip);
+      }).catch(function (e) { console.warn('[veb] partner events strip', e); });
+    }
+
     function openIsland(k) {
       var title = document.getElementById('pacific-' + k + 'Title');
       var cardName = title ? title.textContent.trim() : '';
@@ -492,6 +591,7 @@
         if (frag && (frag.textContent || '').trim()) {
           body.appendChild(frag);
           body.querySelectorAll('img').forEach(function (img) { img.loading = 'lazy'; });
+          renderVebStrip(k, body);
         } else {
           body.innerHTML = '<div class="pc-fallback"><p class="pg-msg">We couldn\'t load this partner\'s details right now.</p><a class="st-btn st-btn-primary" href="' + WEB + '" target="_blank" rel="noopener">See it on ldahawaii.org</a></div>';
         }

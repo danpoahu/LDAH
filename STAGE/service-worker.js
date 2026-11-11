@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — STAGE
-const CACHE_NAME = 'ldah-stage-v28';   // 2026-11-06 zip on parent signup + membership forms
+const CACHE_NAME = 'ldah-stage-v29';   // 2026-11-10 partner pages: upcoming events + flyer
 const urlsToCache = [
   './',
   './index.html',
