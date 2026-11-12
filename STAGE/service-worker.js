@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — STAGE
-const CACHE_NAME = 'ldah-stage-v30';   // 2026-11-12 volunteer page: office help modal
+const CACHE_NAME = 'ldah-stage-v31';   // 2026-11-12 office help modal: request a different day
 const urlsToCache = [
   './',
   './index.html',
