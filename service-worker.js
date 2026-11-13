@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — LIVE
-const CACHE_NAME = 'ldah-v29';   // 2026-11-12 volunteer page office help modal
+const CACHE_NAME = 'ldah-v30';   // 2026-11-13 accommodations hint: don't type N/A
 const urlsToCache = [
   './',
   './index.html',

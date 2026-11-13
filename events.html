@@ -2644,7 +2644,7 @@
                           <textarea value={formData.accommodations}
                             onChange={(e) => handleFormChange('accommodations', e.target.value)}
                             disabled={submitting} rows="3"
-                            placeholder="Please let us know at least 2 weeks prior to the event..."
+                            placeholder="Please don’t type N/A here. If you don’t need any, leave this blank."
                             style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', fontFamily: 'inherit', resize: 'vertical', opacity: submitting ? 0.6 : 1 }} />
                         </div>
                       </div>
@@ -2805,7 +2805,7 @@
                         value={formData.additionalComments}
                         onChange={(e) => handleFormChange('additionalComments', e.target.value)}
                         disabled={submitting}
-                        placeholder="Your answer"
+                        placeholder="Please don’t type N/A here. If you don’t need any, leave this blank."
                         rows="4"
                         style={{
                           width: '100%',
@@ -3486,7 +3486,7 @@
                         value={recurringFormData.additionalComments}
                         onChange={(e) => handleRecurringFormChange('additionalComments', e.target.value)}
                         disabled={recurringSubmitting}
-                        placeholder="Your answer"
+                        placeholder="Please don’t type N/A here. If you don’t need any, leave this blank."
                         rows="3"
                         style={{
                           width: '100%', padding: '12px', border: '1px solid #D1D5DB',
@@ -3944,7 +3944,7 @@
                     <div style={{ marginBottom: '20px' }}>
                       <label style={{ display: 'block', color: '#0891B2', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Accommodations Needed</label>
                       <textarea value={regFormData.accommodations} onChange={(e) => handleRegFormChange('accommodations', e.target.value)} disabled={regSubmitting}
-                        placeholder="Please let us know at least 2 weeks prior to the event..." rows="3"
+                        placeholder="Please don’t type N/A here. If you don’t need any, leave this blank." rows="3"
                         style={{ width: '100%', padding: '12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px', fontFamily: 'inherit', resize: 'vertical', opacity: regSubmitting ? 0.6 : 1 }} />
                     </div>
 
