@@ -261,10 +261,22 @@
   <!-- Request Services sheet (Daniel 2026-11-06: the app is self-contained; it
        never opens the website). Same fields and the same providers record as
        the website's Provider Services Request. -->
+  <style>/* Screening request questions (2026-11-13) */
+    .rs-sec{margin:14px 0 10px;padding-top:12px;border-top:1px solid #E2E8F0;font-weight:700;color:#004E7C;}
+    .rs-chips{display:flex;flex-wrap:wrap;gap:6px;}
+    .rs-chips label{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1.5px solid #E2E8F0;border-radius:999px;font-size:.92rem;cursor:pointer;}
+    .rs-chips label:has(input:checked){border-color:#004E7C;background:#EBF5FB;}
+    .rs-chips input{accent-color:#004E7C;margin:0;}
+    .rs-row{display:grid;grid-template-columns:1.4fr 1fr;gap:8px;}
+    .rs-row + .rs-row{margin-top:8px;}
+    .rs-sub{display:block;font-size:.8rem;color:#64748B;margin-bottom:3px;}
+    .rs-note{font-size:.8rem;color:#64748B;margin:6px 0 0;line-height:1.45;}
+    .rs-unsure{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-size:.92rem;}
+  </style>
   <div class="pg-modal" id="rsModal" hidden role="dialog" aria-modal="true" aria-labelledby="rsTitle">
     <div class="pg-modal-card">
       <div class="pg-modal-head">
-        <div><p>School Readiness</p><h2 id="rsTitle">Request provider services</h2></div>
+        <div><p>School Readiness</p><h2 id="rsTitle">Provider Screening Services Request</h2></div>
         <button type="button" class="pg-x" data-close aria-label="Close">&times;</button>
       </div>
       <div class="pg-modal-body">
@@ -274,6 +286,25 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input class="ob-in" id="rsFirst" type="text" placeholder="First name" autocomplete="given-name"><input class="ob-in" id="rsLast" type="text" placeholder="Last name" autocomplete="family-name"></div></div>
           <div class="ob-fg"><label class="ob-lbl" for="rsEmail">Email <span class="ob-req">*</span></label><input class="ob-in" id="rsEmail" type="email" inputmode="email" autocomplete="email"></div>
           <div class="ob-fg"><label class="ob-lbl" for="rsPhone">Phone</label><input class="ob-in" id="rsPhone" type="tel" inputmode="tel" placeholder="(808) 000-0000" autocomplete="tel"></div>
+          <div class="rs-sec">About the screening</div>
+          <div class="ob-fg"><span class="ob-lbl">Who is the screening for?</span><div class="rs-chips">
+            <label><input type="radio" name="rsFor" value="School"> School</label><label><input type="radio" name="rsFor" value="Person"> Person</label>
+            <label><input type="radio" name="rsFor" value="Location"> Location</label><label><input type="radio" name="rsFor" value="Event"> Event</label></div></div>
+          <div class="ob-fg"><span class="ob-lbl">Is the screening at more than one location?</span><div class="rs-chips">
+            <label><input type="radio" name="rsMulti" value="yes"> Yes</label><label><input type="radio" name="rsMulti" value="no"> No</label></div></div>
+          <div class="ob-fg"><label class="ob-lbl" for="rsSites">Site(s)</label><textarea class="ob-in" id="rsSites" rows="2" placeholder="School or site name and address. List each site if there is more than one."></textarea></div>
+          <div class="ob-fg"><label class="ob-lbl" for="rsCount">How many children will be screened? <span class="ob-req">*</span></label><input class="ob-in" id="rsCount" type="number" min="1" max="2000" inputmode="numeric" placeholder="About how many">
+            <label class="rs-unsure"><input type="checkbox" id="rsCountUnsure"> Not sure yet</label></div>
+          <div class="ob-fg"><label class="ob-lbl" for="rsAges">Children&rsquo;s ages</label><input class="ob-in" id="rsAges" type="text" placeholder="e.g., 3 to 5 years old"></div>
+          <div class="ob-fg"><span class="ob-lbl">Which screenings? <span class="ob-req">*</span></span><div class="rs-chips">
+            <label><input type="checkbox" name="rsType" value="Hearing"> Hearing</label><label><input type="checkbox" name="rsType" value="Vision"> Vision</label>
+            <label><input type="checkbox" name="rsType" value="Developmental"> Developmental</label><label><input type="checkbox" name="rsType" value="Social Emotional"> Social Emotional</label></div></div>
+          <div class="ob-fg"><label class="ob-lbl" for="rsIsland">Island</label><select class="ob-in" id="rsIsland"><option value="">Choose an island</option>
+            <option>O&#699;ahu</option><option>Hawai&#699;i Island</option><option>Kaua&#699;i</option><option>Maui</option><option>L&#257;na&#699;i</option><option>Moloka&#699;i</option></select></div>
+          <div class="ob-fg"><span class="ob-lbl">Days and times that work for you</span>
+            <div class="rs-row"><div><span class="rs-sub">1st choice date</span><input class="ob-in" id="rsDate1" type="date"></div><div><span class="rs-sub">Start time</span><input class="ob-in" id="rsTime1" type="time" value="08:30"></div></div>
+            <div class="rs-row"><div><span class="rs-sub">2nd choice date</span><input class="ob-in" id="rsDate2" type="date"></div><div><span class="rs-sub">Start time</span><input class="ob-in" id="rsTime2" type="time" value="08:30"></div></div>
+            <p class="rs-note">Screenings can start at 8:30 a.m. Schools need time to send consent forms home and get them back signed, so please pick dates at least one week after families receive the forms. We will confirm the date with you.</p></div>
           <div class="ob-fg"><label class="ob-lbl" for="rsMsg">Comment or message</label><textarea class="ob-in" id="rsMsg" rows="4" placeholder="Tell us about your program or event and what services you are interested in."></textarea></div>
           <div class="ob-err" id="rsErr" role="alert" hidden></div>
           <button type="submit" class="ob-cta" id="rsSend">Send request</button>
@@ -1058,7 +1089,7 @@
   (function () {
     var $ = function (id) { return document.getElementById(id); };
     var btn = $('rsOpen'); if (!btn) return;
-    function reset() { $('rsForm').reset(); $('rsForm').hidden = false; $('rsDone').hidden = true; $('rsErr').hidden = true; $('rsSend').disabled = false; $('rsSend').textContent = 'Send request'; }
+    function reset() { var mn = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10); $('rsDate1').min = mn; $('rsDate2').min = mn; $('rsForm').reset(); $('rsForm').hidden = false; $('rsDone').hidden = true; $('rsErr').hidden = true; $('rsSend').disabled = false; $('rsSend').textContent = 'Send request'; }
     btn.addEventListener('click', function (e) { e.preventDefault(); reset(); window.STC.openModal('rsModal'); });
     $('rsForm').addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -1069,12 +1100,20 @@
       if (!v('rsFirst') || !v('rsLast')) miss.push('the contact’s first and last name');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('rsEmail'))) miss.push('an email address');
       if (v('rsPhone') && v('rsPhone').replace(/\D/g, '').length < 10) miss.push('a 10-digit phone number');
+      var pick = function (n) { return Array.prototype.map.call(document.querySelectorAll('input[name="' + n + '"]:checked'), function (x) { return x.value; }); };
+      var unsure = $('rsCountUnsure').checked, types = pick('rsType');
+      if (!unsure && !(parseInt(v('rsCount'), 10) > 0)) miss.push('how many children will be screened (or tick Not sure yet)');
+      if (!types.length) miss.push('which screenings you need');
       if (miss.length) { $('rsErr').textContent = 'Please add ' + miss.join(', ') + '.'; $('rsErr').hidden = false; return; }
       $('rsErr').hidden = true; $('rsSend').disabled = true; $('rsSend').textContent = 'Sending…';
       try {
         await firebase.firestore().collection('providers').add({
           organizationName: v('rsOrg'), firstName: cap(v('rsFirst')), lastName: cap(v('rsLast')),
           email: v('rsEmail').toLowerCase(), phone: v('rsPhone'), message: v('rsMsg'),
+          requestType: 'screening', screeningFor: pick('rsFor')[0] || '', multipleLocations: pick('rsMulti')[0] || '',
+          sites: v('rsSites'), childCount: unsure ? null : parseInt(v('rsCount'), 10), childCountUnknown: unsure,
+          childAges: v('rsAges'), screenings: types, island: v('rsIsland'),
+          preferredDates: [['rsDate1', 'rsTime1'], ['rsDate2', 'rsTime2']].map(function (d) { return { date: v(d[0]), time: v(d[1]) }; }).filter(function (d) { return d.date; }),
           submittedAt: firebase.firestore.FieldValue.serverTimestamp(), status: 'new', source: 'app'
         });
         if (window.ldahAnalytics && ldahAnalytics.trackFormSubmit) ldahAnalytics.trackFormSubmit('provider_request');
