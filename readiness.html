@@ -200,19 +200,19 @@
         <span class="st-tag">Screenings</span>
         <h2 class="st-h" id="readiness-screeningsTitle">Childhood Screenings</h2>
         <div class="pg-mt"></div>
-        <article class="st-card pg-card">
+        <article class="st-card pg-card rs-open" role="button" tabindex="0" data-rs-type="Vision">
           <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12"/></svg><img id="readiness-visionPhoto" alt="" hidden></div>
             <div><h3 id="readiness-visionTitle">Vision Screening</h3>
             <p id="readiness-visionText" data-cms="html">We use the <strong>Plusoptix Digital Vision Screener</strong> to check your child's eyes. It is an accurate, non-invasive way to detect a variety of vision disorders in children. It takes moments for the device to screen your child's eyes and produce immediate results for your review.</p></div>
           </div>
         </article>
-        <article class="st-card pg-card">
+        <article class="st-card pg-card rs-open" role="button" tabindex="0" data-rs-type="Hearing">
           <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8.5a6 6 0 0 1 12 0c0 3.5-3 4.5-3 7.5a3 3 0 0 1-6 0"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0"/></svg><img id="readiness-hearingPhoto" alt="" hidden></div>
             <div><h3 id="readiness-hearingTitle">Hearing Screening</h3>
             <p id="readiness-hearingText" data-cms="html">Two methods can be used to check your child's hearing. The first is called <strong>Otoacoustic Emissions</strong> — this method checks both the middle ear and inner ear and will quickly tell you if your child is hearing normally. The second is called <strong>Tympanometry</strong> — this method checks for reduced eardrum movement caused by fluid, wax, or other problems.</p></div>
           </div>
         </article>
-        <article class="st-card pg-card">
+        <article class="st-card pg-card rs-open" role="button" tabindex="0" data-rs-type="Developmental">
           <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg><img id="readiness-devPhoto" alt="" hidden></div>
             <div><h3 id="readiness-devTitle">Developmental Screening</h3>
             <p id="readiness-devText" data-cms="html">Our qualified personnel use the Ages &amp; Stages Questionnaire (ASQ-3) and ASQ-SE (Social-Emotional) screening tools. When developmental concerns are detected, children will be screened for autism using the Modified Checklist for Autism in Toddlers (M-CHAT).</p></div>
@@ -240,7 +240,7 @@
         </article>
         <article class="st-card pg-card">
           <div class="pg-row"><div class="pg-ph pg-sq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg><img id="readiness-providerPhoto" alt="" hidden></div>
-            <div><h3 id="readiness-providerTitle">Provider Services</h3>
+            <div><h3 id="readiness-providerTitle">Provider Screening Services</h3>
             <p id="readiness-providerText" data-cms="html">If you are a provider of services for children and would like to add our screening services to your program or event, we can help! We offer vision, hearing, and developmental screenings, staff and family trainings, outreach events, and resources.</p></div>
           </div>
           <a class="st-btn st-btn-primary" id="rsOpen" href="#">Request Services</a>
@@ -253,7 +253,7 @@
         <h2 id="readiness-ctaTitle">Schedule a Screening</h2>
         <p id="readiness-ctaSubtitle" data-cms="html">Contact us to schedule a screening event in your community.</p>
         <a class="st-btn st-btn-white" id="obOpen" href="#">Schedule a Screening</a>
-        <a class="st-btn st-btn-outline-white" href="contact.html">Contact Us Today</a>
+        <a class="st-btn st-btn-outline-white" href="#" id="rsOpen2">Contact Us Today</a>
       </div>
     </section>
   </main>
@@ -261,19 +261,63 @@
   <!-- Request Services sheet (Daniel 2026-11-06: the app is self-contained; it
        never opens the website). Same fields and the same providers record as
        the website's Provider Services Request. -->
+  <style>/* Screening request questions (2026-11-13) */
+    .rs-open{cursor:pointer;transition:transform .15s,box-shadow .15s;}
+    .rs-open:active{transform:scale(.99);}
+    .rs-choice{display:block;width:100%;text-align:left;padding:14px 16px;margin-bottom:10px;border:1.5px solid #E2E8F0;border-radius:12px;background:#fff;font:inherit;cursor:pointer;}
+    .rs-choice:active,.rs-choice:focus-visible{border-color:#004E7C;background:#EBF5FB;outline:none;}
+    .rs-choice b{display:block;color:#004E7C;margin-bottom:2px;}
+    .rs-choice span{color:#64748B;font-size:.88rem;line-height:1.4;}
+    .rs-back{background:none;border:none;color:#004E7C;font-weight:600;padding:0;margin-bottom:10px;font:inherit;cursor:pointer;}
+    .rs-sec{margin:14px 0 10px;padding-top:12px;border-top:1px solid #E2E8F0;font-weight:700;color:#004E7C;}
+    .rs-chips{display:flex;flex-wrap:wrap;gap:6px;}
+    .rs-chips label{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1.5px solid #E2E8F0;border-radius:999px;font-size:.92rem;cursor:pointer;}
+    .rs-chips label:has(input:checked){border-color:#004E7C;background:#EBF5FB;}
+    .rs-chips input{accent-color:#004E7C;margin:0;}
+    .rs-row{display:grid;grid-template-columns:1.4fr 1fr;gap:8px;}
+    .rs-row + .rs-row{margin-top:8px;}
+    .rs-sub{display:block;font-size:.8rem;color:#64748B;margin-bottom:3px;}
+    .rs-note{font-size:.8rem;color:#64748B;margin:6px 0 0;line-height:1.45;}
+    .rs-unsure{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-size:.92rem;}
+  </style>
   <div class="pg-modal" id="rsModal" hidden role="dialog" aria-modal="true" aria-labelledby="rsTitle">
     <div class="pg-modal-card">
       <div class="pg-modal-head">
-        <div><p>School Readiness</p><h2 id="rsTitle">Request provider services</h2></div>
+        <div><p>School Readiness</p><h2 id="rsTitle">Provider Screening Services Request</h2></div>
         <button type="button" class="pg-x" data-close aria-label="Close">&times;</button>
       </div>
       <div class="pg-modal-body">
-        <form id="rsForm" novalidate>
+        <div id="rsStep">
+          <p class="ob-lbl" style="margin-bottom:10px;">What kind of screening do you need?</p>
+          <button type="button" class="rs-choice" data-rs-kind="individual"><b>Individual screening</b><span>One child. Book a free screening at our office.</span></button>
+          <button type="button" class="rs-choice" data-rs-kind="group"><b>Group screening</b><span>A school, program, location or event with several children.</span></button>
+        </div>
+        <form id="rsForm" novalidate hidden>
+          <button type="button" class="rs-back" data-rs-kind="">&larr; Back</button>
           <div class="ob-fg"><label class="ob-lbl" for="rsOrg">Organization name <span class="ob-req">*</span></label><input class="ob-in" id="rsOrg" type="text" autocomplete="organization"></div>
           <div class="ob-fg"><label class="ob-lbl" for="rsFirst">Point of contact <span class="ob-req">*</span></label>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input class="ob-in" id="rsFirst" type="text" placeholder="First name" autocomplete="given-name"><input class="ob-in" id="rsLast" type="text" placeholder="Last name" autocomplete="family-name"></div></div>
           <div class="ob-fg"><label class="ob-lbl" for="rsEmail">Email <span class="ob-req">*</span></label><input class="ob-in" id="rsEmail" type="email" inputmode="email" autocomplete="email"></div>
           <div class="ob-fg"><label class="ob-lbl" for="rsPhone">Phone</label><input class="ob-in" id="rsPhone" type="tel" inputmode="tel" placeholder="(808) 000-0000" autocomplete="tel"></div>
+          <div class="rs-sec">About the screening</div>
+          <div class="ob-fg"><span class="ob-lbl">Who is the screening for?</span><div class="rs-chips">
+            <label><input type="radio" name="rsFor" value="School"> School</label><label><input type="radio" name="rsFor" value="Person"> Person</label>
+            <label><input type="radio" name="rsFor" value="Location"> Location</label><label><input type="radio" name="rsFor" value="Event"> Event</label></div></div>
+          <div class="ob-fg"><span class="ob-lbl">Is the screening at more than one location?</span><div class="rs-chips">
+            <label><input type="radio" name="rsMulti" value="yes"> Yes</label><label><input type="radio" name="rsMulti" value="no"> No</label></div></div>
+          <div class="ob-fg"><label class="ob-lbl" for="rsSites">Site(s)</label><textarea class="ob-in" id="rsSites" rows="2" placeholder="School or site name and address. List each site if there is more than one."></textarea></div>
+          <div class="ob-fg"><label class="ob-lbl" for="rsCount">How many children will be screened? <span class="ob-req">*</span></label><input class="ob-in" id="rsCount" type="number" min="1" max="2000" inputmode="numeric" placeholder="About how many">
+            <label class="rs-unsure"><input type="checkbox" id="rsCountUnsure"> Not sure yet</label></div>
+          <div class="ob-fg"><label class="ob-lbl" for="rsAges">Children&rsquo;s ages</label><input class="ob-in" id="rsAges" type="text" placeholder="e.g., 3 to 5 years old"></div>
+          <div class="ob-fg"><span class="ob-lbl">Which screenings? <span class="ob-req">*</span></span><div class="rs-chips">
+            <label><input type="checkbox" name="rsType" value="Hearing"> Hearing</label><label><input type="checkbox" name="rsType" value="Vision"> Vision</label>
+            <label><input type="checkbox" name="rsType" value="Developmental"> Developmental</label><label><input type="checkbox" name="rsType" value="Social Emotional"> Social Emotional</label></div></div>
+          <div class="ob-fg"><label class="ob-lbl" for="rsIsland">Island</label><select class="ob-in" id="rsIsland"><option value="">Choose an island</option>
+            <option>O&#699;ahu</option><option>Hawai&#699;i Island</option><option>Kaua&#699;i</option><option>Maui</option><option>L&#257;na&#699;i</option><option>Moloka&#699;i</option></select></div>
+          <div class="ob-fg"><span class="ob-lbl">Days and times that work for you</span>
+            <div class="rs-row"><div><span class="rs-sub">1st choice date</span><input class="ob-in" id="rsDate1" type="date"></div><div><span class="rs-sub">Start time</span><input class="ob-in" id="rsTime1" type="time" value="08:30"></div></div>
+            <div class="rs-row"><div><span class="rs-sub">2nd choice date</span><input class="ob-in" id="rsDate2" type="date"></div><div><span class="rs-sub">Start time</span><input class="ob-in" id="rsTime2" type="time" value="08:30"></div></div>
+            <p class="rs-note">Screenings can start at 8:30 a.m. Schools need time to send consent forms home and get them back signed, so please pick dates at least one week after families receive the forms. We will confirm the date with you.</p></div>
           <div class="ob-fg"><label class="ob-lbl" for="rsMsg">Comment or message</label><textarea class="ob-in" id="rsMsg" rows="4" placeholder="Tell us about your program or event and what services you are interested in."></textarea></div>
           <div class="ob-err" id="rsErr" role="alert" hidden></div>
           <button type="submit" class="ob-cta" id="rsSend">Send request</button>
@@ -1058,8 +1102,24 @@
   (function () {
     var $ = function (id) { return document.getElementById(id); };
     var btn = $('rsOpen'); if (!btn) return;
-    function reset() { $('rsForm').reset(); $('rsForm').hidden = false; $('rsDone').hidden = true; $('rsErr').hidden = true; $('rsSend').disabled = false; $('rsSend').textContent = 'Send request'; }
-    btn.addEventListener('click', function (e) { e.preventDefault(); reset(); window.STC.openModal('rsModal'); });
+    function step(kind) {
+      if (kind === 'individual') { window.STC.closeModal('rsModal'); var ob = $('obOpen'); if (ob) ob.click(); return; }
+      $('rsStep').hidden = kind === 'group'; $('rsForm').hidden = kind !== 'group';
+    }
+    document.querySelectorAll('#rsModal [data-rs-kind]').forEach(function (b) { b.addEventListener('click', function () { step(b.getAttribute('data-rs-kind')); }); });
+    function openRs(type) {
+      reset(); step('');
+      if (type) { var t = document.querySelector('input[name="rsType"][value="' + type + '"]'); if (t) t.checked = true; }
+      window.STC.openModal('rsModal');
+    }
+    document.querySelectorAll('.rs-open').forEach(function (c) {
+      var go = function () { openRs(c.getAttribute('data-rs-type')); };
+      c.addEventListener('click', go);
+      c.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    });
+    var btn2 = $('rsOpen2'); if (btn2) btn2.addEventListener('click', function (e) { e.preventDefault(); openRs(''); });
+    function reset() { var mn = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10); $('rsDate1').min = mn; $('rsDate2').min = mn; $('rsForm').reset(); $('rsDone').hidden = true; $('rsErr').hidden = true; $('rsSend').disabled = false; $('rsSend').textContent = 'Send request'; }
+    btn.addEventListener('click', function (e) { e.preventDefault(); openRs(''); });
     $('rsForm').addEventListener('submit', async function (e) {
       e.preventDefault();
       var v = function (id) { return String($(id).value || '').trim(); };
@@ -1069,12 +1129,20 @@
       if (!v('rsFirst') || !v('rsLast')) miss.push('the contact’s first and last name');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('rsEmail'))) miss.push('an email address');
       if (v('rsPhone') && v('rsPhone').replace(/\D/g, '').length < 10) miss.push('a 10-digit phone number');
+      var pick = function (n) { return Array.prototype.map.call(document.querySelectorAll('input[name="' + n + '"]:checked'), function (x) { return x.value; }); };
+      var unsure = $('rsCountUnsure').checked, types = pick('rsType');
+      if (!unsure && !(parseInt(v('rsCount'), 10) > 0)) miss.push('how many children will be screened (or tick Not sure yet)');
+      if (!types.length) miss.push('which screenings you need');
       if (miss.length) { $('rsErr').textContent = 'Please add ' + miss.join(', ') + '.'; $('rsErr').hidden = false; return; }
       $('rsErr').hidden = true; $('rsSend').disabled = true; $('rsSend').textContent = 'Sending…';
       try {
         await firebase.firestore().collection('providers').add({
           organizationName: v('rsOrg'), firstName: cap(v('rsFirst')), lastName: cap(v('rsLast')),
           email: v('rsEmail').toLowerCase(), phone: v('rsPhone'), message: v('rsMsg'),
+          requestType: 'screening', screeningFor: pick('rsFor')[0] || '', multipleLocations: pick('rsMulti')[0] || '',
+          sites: v('rsSites'), childCount: unsure ? null : parseInt(v('rsCount'), 10), childCountUnknown: unsure,
+          childAges: v('rsAges'), screenings: types, island: v('rsIsland'),
+          preferredDates: [['rsDate1', 'rsTime1'], ['rsDate2', 'rsTime2']].map(function (d) { return { date: v(d[0]), time: v(d[1]) }; }).filter(function (d) { return d.date; }),
           submittedAt: firebase.firestore.FieldValue.serverTimestamp(), status: 'new', source: 'app'
         });
         if (window.ldahAnalytics && ldahAnalytics.trackFormSubmit) ldahAnalytics.trackFormSubmit('provider_request');

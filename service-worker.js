@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — LIVE
-const CACHE_NAME = 'ldah-v30';   // 2026-11-13 accommodations hint: don't type N/A
+const CACHE_NAME = 'ldah-v31';   // 2026-11-13 screening request form: individual/group, children, dates
 const urlsToCache = [
   './',
   './index.html',
