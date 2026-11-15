@@ -1,5 +1,5 @@
 // Service Worker for LDAH Progressive Web App — LIVE
-const CACHE_NAME = 'ldah-v31';   // 2026-11-13 screening request form: individual/group, children, dates
+const CACHE_NAME = 'ldah-v32';   // 2026-11-14 consent forms download on the screening request Mahalo screen
 const urlsToCache = [
   './',
   './index.html',
